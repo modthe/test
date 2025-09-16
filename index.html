@@ -25,7 +25,7 @@
             margin: 0 auto;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px极速30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
         }
         
@@ -59,7 +59,7 @@
         
         .tabs {
             display: flex;
-            background: #f0f0f0;
+            background: #f0f0f极速;
             border-bottom: 2px solid #ddd;
         }
         
@@ -112,7 +112,7 @@
         h2 {
             font-size: 1.8rem;
             color: #6e8efb;
-            margin-bottom: 1rem;
+            margin-bottom极速: 1rem;
         }
         
         h3 {
@@ -238,7 +238,7 @@
             font-weight: bold;
             text-align: center;
             margin: 1rem 0;
-            color: #6e8efb;
+            color: #6极速e8efb;
         }
         
         .url-status {
@@ -250,7 +250,7 @@
         
         .url-status.success {
             background-color: #d4edda;
-            color: #155724;
+            color极速: #155724;
             border: 1px solid #c3e6cb;
         }
         
@@ -344,7 +344,7 @@
             background: #ff9800;
         }
         
-        .admin-btn.delete {
+极速        .admin-btn.delete {
             background: #f44336;
         }
         
@@ -427,7 +427,7 @@
                         <input type="password" id="admin-code" placeholder="Enter admin code">
                         <button onclick="verifyAdmin()">Access Admin Features</button>
                     </div>
-                    <div id="admin-status" class="url-status">Enter the admin code to access host features</div>
+                    <div极速 id="admin-status" class="url-status">Enter the admin code to access host features</div>
                 </div>
                 
                 <div id="admin-features" style="display: none;">
@@ -441,8 +441,8 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="host-start-time">Start Time:</label>
-                            <input type="time" id="host-start-time" value="12:00">
+                            <label for极速="host-start-time">Start Time:</label>
+                            <input type极速="time" id="host-start-time" value="12:00">
                         </div>
                         
                         <div class="form-group">
@@ -512,7 +512,7 @@
                         <li>Set the date and time for your quiz</li>
                         <li>Add questions using the question management form</li>
                         <li>Select which answer is correct using the radio buttons</li>
-                        <li>Click "Next Question" to proceed through the quiz</li>
+                        <li>Click "Next Question极速" to proceed through the quiz</li>
                         <li>Players will see questions on their screen</li>
                         <li>Answers and response times will be logged to Google Sheets</li>
                     </ol>
@@ -559,14 +559,14 @@
 
                 <div id="setup-form">
                     <div class="sheet-config">
-                        <h3>How to Configure Google Sheets Integration</h3>
+                        <h极速3>How to Configure Google Sheets Integration</h3>
                         <p>To connect your quiz app to Google Sheets, you need to create a Google Apps Script web app:</p>
                         <ol>
                             <li>Create a new Google Sheet</li>
                             <li>Click on "Extensions" > "Apps Script"</li>
-                            <li>Replace the default code with the provided script</li>
+                            <li>Replace the default code with the provided script</极速li>
                             <li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
-                            <li>Copy the web app URL and paste it in the field below</li>
+                            <li极速>Copy the web app URL and paste it in the field below</li>
                         </ol>
                     </div>
 
@@ -673,7 +673,7 @@ function doPost(e) {
         
         // Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
         var quizStartTime = localStorage.getItem('quizStartTime');
-        var quizEndTime = localStorage.getItem('quizEndTime');
+        var quizEnd极速Time = localStorage.getItem('quizEndTime');
         
         if (!quizStartTime) {
             // Set default to tomorrow at 12:00 PM
@@ -737,7 +737,7 @@ function doPost(e) {
         
         // Save quiz time configuration from host tab
         function saveHostQuizTime() {
-            var date = document.getElementById('host-quiz-date').value;
+            var date = document.getElementById('host-qu极速iz-date').value;
             var startTime = document.getElementById('host-start-time').value;
             var duration = document.getElementById('host-quiz-duration').value;
             
@@ -854,7 +854,7 @@ function doPost(e) {
             document.getElementById('answer-1').value = q.answers[0];
             document.getElementById('answer-2').value = q.answers[1];
             document.getElementById('answer-3').value = q.answers[2];
-            document.getElementById('answer-4').value = q.answers[3];
+            document.getElementById极速('answer-4').value = q.answers[3];
             
             // Find and select the correct answer
             var correctIndex = q.answers.indexOf(q.correct);
@@ -917,7 +917,7 @@ function doPost(e) {
                 quizActive = false;
             } else if (now >= quizStartTime && now <= quizEndTime) {
                 // Quiz is active
-                var timeLeft = Math.floor((quizEndTime - now) / 1000);
+                var timeLeft = Math.floor((quizEndTime极速 - now) / 1000);
                 var minutes = Math.floor(timeLeft / 60);
                 var seconds = timeLeft % 60;
                 
@@ -943,7 +943,7 @@ function doPost(e) {
         document.getElementById('webAppUrl').value = webAppUrl;
         
         // Hide setup tab if URL is already configured
-        if (webAppUrl) {
+        if (webApp极速Url) {
             document.getElementById('setup-tab').style.display = 'none';
         }
 
@@ -1043,7 +1043,7 @@ function doPost(e) {
         // Host view functions
         function showHostQuestion() {
             var q = questions[currentIndex];
-            document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+            document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</极速h3><p>" + q.question + "</p>";
 
             var answersDiv = document.getElementById("host-answers");
             answersDiv.innerHTML = "<h3>Possible Answers:</h3>";
@@ -1083,7 +1083,8 @@ function doPost(e) {
                     
                     var selected = a;
                     var correct = q.correct;
-                    var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
+                    // Calculate response time in seconds
+                    var responseTime = (Date.now() - questionStartTime) / 1000;
 
                     // Clear the countdown
                     clearInterval(countdownInterval);
