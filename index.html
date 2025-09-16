@@ -549,7 +549,7 @@ function doPost(e) {
             // Set default to tomorrow at 12:00 PM
             var tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(12, 0, 0, 0);
+            tomorrow.setHours(9, 0, 0, 0);
             quizStartTime = tomorrow.getTime();
             localStorage.setItem('quizStartTime', quizStartTime);
         } else {
@@ -559,7 +559,7 @@ function doPost(e) {
         if (!quizEndTime) {
             // Set default to tomorrow at 12:30 PM
             var endTime = new Date(quizStartTime);
-            endTime.setMinutes(endTime.getMinutes() + 30);
+            endTime.setMinutes(endTime.getMinutes() + 40);
             quizEndTime = endTime.getTime();
             localStorage.setItem('quizEndTime', quizEndTime);
         } else {
@@ -913,5 +913,6 @@ function doPost(e) {
     </script>
 </body>
 </html>
+
 
 
