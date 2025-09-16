@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game with Timing Features</title>
+    <title>Quiz Game with Admin Features</title>
     <style>
         * {
             margin: 0;
@@ -121,7 +121,7 @@
             margin: 1.5rem 0 0.8rem;
         }
         
-        input, button, select {
+        input, button, select, textarea {
             padding: 0.8rem 1.2rem;
             margin: 0.5rem 0;
             border-radius: 5px;
@@ -129,9 +129,14 @@
             font-size: 1rem;
         }
         
-        input, select {
+        input, select, textarea {
             width: 100%;
             max-width: 300px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
         
         button {
@@ -183,34 +188,6 @@
             border-color: #f44336;
         }
         
-        #leaderboard-list {
-            list-style: none;
-        }
-        
-        #leaderboard-list li {
-            padding: 1rem;
-            margin: 0.5rem 0;
-            background: #f8f9fa;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            font-weight: 500;
-        }
-        
-        #leaderboard-list li:nth-child(1) {
-            background: #fff4e6;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        
-        #leaderboard-list li:nth-child(2) {
-            background: #f8f9fa;
-        }
-        
-        #leaderboard-list li:nth-child(3) {
-            background: #fff4e6;
-        }
-        
         .instructions {
             background: #fff8e1;
             border-left: 4px solid #ffc107;
@@ -226,6 +203,7 @@
         
         .instructions ol {
             margin-left: 1.5rem;
+            margin-bottom: 1rem;
         }
         
         .instructions li {
@@ -320,6 +298,55 @@
             font-weight: 600;
         }
         
+        .admin-section {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .admin-section h3 {
+            color: #ef6c00;
+        }
+        
+        .question-list {
+            margin: 1rem 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 1rem;
+        }
+        
+        .question-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-item:last-child {
+            border-bottom: none;
+        }
+        
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+        
+        .admin-btn {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+        }
+        
+        .admin-btn.edit {
+            background: #ff9800;
+        }
+        
+        .admin-btn.delete {
+            background: #f44336;
+        }
+        
         @media (max-width: 768px) {
             .tabs {
                 flex-direction: column;
@@ -337,13 +364,17 @@
                 position: static;
                 margin-top: 10px;
             }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Timed Quiz Game</h1>
+            <h1>Quiz Game with Admin Features</h1>
             <p class="subtitle">Answer questions within the time limit</p>
             <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
         </header>
@@ -351,58 +382,108 @@
         <div class="tabs">
             <div class="tab" onclick="switchTab('host')">Host</div>
             <div class="tab active" onclick="switchTab('player')">Player</div>
-            <div class="tab" onclick="switchTab('leaderboard')">Leaderboard</div>
             <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
         </div>
 
         <div class="content">
             <!-- Host Tab -->
             <div id="host" class="tab-content">
-                <h2>Quiz Host</h2>
+                <h2>Quiz Host (Admin)</h2>
                 
-                <div class="time-config">
-                    <h3>Quiz Timing Configuration</h3>
-                    <p>Set when your quiz will be active</p>
-                    
+                <div class="admin-section">
+                    <h3>Admin Access</h3>
                     <div class="form-group">
-                        <label for="host-quiz-date">Quiz Date:</label>
-                        <input type="date" id="host-quiz-date">
+                        <label for="admin-code">Enter Admin Code:</label>
+                        <input type="password" id="admin-code" placeholder="Enter admin code">
+                        <button onclick="verifyAdmin()">Access Admin Features</button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="host-start-time">Start Time:</label>
-                        <input type="time" id="host-start-time" value="12:00">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="host-quiz-duration">Quiz Duration (minutes):</label>
-                        <select id="host-quiz-duration">
-                            <option value="15">15 minutes</option>
-                            <option value="30" selected>30 minutes</option>
-                            <option value="45">45 minutes</option>
-                            <option value="60">1 hour</option>
-                            <option value="90">1.5 hours</option>
-                            <option value="120">2 hours</option>
-                        </select>
-                    </div>
-                    
-                    <button onclick="saveHostQuizTime()">Save Quiz Time</button>
-                    <div id="host-time-status" class="url-status">Configure when your quiz will be active</div>
+                    <div id="admin-status" class="url-status">Enter the admin code to access host features</div>
                 </div>
                 
-                <div class="card">
-                    <div id="host-question"></div>
-                    <div id="host-answers"></div>
-                    <button id="nextBtn">Next Question</button>
+                <div id="admin-features" style="display: none;">
+                    <div class="time-config">
+                        <h3>Quiz Timing Configuration</h3>
+                        <p>Set when your quiz will be active</p>
+                        
+                        <div class="form-group">
+                            <label for="host-quiz-date">Quiz Date:</label>
+                            <input type="date" id="host-quiz-date">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="host-start-time">Start Time:</label>
+                            <input type="time" id="host-start-time" value="12:00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="host-quiz-duration">Quiz Duration (minutes):</label>
+                            <select id="host-quiz-duration">
+                                <option value="15">15 minutes</option>
+                                <option value="30" selected>30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="saveHostQuizTime()">Save Quiz Time</button>
+                        <div id="host-time-status" class="url-status">Configure when your quiz will be active</div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>Question Management</h3>
+                        
+                        <div class="form-group">
+                            <label for="question-text">Question:</label>
+                            <textarea id="question-text" placeholder="Enter your question"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="answer-1">Answer 1 (Correct Answer):</label>
+                            <input type="text" id="answer-1" placeholder="Enter answer 1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="answer-2">Answer 2:</label>
+                            <input type="text" id="answer-2" placeholder="Enter answer 2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="answer-3">Answer 3:</label>
+                            <input type="text" id="answer-3" placeholder="Enter answer 3">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="answer-4">Answer 4:</label>
+                            <input type="text" id="answer-4" placeholder="Enter answer 4">
+                        </div>
+                        
+                        <button onclick="addQuestion()">Add Question</button>
+                        <div id="question-status" class="url-status">Add a new question to the quiz</div>
+                    </div>
+                    
+                    <div class="question-list">
+                        <h3>Current Questions</h3>
+                        <div id="questions-container"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <div id="host-question"></div>
+                        <div id="host-answers"></div>
+                        <button id="nextBtn">Next Question</button>
+                    </div>
                 </div>
 
                 <div class="instructions">
                     <h3>Host Instructions</h3>
                     <ol>
-                        <li>Set the date and time for your quiz using the form above</li>
+                        <li>Enter the admin code to access host features</li>
+                        <li>Set the date and time for your quiz</li>
+                        <li>Add questions using the question management form</li>
                         <li>Click "Next Question" to proceed through the quiz</li>
                         <li>Players will see questions on their screen</li>
-                        <li>Answers will be logged to Google Sheets automatically</li>
+                        <li>Answers and response times will be logged to Google Sheets</li>
                     </ol>
                 </div>
             </div>
@@ -435,30 +516,13 @@
                 </div>
             </div>
 
-            <!-- Leaderboard Tab -->
-            <div id="leaderboard" class="tab-content">
-                <h2>Leaderboard</h2>
-                <div class="card">
-                    <ul id="leaderboard-list"></ul>
-                </div>
-
-                <div class="instructions">
-                    <h3>Leaderboard Information</h3>
-                    <ol>
-                        <li>Scores update in real-time as players answer questions</li>
-                        <li>Points are awarded for correct answers</li>
-                        <li>Response times are recorded for each answer</li>
-                    </ol>
-                </div>
-            </div>
-
             <!-- Setup Tab -->
             <div id="setup" class="tab-content">
                 <h2>Google Sheets Setup</h2>
                 
                 <div id="setup-complete-message" class="setup-complete" style="display: none;">
                     <h3>✅ Setup Complete!</h3>
-                    <p>Your Google Sheets integration is configured. You can now use the Player, Host, and Leaderboard tabs.</p>
+                    <p>Your Google Sheets integration is configured. You can now use the Player and Host tabs.</p>
                     <button onclick="switchTab('player')">Go to Player Tab</button>
                 </div>
 
@@ -570,17 +634,11 @@ function doPost(e) {
         // Initialize variables
         var currentIndex = 0;
         var playerName = "";
-        var scores = [
-            { player: "Alex", points: 15, avgTime: 2.3 },
-            { player: "Jordan", points: 12, avgTime: 3.1 },
-            { player: "Taylor", points: 10, avgTime: 1.8 },
-            { player: "Morgan", points: 8, avgTime: 4.2 },
-            { player: "Casey", points: 5, avgTime: 5.7 }
-        ];
         var countdownInterval;
         var timeLeft = 5;
         var questionStartTime;
         var quizActive = false;
+        var adminCode = "admin123"; // Default admin code
         
         // Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
         var quizStartTime = localStorage.getItem('quizStartTime');
@@ -607,6 +665,12 @@ function doPost(e) {
             quizEndTime = parseInt(quizEndTime);
         }
         
+        // Load questions from localStorage
+        var savedQuestions = localStorage.getItem('quizQuestions');
+        if (savedQuestions) {
+            questions = JSON.parse(savedQuestions);
+        }
+        
         // Load host time settings into the form
         function loadHostTimeSettings() {
             var quizDate = new Date(quizStartTime);
@@ -620,6 +684,24 @@ function doPost(e) {
             // Calculate duration in minutes
             var duration = Math.round((quizEndTime - quizStartTime) / 60000);
             document.getElementById('host-quiz-duration').value = duration;
+            
+            // Display questions
+            displayQuestions();
+        }
+        
+        // Verify admin code
+        function verifyAdmin() {
+            var code = document.getElementById('admin-code').value;
+            var status = document.getElementById('admin-status');
+            
+            if (code === adminCode) {
+                document.getElementById('admin-features').style.display = 'block';
+                status.textContent = 'Admin access granted!';
+                status.className = 'url-status success';
+            } else {
+                status.textContent = 'Invalid admin code. Please try again.';
+                status.className = 'url-status error';
+            }
         }
         
         // Save quiz time configuration from host tab
@@ -653,6 +735,103 @@ function doPost(e) {
                 document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
                 document.getElementById('host-time-status').className = 'url-status';
             }, 3000);
+        }
+        
+        // Add a new question
+        function addQuestion() {
+            var questionText = document.getElementById('question-text').value;
+            var answer1 = document.getElementById('answer-1').value;
+            var answer2 = document.getElementById('answer-2').value;
+            var answer3 = document.getElementById('answer-3').value;
+            var answer4 = document.getElementById('answer-4').value;
+            
+            if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
+                document.getElementById('question-status').textContent = 'Please fill in all fields';
+                document.getElementById('question-status').className = 'url-status error';
+                return;
+            }
+            
+            var newQuestion = {
+                question: questionText,
+                answers: [answer1, answer2, answer3, answer4],
+                correct: answer1
+            };
+            
+            questions.push(newQuestion);
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+            
+            document.getElementById('question-status').textContent = 'Question added successfully!';
+            document.getElementById('question-status').className = 'url-status success';
+            
+            // Clear form
+            document.getElementById('question-text').value = '';
+            document.getElementById('answer-1').value = '';
+            document.getElementById('answer-2').value = '';
+            document.getElementById('answer-3').value = '';
+            document.getElementById('answer-4').value = '';
+            
+            // Update questions display
+            displayQuestions();
+            
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                document.getElementById('question-status').textContent = 'Add a new question to the quiz';
+                document.getElementById('question-status').className = 'url-status';
+            }, 3000);
+        }
+        
+        // Display all questions
+        function displayQuestions() {
+            var container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p>No questions added yet.</p>';
+                return;
+            }
+            
+            questions.forEach((q, index) => {
+                var questionItem = document.createElement('div');
+                questionItem.className = 'question-item';
+                questionItem.innerHTML = `
+                    <strong>Q${index + 1}:</strong> ${q.question}
+                    <div class="admin-controls">
+                        <button class="admin-btn edit" onclick="editQuestion(${index})">Edit</button>
+                        <button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
+                    </div>
+                `;
+                container.appendChild(questionItem);
+            });
+        }
+        
+        // Edit a question
+        function editQuestion(index) {
+            var q = questions[index];
+            
+            document.getElementById('question-text').value = q.question;
+            document.getElementById('answer-1').value = q.answers[0];
+            document.getElementById('answer-2').value = q.answers[1];
+            document.getElementById('answer-3').value = q.answers[2];
+            document.getElementById('answer-4').value = q.answers[3];
+            
+            // Remove the question being edited
+            questions.splice(index, 1);
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+            
+            // Update display
+            displayQuestions();
+            
+            document.getElementById('question-status').textContent = 'Editing question. Update the fields and click "Add Question" to save changes.';
+            document.getElementById('question-status').className = 'url-status';
+        }
+        
+        // Delete a question
+        function deleteQuestion(index) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                questions.splice(index, 1);
+                localStorage.setItem('quizQuestions', JSON.stringify(questions));
+                displayQuestions();
+            }
         }
         
         // Update quiz time info display
@@ -888,28 +1067,6 @@ function doPost(e) {
             startCountdown();
         }
 
-        // Leaderboard functions
-        function updateLeaderboard() {
-            // Sort scores by points (descending)
-            scores.sort((a, b) => b.points - a.points);
-
-            var ul = document.getElementById("leaderboard-list");
-            ul.innerHTML = "";
-
-            scores.forEach(function(score, index) {
-                var li = document.createElement("li");
-
-                // Add trophy for top 3
-                var trophy = "";
-                if (index === 0) trophy = "🥇 ";
-                else if (index === 1) trophy = "🥈 ";
-                else if (index === 2) trophy = "🥉 ";
-
-                li.innerHTML = `<span>${trophy}${score.player}</span><span>${score.points} pts (${score.avgTime}s avg)</span>`;
-                ul.appendChild(li);
-            });
-        }
-
         // Initialize the application
         document.getElementById("joinBtn").onclick = function() {
             // Check if quiz is active
@@ -960,9 +1117,8 @@ function doPost(e) {
             switchTab('setup');
         }
 
-        // Initialize leaderboard
-        updateLeaderboard();
+        // Initialize the quiz time display
+        updateQuizTimeInfo();
     </script>
 </body>
 </html>
-
