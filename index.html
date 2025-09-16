@@ -47,27 +47,7 @@ opacity: 0.9;
 }
 
 .tabs {
-display: flex;
-background: #f0f0f0;
-border-bottom: 2px solid #ddd;
-}
-
-.tab {
-padding: 1rem 2rem;
-cursor: pointer;
-font-weight: 600;
-transition: all 0.3s ease;
-text-align: center;
-flex: 1;
-}
-
-.tab:hover {
-background: #e0e0e0;
-}
-
-.tab.active {
-background: white;
-border-bottom: 3px solid #6e8efb;
+display: none; /* Hide tabs as requested */
 }
 
 .content {
@@ -159,6 +139,18 @@ background: #e9ecef;
 transform: translateX(5px);
 }
 
+.answer-btn.correct {
+background-color: #4caf50;
+color: white;
+border-color: #4caf50;
+}
+
+.answer-btn.incorrect {
+background-color: #f44336;
+color: white;
+border-color: #f44336;
+}
+
 #leaderboard-list {
 list-style: none;
 }
@@ -231,6 +223,14 @@ margin: 1.5rem 0;
 overflow-x: auto;
 }
 
+.countdown {
+font-size: 1.5rem;
+font-weight: bold;
+text-align: center;
+margin: 1rem 0;
+color: #6e8efb;
+}
+
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -262,7 +262,7 @@ padding: 1rem;
 
 <div class="content">
 <!-- Host Tab -->
-<div id="host" class="tab-content active">
+<div id="host" class="tab-content">
 <h2>Quiz Host</h2>
 <div class="card">
 <div id="host-question"></div>
@@ -281,13 +281,14 @@ padding: 1rem;
 </div>
 
 <!-- Player Tab -->
-<div id="player" class="tab-content">
+<div id="player" class="tab-content active"> <!-- Set as active by default -->
 <h2>Join Quiz</h2>
 <div class="card">
 <input id="name" placeholder="Enter your name">
 <button id="joinBtn">Join Game</button>
 
 <div id="player-question"></div>
+<div id="countdown" class="countdown"></div>
 <div id="player-answers"></div>
 </div>
 
@@ -423,6 +424,8 @@ var scores = [
 { player: "Morgan", points: 8 },
 { player: "Casey", points: 5 }
 ];
+var countdownInterval;
+var timeLeft = 5;
 
 // Get saved web app URL from local storage
 var webAppUrl = localStorage.getItem('webAppUrl') || '';
@@ -476,6 +479,36 @@ console.error("Error sending data to Google Sheets:", error);
 });
 }
 
+// Countdown timer function
+function startCountdown() {
+timeLeft = 5;
+document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+  
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+    
+    if (timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      moveToNextQuestion();
+    }
+  }, 1000);
+}
+
+// Move to next question automatically
+function moveToNextQuestion() {
+  currentIndex++;
+  if (currentIndex < questions.length) {
+    showPlayerQuestion();
+    startCountdown();
+  } else {
+    document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
+    document.getElementById('player-answers').innerHTML = "";
+    document.getElementById('countdown').textContent = "";
+  }
+}
+
 // Host view functions
 function showHostQuestion() {
 var q = questions[currentIndex];
@@ -511,24 +544,32 @@ btn.onclick = function() {
 var selected = a;
 var correct = q.correct;
 
-// Show result to player
-if (selected === correct) {
-alert("Correct! " + selected + " is the right answer.");
-} else {
-alert("Incorrect. The correct answer is " + correct + ".");
+// Clear the countdown
+clearInterval(countdownInterval);
+document.getElementById('countdown').textContent = "";
+
+// Color the answers
+var allButtons = document.querySelectorAll('.answer-btn');
+allButtons.forEach(button => {
+button.disabled = true;
+if (button.innerText === correct) {
+button.classList.add('correct');
+} else if (button.innerText === selected && selected !== correct) {
+button.classList.add('incorrect');
 }
+});
 
 // Send to Google Sheets
 sendToGoogleSheet(playerName, q.question, selected, correct);
 
-// Disable buttons after selection
-var allButtons = document.querySelectorAll('.answer-btn');
-allButtons.forEach(button => {
-button.disabled = true;
-});
+// Move to next question after 5 seconds
+setTimeout(moveToNextQuestion, 5000);
 };
 answersDiv.appendChild(btn);
 });
+
+// Start countdown for this question
+startCountdown();
 }
 
 // Leaderboard functions
@@ -583,9 +624,11 @@ document.getElementById("nextBtn").disabled = true;
 }
 };
 
-// Initial setup
-showHostQuestion();
-updateLeaderboard();
+// Initial setup - only show player tab
+document.querySelectorAll('.tab-content').forEach(tab => {
+tab.classList.remove('active');
+});
+document.getElementById('player').classList.add('active');
 
 // Check if web app URL is configured
 if (!webAppUrl) {
