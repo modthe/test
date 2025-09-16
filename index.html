@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game with Timing Features</title>
+    <title>Quiz Time Configuration</title>
     <style>
         * {
             margin: 0;
@@ -18,11 +18,14 @@
             line-height: 1.6;
             min-height: 100vh;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 800px;
+            width: 100%;
             background: white;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -34,70 +37,15 @@
             color: white;
             padding: 2rem;
             text-align: center;
-            position: relative;
-        }
-        
-        .quiz-timer {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
         }
         
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             margin-bottom: 1rem;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .tabs {
-            display: flex;
-            background: #f0f0f0;
-            border-bottom: 2px solid #ddd;
-        }
-        
-        .tab {
-            padding: 1rem 2rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-align: center;
-            flex: 1;
-        }
-        
-        .tab:hover {
-            background: #e0e0e0;
-        }
-        
-        .tab.active {
-            background: white;
-            border-bottom: 3px solid #6e8efb;
         }
         
         .content {
             padding: 2rem;
-            min-height: 500px;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         
         .card {
@@ -121,7 +69,7 @@
             margin: 1.5rem 0 0.8rem;
         }
         
-        input, button {
+        input, button, select {
             padding: 0.8rem 1.2rem;
             margin: 0.5rem 0;
             border-radius: 5px;
@@ -129,7 +77,7 @@
             font-size: 1rem;
         }
         
-        input {
+        input, select {
             width: 100%;
             max-width: 300px;
         }
@@ -146,69 +94,6 @@
         button:hover {
             background: #5a7df9;
             transform: translateY(-2px);
-        }
-        
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .answer-btn {
-            display: block;
-            width: 100%;
-            text-align: left;
-            margin: 0.5rem 0;
-            padding: 1rem;
-            background: #f8f9fa;
-            color: #333;
-            border: 1px solid #ddd;
-            transition: all 0.2s ease;
-        }
-        
-        .answer-btn:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-        }
-        
-        .answer-btn.correct {
-            background-color: #4caf50;
-            color: white;
-            border-color: #4caf50;
-        }
-        
-        .answer-btn.incorrect {
-            background-color: #f44336;
-            color: white;
-            border-color: #f44336;
-        }
-        
-        #leaderboard-list {
-            list-style: none;
-        }
-        
-        #leaderboard-list li {
-            padding: 1rem;
-            margin: 0.5rem 0;
-            background: #f8f9fa;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            font-weight: 500;
-        }
-        
-        #leaderboard-list li:nth-child(1) {
-            background: #fff4e6;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        
-        #leaderboard-list li:nth-child(2) {
-            background: #f8f9fa;
-        }
-        
-        #leaderboard-list li:nth-child(3) {
-            background: #fff4e6;
         }
         
         .instructions {
@@ -232,7 +117,7 @@
             margin-bottom: 0.5rem;
         }
         
-        .sheet-config {
+        .time-config {
             background: #e8f5e9;
             border-left: 4px solid #4caf50;
             padding: 1.5rem;
@@ -240,80 +125,87 @@
             border-radius: 4px;
         }
         
-        .sheet-config h3 {
+        .time-config h3 {
             color: #2e7d32;
             margin-bottom: 1rem;
         }
         
-        .code-block {
-            background: #2c3e50;
-            color: #f5f7fa;
-            padding: 1.5rem;
-            border-radius: 8px;
-            font-family: monospace;
-            margin: 1.5rem 0;
-            overflow-x: auto;
-        }
-        
-        .countdown {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
+        .form-group {
             margin: 1rem 0;
-            color: #6e8efb;
         }
         
-        .url-status {
-            margin-top: 10px;
-            padding: 8px;
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .status-message {
+            padding: 0.5rem;
+            margin-top: 1rem;
             border-radius: 4px;
             text-align: center;
         }
         
-        .url-status.success {
+        .success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
         
-        .url-status.error {
+        .error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
         
-        .setup-complete {
-            text-align: center;
-            padding: 2rem;
-            background: #e8f5e9;
-            border-radius: 8px;
-            margin: 2rem 0;
+        .quick-presets {
+            display: flex;
+            gap: 10px;
+            margin: 1rem 0;
+            flex-wrap: wrap;
         }
         
-        .time-info {
+        .preset-btn {
+            background: #ff9800;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .preset-btn:hover {
+            background: #f57c00;
+        }
+        
+        .current-settings {
             background: #e3f2fd;
             border-left: 4px solid #2196f3;
-            padding: 1rem;
-            margin: 1rem 0;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .current-settings h3 {
+            color: #1565c0;
+        }
+        
+        .setting-item {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: #bbdefb;
             border-radius: 4px;
         }
         
         @media (max-width: 768px) {
-            .tabs {
-                flex-direction: column;
-            }
-            
             h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .content {
                 padding: 1rem;
             }
             
-            .quiz-timer {
-                position: static;
-                margin-top: 10px;
+            .quick-presets {
+                flex-direction: column;
             }
         }
     </style>
@@ -321,598 +213,226 @@
 <body>
     <div class="container">
         <header>
-            <h1>Timed Quiz Game</h1>
-            <p class="subtitle">Answer questions within the time limit</p>
-            <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
+            <h1>Quiz Time Configuration</h1>
+            <p>Set when your quiz game will be active</p>
         </header>
 
-        <div class="tabs">
-            <div class="tab" onclick="switchTab('host')">Host</div>
-            <div class="tab active" onclick="switchTab('player')">Player</div>
-            <div class="tab" onclick="switchTab('leaderboard')">Leaderboard</div>
-            <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
-        </div>
-
         <div class="content">
-            <!-- Host Tab -->
-            <div id="host" class="tab-content">
-                <h2>Quiz Host</h2>
-                <div class="card">
-                    <div id="host-question"></div>
-                    <div id="host-answers"></div>
-                    <button id="nextBtn">Next Question</button>
-                </div>
-
-                <div class="instructions">
-                    <h3>Host Instructions</h3>
-                    <ol>
-                        <li>Click "Next Question" to proceed through the quiz</li>
-                        <li>Players will see questions on their screen</li>
-                        <li>Answers will be logged to Google Sheets automatically</li>
-                    </ol>
-                </div>
+            <div class="instructions">
+                <h3>How to Set Quiz Time</h3>
+                <ol>
+                    <li>Select the date and time when your quiz should start</li>
+                    <li>Set how long the quiz should be available (duration)</li>
+                    <li>Click "Save Quiz Time" to apply your settings</li>
+                    <li>Use quick presets for common time configurations</li>
+                </ol>
             </div>
 
-            <!-- Player Tab -->
-            <div id="player" class="tab-content active">
-                <h2>Join Quiz</h2>
-                <div class="time-info" id="quiz-time-info">
-                    <p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p>
-                    <p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p>
+            <div class="current-settings">
+                <h3>Current Quiz Time Settings</h3>
+                <div class="setting-item" id="current-date">Date: Not set</div>
+                <div class="setting-item" id="current-start">Start Time: Not set</div>
+                <div class="setting-item" id="current-duration">Duration: Not set</div>
+                <div class="setting-item" id="current-end">End Time: Not set</div>
+            </div>
+
+            <div class="card">
+                <h2>Configure Quiz Time</h2>
+                
+                <div class="form-group">
+                    <label for="quiz-date">Quiz Date:</label>
+                    <input type="date" id="quiz-date" required>
                 </div>
                 
-                <div class="card">
-                    <input id="name" placeholder="Enter your name">
-                    <button id="joinBtn">Join Game</button>
-
-                    <div id="player-question"></div>
-                    <div id="countdown" class="countdown"></div>
-                    <div id="player-answers"></div>
+                <div class="form-group">
+                    <label for="start-time">Start Time:</label>
+                    <input type="time" id="start-time" required value="12:00">
                 </div>
-
-                <div class="instructions">
-                    <h3>Player Instructions</h3>
-                    <ol>
-                        <li>Enter your name and click "Join Game"</li>
-                        <li>Wait for the host to start the quiz</li>
-                        <li>Select your answer when questions appear</li>
-                        <li>Your answers and response time will be recorded</li>
-                    </ol>
-                </div>
-            </div>
-
-            <!-- Leaderboard Tab -->
-            <div id="leaderboard" class="tab-content">
-                <h2>Leaderboard</h2>
-                <div class="card">
-                    <ul id="leaderboard-list"></ul>
-                </div>
-
-                <div class="instructions">
-                    <h3>Leaderboard Information</h3>
-                    <ol>
-                        <li>Scores update in real-time as players answer questions</li>
-                        <li>Points are awarded for correct answers</li>
-                        <li>Response times are recorded for each answer</li>
-                    </ol>
-                </div>
-            </div>
-
-            <!-- Setup Tab -->
-            <div id="setup" class="tab-content">
-                <h2>Google Sheets Setup</h2>
                 
-                <div id="setup-complete-message" class="setup-complete" style="display: none;">
-                    <h3>✅ Setup Complete!</h3>
-                    <p>Your Google Sheets integration is configured. You can now use the Player, Host, and Leaderboard tabs.</p>
-                    <button onclick="switchTab('player')">Go to Player Tab</button>
+                <div class="form-group">
+                    <label for="quiz-duration">Quiz Duration:</label>
+                    <select id="quiz-duration">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
                 </div>
-
-                <div id="setup-form">
-                    <div class="sheet-config">
-                        <h3>How to Configure Google Sheets Integration</h3>
-                        <p>To connect your quiz app to Google Sheets, you need to create a Google Apps Script web app:</p>
-                        <ol>
-                            <li>Create a new Google Sheet</li>
-                            <li>Click on "Extensions" > "Apps Script"</li>
-                            <li>Replace the default code with the provided script</li>
-                            <li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
-                            <li>Copy the web app URL and paste it in the field below</li>
-                        </ol>
-                    </div>
-
-                    <div class="card">
-                        <h3>Web App URL Configuration</h3>
-                        <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwKvTFh7VrNVqFkLsynFabevnmyV7SG2QGutS3smWcKjW0LZSl42nwqB3VkMZu3nHjCGg/exec">
-                        <button onclick="saveWebAppUrl()">Save URL</button>
-                        <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Quiz Timing Configuration</h3>
-                        <p>Set the date and time for your quiz (current default: tomorrow 9:00 PM to 9:40 PM)</p>
-                        <div style="margin: 1rem 0;">
-                            <label for="quiz-date">Quiz Date:</label>
-                            <input type="date" id="quiz-date">
-                        </div>
-                        <div style="margin: 1rem 0;">
-                            <label for="start-time">Start Time:</label>
-                            <input type="time" id="start-time" value="9:00">
-                        </div>
-                        <div style="margin: 1rem 0;">
-                            <label for="end-time">End Time:</label>
-                            <input type="time" id="end-time" value="9:40">
-                        </div>
-                        <button onclick="saveQuizTime()">Save Quiz Time</button>
-                    </div>
-
-                    <div class="code-block">
-                        <p>// Updated Google Apps Script code for your Google Sheet</p>
-                        <pre>
-function doPost(e) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-
-    // Add headers if sheet is empty
-    if (sheet.getLastRow() === 0) {
-        sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
-    }
-
-    // Add new row with data
-    sheet.appendRow([
-        new Date(), 
-        data.player, 
-        data.question, 
-        data.answer, 
-        data.correct,
-        data.responseTime,
-        data.status
-    ]);
-
-    return ContentService.createTextOutput("Success");
-}
-                        </pre>
-                    </div>
+                
+                <h3>Quick Presets</h3>
+                <div class="quick-presets">
+                    <button class="preset-btn" onclick="setPreset('today1')">Today, 1 hour from now</button>
+                    <button class="preset-btn" onclick="setPreset('tomorrow12')">Tomorrow at 12:00 PM</button>
+                    <button class="preset-btn" onclick="setPreset('weekend')">Next Saturday at 2:00 PM</button>
                 </div>
+                
+                <button onclick="saveQuizTime()">Save Quiz Time</button>
+                <div id="timeStatus" class="status-message">Settings will be saved automatically</div>
+            </div>
+            
+            <div class="time-config">
+                <h3>How It Works</h3>
+                <p>Once you set the quiz time, your quiz game will only be active during the specified time period.</p>
+                <p>Players will not be able to join or answer questions outside of this time window.</p>
+                <p>You can change these settings anytime you want to schedule a new quiz game.</p>
+            </div>
+            
+            <div class="card">
+                <h2>Google Sheets Integration</h2>
+                <div class="form-group">
+                    <label for="webAppUrl">Google Apps Script URL:</label>
+                    <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <button onclick="saveWebAppUrl()">Save Google Sheets URL</button>
+                <div id="urlStatus" class="status-message">Enter your Google Apps Script URL</div>
             </div>
         </div>
     </div>
 
     <script>
-        // Tab switching functionality
-        function switchTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
-
-            // Update active tab
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-
-            // Activate the clicked tab
-            document.querySelectorAll('.tab').forEach(tab => {
-                if (tab.textContent.toLowerCase().includes(tabName)) {
-                    tab.classList.add('active');
-                }
-            });
-        }
-
-        // Example question set
-        var questions = [
-            {
-                question: "What is 2 + 2?",
-                answers: ["3", "4", "5", "6"],
-                correct: "4"
-            },
-            {
-                question: "Capital of France?",
-                answers: ["London", "Paris", "Berlin", "Rome"],
-                correct: "Paris"
-            },
-            {
-                question: "Largest planet in our solar system?",
-                answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
-                correct: "Jupiter"
-            },
-            {
-                question: "What is the chemical symbol for gold?",
-                answers: ["Go", "Gd", "Au", "Ag"],
-                correct: "Au"
+        // Load saved settings
+        function loadSavedSettings() {
+            // Load quiz time settings
+            const quizDate = localStorage.getItem('quizDate');
+            const startTime = localStorage.getItem('startTime');
+            const duration = localStorage.getItem('quizDuration');
+            
+            if (quizDate && startTime && duration) {
+                document.getElementById('quiz-date').value = quizDate;
+                document.getElementById('start-time').value = startTime;
+                document.getElementById('quiz-duration').value = duration;
+                
+                updateCurrentSettingsDisplay();
             }
-        ];
-
-        // Initialize variables
-        var currentIndex = 0;
-        var playerName = "";
-        var scores = [
-            { player: "Alex", points: 15, avgTime: 2.3 },
-            { player: "Jordan", points: 12, avgTime: 3.1 },
-            { player: "Taylor", points: 10, avgTime: 1.8 },
-            { player: "Morgan", points: 8, avgTime: 4.2 },
-            { player: "Casey", points: 5, avgTime: 5.7 }
-        ];
-        var countdownInterval;
-        var timeLeft = 5;
-        var questionStartTime;
-        var quizActive = false;
-        
-        // Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
-        var quizStartTime = localStorage.getItem('quizStartTime');
-        var quizEndTime = localStorage.getItem('quizEndTime');
-        
-        if (!quizStartTime) {
-            // Set default to tomorrow at 12:00 PM
-            var tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(9, 0, 0, 0);
-            quizStartTime = tomorrow.getTime();
-            localStorage.setItem('quizStartTime', quizStartTime);
-        } else {
-            quizStartTime = parseInt(quizStartTime);
+            
+            // Load Google Sheets URL
+            const webAppUrl = localStorage.getItem('webAppUrl') || '';
+            document.getElementById('webAppUrl').value = webAppUrl;
         }
         
-        if (!quizEndTime) {
-            // Set default to tomorrow at 12:30 PM
-            var endTime = new Date(quizStartTime);
-            endTime.setMinutes(endTime.getMinutes() + 40);
-            quizEndTime = endTime.getTime();
-            localStorage.setItem('quizEndTime', quizEndTime);
-        } else {
-            quizEndTime = parseInt(quizEndTime);
-        }
-        
-        // Initialize date and time inputs
-        var quizDate = new Date(quizStartTime);
-        document.getElementById('quiz-date').value = quizDate.toISOString().split('T')[0];
-        
-        var startTime = new Date(quizStartTime);
-        document.getElementById('start-time').value = 
-            String(startTime.getHours()).padStart(2, '0') + ':' + 
-            String(startTime.getMinutes()).padStart(2, '0');
+        // Update the current settings display
+        function updateCurrentSettingsDisplay() {
+            const quizDate = localStorage.getItem('quizDate');
+            const startTime = localStorage.getItem('startTime');
+            const duration = localStorage.getItem('quizDuration');
             
-        var endTime = new Date(quizEndTime);
-        document.getElementById('end-time').value = 
-            String(endTime.getHours()).padStart(2, '0') + ':' + 
-            String(endTime.getMinutes()).padStart(2, '0');
-        
-        // Update quiz time info display
-        function updateQuizTimeInfo() {
-            var start = new Date(quizStartTime);
-            var end = new Date(quizEndTime);
-            
-            var options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            
-            var timeRange = start.toLocaleDateString('en-US', options) + ' to ' + 
-                           end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
-            
-            document.getElementById('quiz-time-range').textContent = timeRange;
-            
-            // Update quiz status
-            var now = new Date().getTime();
-            var quizTimer = document.getElementById('quiz-timer');
-            var quizStatus = document.getElementById('quiz-status-text');
-            
-            if (now < quizStartTime) {
-                // Quiz hasn't started yet
-                var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
-                var hours = Math.floor(timeUntilStart / 3600);
-                var minutes = Math.floor((timeUntilStart % 3600) / 60);
-                var seconds = timeUntilStart % 60;
+            if (quizDate && startTime && duration) {
+                const dateObj = new Date(quizDate);
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = dateObj.toLocaleDateString('en-US', options);
                 
-                quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
-                quizStatus.textContent = 'Not started';
-                quizStatus.style.color = '#ff9800';
-                quizActive = false;
-            } else if (now >= quizStartTime && now <= quizEndTime) {
-                // Quiz is active
-                var timeLeft = Math.floor((quizEndTime - now) / 1000);
-                var minutes = Math.floor(timeLeft / 60);
-                var seconds = timeLeft % 60;
+                // Calculate end time
+                const startDateTime = new Date(quizDate + 'T' + startTime);
+                const endDateTime = new Date(startDateTime.getTime() + parseInt(duration) * 60000);
+                const formattedEndTime = endDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
-                quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
-                quizStatus.textContent = 'Active';
-                quizStatus.style.color = '#4caf50';
-                quizActive = true;
-            } else {
-                // Quiz has ended
-                quizTimer.textContent = 'Quiz ended';
-                quizStatus.textContent = 'Ended';
-                quizStatus.style.color = '#f44336';
-                quizActive = false;
+                document.getElementById('current-date').textContent = `Date: ${formattedDate}`;
+                document.getElementById('current-start').textContent = `Start Time: ${startTime}`;
+                document.getElementById('current-duration').textContent = `Duration: ${duration} minutes`;
+                document.getElementById('current-end').textContent = `End Time: ${formattedEndTime}`;
             }
         }
         
-        // Update quiz timer every second
-        setInterval(updateQuizTimeInfo, 1000);
-        updateQuizTimeInfo();
-
-        // Get saved web app URL from local storage
-        var webAppUrl = localStorage.getItem('webAppUrl') || '';
-        document.getElementById('webAppUrl').value = webAppUrl;
-        
-        // Hide setup tab if URL is already configured
-        if (webAppUrl) {
-            document.getElementById('setup-tab').style.display = 'none';
+        // Save quiz time settings
+        function saveQuizTime() {
+            const quizDate = document.getElementById('quiz-date').value;
+            const startTime = document.getElementById('start-time').value;
+            const duration = document.getElementById('quiz-duration').value;
+            
+            if (!quizDate || !startTime) {
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            localStorage.setItem('quizDate', quizDate);
+            localStorage.setItem('startTime', startTime);
+            localStorage.setItem('quizDuration', duration);
+            
+            showStatus('Quiz time settings saved successfully!', 'success');
+            updateCurrentSettingsDisplay();
         }
-
-        // Save web app URL to local storage
+        
+        // Save Google Sheets URL
         function saveWebAppUrl() {
-            var url = document.getElementById('webAppUrl').value;
-            var urlStatus = document.getElementById('urlStatus');
+            const url = document.getElementById('webAppUrl').value;
             
             if (url) {
                 localStorage.setItem('webAppUrl', url);
-                urlStatus.textContent = 'URL saved successfully! Setup complete.';
-                urlStatus.className = 'url-status success';
-                
-                // Hide setup form and show completion message
-                document.getElementById('setup-form').style.display = 'none';
-                document.getElementById('setup-complete-message').style.display = 'block';
-                
-                // Hide setup tab
-                document.getElementById('setup-tab').style.display = 'none';
+                showStatus('Google Sheets URL saved successfully!', 'success', 'urlStatus');
             } else {
-                urlStatus.textContent = 'Please enter a valid URL';
-                urlStatus.className = 'url-status error';
+                showStatus('Please enter a valid URL', 'error', 'urlStatus');
             }
         }
         
-        // Save quiz time configuration
-        function saveQuizTime() {
-            var date = document.getElementById('quiz-date').value;
-            var startTime = document.getElementById('start-time').value;
-            var endTime = document.getElementById('end-time').value;
+        // Show status message
+        function showStatus(message, type, elementId = 'timeStatus') {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${type}`;
             
-            if (date && startTime && endTime) {
-                var startDate = new Date(date + 'T' + startTime);
-                var endDate = new Date(date + 'T' + endTime);
-                
-                quizStartTime = startDate.getTime();
-                quizEndTime = endDate.getTime();
-                
-                localStorage.setItem('quizStartTime', quizStartTime);
-                localStorage.setItem('quizEndTime', quizEndTime);
-                
-                alert('Quiz time saved successfully!');
-                updateQuizTimeInfo();
-            } else {
-                alert('Please fill in all time fields');
-            }
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = 'status-message';
+            }, 3000);
         }
-
-        // Function to send data to Google Sheets
-        function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-            var webAppUrl = localStorage.getItem('webAppUrl');
-
-            if (!webAppUrl) {
-                console.error("Web app URL not configured");
-                alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-                switchTab('setup');
-                return;
-            }
-
-            // Prepare data to send
-            var data = {
-                player: playerName,
-                question: question,
-                answer: selectedAnswer,
-                correct: correctAnswer,
-                responseTime: responseTime,
-                status: status
-            };
-
-            // Send data to Google Apps Script web app
-            fetch(webAppUrl, {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            })
-            .then(() => {
-                console.log("Data sent to Google Sheets successfully");
-            })
-            .catch(error => {
-                console.error("Error sending data to Google Sheets:", error);
-            });
-        }
-
-        // Countdown timer function
-        function startCountdown() {
-            timeLeft = 15; // Increased time for answering
-            document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+        
+        // Set time presets
+        function setPreset(presetType) {
+            const now = new Date();
+            let quizDate, startTime, duration;
             
-            clearInterval(countdownInterval);
-            countdownInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    // Record unanswered question
-                    var q = questions[currentIndex];
-                    var responseTime = (Date.now() - questionStartTime) / 1000;
-                    sendToGoogleSheet(playerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
-                    moveToNextQuestion();
-                }
-            }, 1000);
-        }
-
-        // Move to next question automatically
-        function moveToNextQuestion() {
-            currentIndex++;
-            if (currentIndex < questions.length) {
-                showPlayerQuestion();
-            } else {
-                document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
-                document.getElementById('player-answers').innerHTML = "";
-                document.getElementById('countdown').textContent = "";
-            }
-        }
-
-        // Host view functions
-        function showHostQuestion() {
-            var q = questions[currentIndex];
-            document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
-
-            var answersDiv = document.getElementById("host-answers");
-            answersDiv.innerHTML = "<h3>Possible Answers:</h3>";
-
-            q.answers.forEach(a => {
-                var p = document.createElement("p");
-                p.innerText = a;
-                if (a === q.correct) {
-                    p.style.fontWeight = "bold";
-                    p.style.color = "#4caf50";
-                }
-                answersDiv.appendChild(p);
-            });
-        }
-
-        // Player view functions
-        function showPlayerQuestion() {
-            var q = questions[currentIndex];
-            document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
-
-            var answersDiv = document.getElementById("player-answers");
-            answersDiv.innerHTML = "<h3>Select your answer:</h3>";
-            
-            // Record question start time for response timing
-            questionStartTime = Date.now();
-
-            q.answers.forEach(a => {
-                var btn = document.createElement("button");
-                btn.className = "answer-btn";
-                btn.innerText = a;
-                btn.onclick = function() {
-                    // Check if quiz is active
-                    if (!quizActive) {
-                        alert("The quiz is not currently active. Please check the quiz schedule.");
-                        return;
-                    }
+            switch(presetType) {
+                case 'today1':
+                    // 1 hour from now
+                    const oneHourLater = new Date(now.getTime() + 60 * 60000);
+                    quizDate = oneHourLater.toISOString().split('T')[0];
+                    startTime = oneHourLater.toTimeString().substring(0, 5);
+                    duration = '30';
+                    break;
                     
-                    var selected = a;
-                    var correct = q.correct;
-                    var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
-
-                    // Clear the countdown
-                    clearInterval(countdownInterval);
-                    document.getElementById('countdown').textContent = "";
-
-                    // Color the answers
-                    var allButtons = document.querySelectorAll('.answer-btn');
-                    allButtons.forEach(button => {
-                        button.disabled = true;
-                        if (button.innerText === correct) {
-                            button.classList.add('correct');
-                        } else if (button.innerText === selected && selected !== correct) {
-                            button.classList.add('incorrect');
-                        }
-                    });
-
-                    // Send to Google Sheets with response time
-                    sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
-
-                    // Move to next question after 5 seconds
-                    setTimeout(moveToNextQuestion, 5000);
-                };
-                answersDiv.appendChild(btn);
-            });
-
-            // Start countdown for this question
-            startCountdown();
-        }
-
-        // Leaderboard functions
-        function updateLeaderboard() {
-            // Sort scores by points (descending)
-            scores.sort((a, b) => b.points - a.points);
-
-            var ul = document.getElementById("leaderboard-list");
-            ul.innerHTML = "";
-
-            scores.forEach(function(score, index) {
-                var li = document.createElement("li");
-
-                // Add trophy for top 3
-                var trophy = "";
-                if (index === 0) trophy = "🥇 ";
-                else if (index === 1) trophy = "🥈 ";
-                else if (index === 2) trophy = "🥉 ";
-
-                li.innerHTML = `<span>${trophy}${score.player}</span><span>${score.points} pts (${score.avgTime}s avg)</span>`;
-                ul.appendChild(li);
-            });
-        }
-
-        // Initialize the application
-        document.getElementById("joinBtn").onclick = function() {
-            // Check if quiz is active
-            if (!quizActive) {
-                alert("The quiz is not currently active. Please check the quiz schedule.");
-                return;
+                case 'tomorrow12':
+                    // Tomorrow at 12:00 PM
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    quizDate = tomorrow.toISOString().split('T')[0];
+                    startTime = '12:00';
+                    duration = '30';
+                    break;
+                    
+                case 'weekend':
+                    // Next Saturday at 2:00 PM
+                    const nextSaturday = new Date(now);
+                    const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7;
+                    nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+                    quizDate = nextSaturday.toISOString().split('T')[0];
+                    startTime = '14:00';
+                    duration = '60';
+                    break;
             }
             
-            playerName = document.getElementById("name").value;
-            if (playerName.trim() !== "") {
-                alert("Welcome, " + playerName + "! You've joined the game.");
-                document.getElementById("joinBtn").disabled = true;
-                document.getElementById("name").disabled = true;
-
-                // Show first question
-                showPlayerQuestion();
-            } else {
-                alert("Please enter your name to join the game.");
-            }
-        };
-
-        document.getElementById("nextBtn").onclick = function() {
-            currentIndex++;
-            if (currentIndex < questions.length) {
-                showHostQuestion();
-
-                // If player has joined, show them the next question too
-                if (playerName) {
-                    showPlayerQuestion();
-                }
-            } else {
-                alert("Quiz completed! No more questions.");
-                document.getElementById("nextBtn").disabled = true;
-            }
-        };
-
-        // Initial setup - show player tab by default
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.getElementById('player').classList.add('active');
-
-        // Check if web app URL is configured
-        if (!webAppUrl) {
-            console.log("Web app URL not configured. Please set it up in the Setup tab.");
-            // Show setup tab if no URL is configured
-            document.getElementById('setup-tab').style.display = 'flex';
-            switchTab('setup');
+            document.getElementById('quiz-date').value = quizDate;
+            document.getElementById('start-time').value = startTime;
+            document.getElementById('quiz-duration').value = duration;
+            
+            showStatus('Preset applied. Click "Save Quiz Time" to confirm.', 'success');
         }
-
-        // Initialize leaderboard
-        updateLeaderboard();
+        
+        // Initialize the page
+        function init() {
+            loadSavedSettings();
+            
+            // Set today's date as default if no date is set
+            if (!localStorage.getItem('quizDate')) {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('quiz-date').value = today;
+            }
+        }
+        
+        // Run initialization when page loads
+        window.onload = init;
     </script>
 </body>
 </html>
-
-
-
