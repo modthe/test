@@ -1,697 +1,715 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Game with Google Sheets Integration</title>
-<style>
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-color: #333;
-line-height: 1.6;
-min-height: 100vh;
-padding: 20px;
-}
-
-.container {
-max-width: 1000px;
-margin: 0 auto;
-background: white;
-border-radius: 12px;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-overflow: hidden;
-}
-
-header {
-background: linear-gradient(135deg, #6e8efb, #a777e3);
-color: white;
-padding: 2rem;
-text-align: center;
-}
-
-h1 {
-font-size: 2.5rem;
-margin-bottom: 1rem;
-}
-
-.subtitle {
-font-size: 1.2rem;
-opacity: 0.9;
-}
-
-.tabs {
-display: flex; /* Show tabs again for navigation */
-background: #f0f0f0;
-border-bottom: 2px solid #ddd;
-}
-
-.tab {
-padding: 1rem 2rem;
-cursor: pointer;
-font-weight: 600;
-transition: all 0.3s ease;
-text-align: center;
-flex: 1;
-}
-
-.tab:hover {
-background: #e0e0e0;
-}
-
-.tab.active {
-background: white;
-border-bottom: 3px solid #6e8efb;
-}
-
-.content {
-padding: 2rem;
-min-height: 500px;
-}
-
-.tab-content {
-display: none;
-}
-
-.tab-content.active {
-display: block;
-animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(20px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.card {
-background: white;
-border-radius: 10px;
-padding: 1.5rem;
-margin: 1.5rem 0;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-border-left: 4px solid #6e8efb;
-}
-
-h2 {
-font-size: 1.8rem;
-color: #6e8efb;
-margin-bottom: 1rem;
-}
-
-h3 {
-font-size: 1.4rem;
-color: #a777e3;
-margin: 1.5rem 0 0.8rem;
-}
-
-input, button {
-padding: 0.8rem 1.2rem;
-margin: 0.5rem 0;
-border-radius: 5px;
-border: 1px solid #ddd;
-font-size: 1rem;
-}
-
-input {
-width: 100%;
-max-width: 300px;
-}
-
-button {
-background: #6e8efb;
-color: white;
-border: none;
-cursor: pointer;
-transition: all 0.3s ease;
-font-weight: 600;
-}
-
-button:hover {
-background: #5a7df9;
-transform: translateY(-2px);
-}
-
-button:disabled {
-background: #ccc;
-cursor: not-allowed;
-transform: none;
-}
-
-.answer-btn {
-display: block;
-width: 100%;
-text-align: left;
-margin: 0.5rem 0;
-padding: 1rem;
-background: #f8f9fa;
-color: #333;
-border: 1px solid #ddd;
-}
-
-.answer-btn:hover {
-background: #e9ecef;
-transform: translateX(5px);
-}
-
-.answer-btn.correct {
-background-color: #4caf50;
-color: white;
-border-color: #4caf50;
-}
-
-.answer-btn.incorrect {
-background-color: #f44336;
-color: white;
-border-color: #f44336;
-}
-
-#leaderboard-list {
-list-style: none;
-}
-
-#leaderboard-list li {
-padding: 1rem;
-margin: 0.5rem 0;
-background: #f8f9fa;
-border-radius: 5px;
-display: flex;
-justify-content: space-between;
-font-weight: 500;
-}
-
-#leaderboard-list li:nth-child(1) {
-background: #fff4e6;
-font-weight: bold;
-font-size: 1.1rem;
-}
-
-#leaderboard-list li:nth-child(2) {
-background: #f8f9fa;
-}
-
-#leaderboard-list li:nth-child(3) {
-background: #fff4e6;
-}
-
-.instructions {
-background: #fff8e1;
-border-left: 4px solid #ffc107;
-padding: 1.5rem;
-margin: 2rem 0;
-border-radius: 4px;
-}
-
-.instructions h3 {
-color: #ff9800;
-margin-bottom: 1rem;
-}
-
-.instructions ol {
-margin-left: 1.5rem;
-}
-
-.instructions li {
-margin-bottom: 0.5rem;
-}
-
-.sheet-config {
-background: #e8f5e9;
-border-left: 4px solid #4caf50;
-padding: 1.5rem;
-margin: 2rem 0;
-border-radius: 4px;
-}
-
-.sheet-config h3 {
-color: #2e7d32;
-margin-bottom: 1rem;
-}
-
-.code-block {
-background: #2c3e50;
-color: #f5f7fa;
-padding: 1.5rem;
-border-radius: 8px;
-font-family: monospace;
-margin: 1.5rem 0;
-overflow-x: auto;
-}
-
-.countdown {
-font-size: 1.5rem;
-font-weight: bold;
-text-align: center;
-margin: 1rem 0;
-color: #6e8efb;
-}
-
-.url-status {
-margin-top: 10px;
-padding: 8px;
-border-radius: 4px;
-text-align: center;
-display: none;
-}
-
-.url-status.success {
-background-color: #d4edda;
-color: #155724;
-border: 1px solid #c3e6cb;
-display: block;
-}
-
-.url-status.error {
-background-color: #f8d7da;
-color: #721c24;
-border: 1px solid #f5c6cb;
-display: block;
-}
-
-@media (max-width: 768px) {
-.tabs {
-flex-direction: column;
-}
-
-h1 {
-font-size: 2rem;
-}
-
-.content {
-padding: 1rem;
-}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game with Google Sheets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .tab:hover {
+            background: #e0e0e0;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #6e8efb;
+        }
+        
+        .content {
+            padding: 2rem;
+            min-height: 500px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #6e8efb;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            color: #6e8efb;
+            margin-bottom: 1rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            color: #a777e3;
+            margin: 1.5rem 0 0.8rem;
+        }
+        
+        input, button {
+            padding: 0.8rem 1.2rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+        
+        input {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        button {
+            background: #6e8efb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5a7df9;
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .answer-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .answer-btn:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .answer-btn.correct {
+            background-color: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        .answer-btn.incorrect {
+            background-color: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        
+        #leaderboard-list {
+            list-style: none;
+        }
+        
+        #leaderboard-list li {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+        
+        #leaderboard-list li:nth-child(1) {
+            background: #fff4e6;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        #leaderboard-list li:nth-child(2) {
+            background: #f8f9fa;
+        }
+        
+        #leaderboard-list li:nth-child(3) {
+            background: #fff4e6;
+        }
+        
+        .instructions {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .instructions h3 {
+            color: #ff9800;
+            margin-bottom: 1rem;
+        }
+        
+        .instructions ol {
+            margin-left: 1.5rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sheet-config {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+        
+        .sheet-config h3 {
+            color: #2e7d32;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #f5f7fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+            color: #6e8efb;
+        }
+        
+        .url-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .url-status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .url-status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .setup-complete {
+            text-align: center;
+            padding: 2rem;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<header>
-<h1>Quiz Game with Google Sheets</h1>
-<p class="subtitle">Store answers directly in your spreadsheet</p>
-</header>
+    <div class="container">
+        <header>
+            <h1>Quiz Game with Google Sheets</h1>
+            <p class="subtitle">Store answers directly in your spreadsheet</p>
+        </header>
 
-<div class="tabs">
-<div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab active" onclick="switchTab('player')">Player</div>
-<div class="tab" onclick="switchTab('leaderboard')">Leaderboard</div>
-<div class="tab" onclick="switchTab('setup')">Setup</div>
-</div>
+        <div class="tabs">
+            <div class="tab" onclick="switchTab('host')">Host</div>
+            <div class="tab active" onclick="switchTab('player')">Player</div>
+            <div class="tab" onclick="switchTab('leaderboard')">Leaderboard</div>
+            <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
+        </div>
 
-<div class="content">
-<!-- Host Tab -->
-<div id="host" class="tab-content">
-<h2>Quiz Host</h2>
-<div class="card">
-<div id="host-question"></div>
-<div id="host-answers"></div>
-<button id="nextBtn">Next Question</button>
-</div>
+        <div class="content">
+            <!-- Host Tab -->
+            <div id="host" class="tab-content">
+                <h2>Quiz Host</h2>
+                <div class="card">
+                    <div id="host-question"></div>
+                    <div id="host-answers"></div>
+                    <button id="nextBtn">Next Question</button>
+                </div>
 
-<div class="instructions">
-<h3>Host Instructions</h3>
-<ol>
-<li>Click "Next Question" to proceed through the quiz</li>
-<li>Players will see questions on their screen</li>
-<li>Answers will be logged to Google Sheets automatically</li>
-</ol>
-</div>
-</div>
+                <div class="instructions">
+                    <h3>Host Instructions</h3>
+                    <ol>
+                        <li>Click "Next Question" to proceed through the quiz</li>
+                        <li>Players will see questions on their screen</li>
+                        <li>Answers will be logged to Google Sheets automatically</li>
+                    </ol>
+                </div>
+            </div>
 
-<!-- Player Tab -->
-<div id="player" class="tab-content active">
-<h2>Join Quiz</h2>
-<div class="card">
-<input id="name" placeholder="Enter your name">
-<button id="joinBtn">Join Game</button>
+            <!-- Player Tab -->
+            <div id="player" class="tab-content active">
+                <h2>Join Quiz</h2>
+                <div class="card">
+                    <input id="name" placeholder="Enter your name">
+                    <button id="joinBtn">Join Game</button>
 
-<div id="player-question"></div>
-<div id="countdown" class="countdown"></div>
-<div id="player-answers"></div>
-</div>
+                    <div id="player-question"></div>
+                    <div id="countdown" class="countdown"></div>
+                    <div id="player-answers"></div>
+                </div>
 
-<div class="instructions">
-<h3>Player Instructions</h3>
-<ol>
-<li>Enter your name and click "Join Game"</li>
-<li>Wait for the host to start the quiz</li>
-<li>Select your answer when questions appear</li>
-<li>Your answers will be saved to Google Sheets</li>
-</ol>
-</div>
-</div>
+                <div class="instructions">
+                    <h3>Player Instructions</h3>
+                    <ol>
+                        <li>Enter your name and click "Join Game"</li>
+                        <li>Wait for the host to start the quiz</li>
+                        <li>Select your answer when questions appear</li>
+                        <li>Your answers will be saved to Google Sheets</li>
+                    </ol>
+                </div>
+            </div>
 
-<!-- Leaderboard Tab -->
-<div id="leaderboard" class="tab-content">
-<h2>Leaderboard</h2>
-<div class="card">
-<ul id="leaderboard-list"></ul>
-</div>
+            <!-- Leaderboard Tab -->
+            <div id="leaderboard" class="tab-content">
+                <h2>Leaderboard</h2>
+                <div class="card">
+                    <ul id="leaderboard-list"></ul>
+                </div>
 
-<div class="instructions">
-<h3>Leaderboard Information</h3>
-<ol>
-<li>Scores update in real-time as players answer questions</li>
-<li>Points are awarded for correct answers</li>
-<li>The top scorer will be highlighted</li>
-</ol>
-</div>
-</div>
+                <div class="instructions">
+                    <h3>Leaderboard Information</h3>
+                    <ol>
+                        <li>Scores update in real-time as players answer questions</li>
+                        <li>Points are awarded for correct answers</li>
+                        <li>The top scorer will be highlighted</li>
+                    </ol>
+                </div>
+            </div>
 
-<!-- Setup Tab -->
-<div id="setup" class="tab-content">
-<h2>Google Sheets Setup</h2>
+            <!-- Setup Tab -->
+            <div id="setup" class="tab-content">
+                <h2>Google Sheets Setup</h2>
+                
+                <div id="setup-complete-message" class="setup-complete" style="display: none;">
+                    <h3>✅ Setup Complete!</h3>
+                    <p>Your Google Sheets integration is configured. You can now use the Player, Host, and Leaderboard tabs.</p>
+                    <button onclick="switchTab('player')">Go to Player Tab</button>
+                </div>
 
-<div class="sheet-config">
-<h3>How to Configure Google Sheets Integration</h3>
-<p>To connect your quiz app to Google Sheets, you need to create a Google Apps Script web app:</p>
-<ol>
-<li>Create a new Google Sheet</li>
-<li>Click on "Extensions" > "Apps Script"</li>
-<li>Replace the default code with the provided script</li>
-<li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
-<li>Copy the web app URL and paste it in the field below</li>
-</ol>
-</div>
+                <div id="setup-form">
+                    <div class="sheet-config">
+                        <h3>How to Configure Google Sheets Integration</h3>
+                        <p>To connect your quiz app to Google Sheets, you need to create a Google Apps Script web app:</p>
+                        <ol>
+                            <li>Create a new Google Sheet</li>
+                            <li>Click on "Extensions" > "Apps Script"</li>
+                            <li>Replace the default code with the provided script</li>
+                            <li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
+                            <li>Copy the web app URL and paste it in the field below</li>
+                        </ol>
+                    </div>
 
-<div class="card">
-<h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwKvTFh7VrNVqFkLsynFabevnmyV7SG2QGutS3smWcKjW0LZSl42nwqB3VkMZu3nHjCGg/exec" oninput="autoSaveUrl()">
-<div id="urlStatus" class="url-status">URL will be saved automatically as you type</div>
-</div>
+                    <div class="card">
+                        <h3>Web App URL Configuration</h3>
+                        <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbwKvTFh7VrNVqFkLsynFabevnmyV7SG2QGutS3smWcKjW0LZSl42nwqB3VkMZu3nHjCGg/exec">
+                        <button onclick="saveWebAppUrl()">Save URL</button>
+                        <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
+                    </div>
 
-<div class="code-block">
-<p>// Google Apps Script code for your Google Sheet</p>
-<pre>
+                    <div class="code-block">
+                        <p>// Google Apps Script code for your Google Sheet</p>
+                        <pre>
 function doPost(e) {
-var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = JSON.parse(e.postData.contents);
 
-// Add headers if sheet is empty
-if (sheet.getLastRow() === 0) {
-sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer"]);
+    // Add headers if sheet is empty
+    if (sheet.getLastRow() === 0) {
+        sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer"]);
+    }
+
+    // Add new row with data
+    sheet.appendRow([new Date(), data.player, data.question, data.answer, data.correct]);
+
+    return ContentService.createTextOutput("Success");
 }
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// Add new row with data
-sheet.appendRow([new Date(), data.player, data.question, data.answer, data.correct]);
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
 
-return ContentService.createTextOutput("Success");
-}
-</pre>
-</div>
-</div>
-</div>
-</div>
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
 
-<script>
-// Tab switching functionality
-function switchTab(tabName) {
-// Hide all tab contents
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
 
-// Show selected tab content
-document.getElementById(tabName).classList.add('active');
+            // Activate the clicked tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabName)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
 
-// Update active tab
-document.querySelectorAll('.tab').forEach(tab => {
-tab.classList.remove('active');
-});
+        // Example question set
+        var questions = [
+            {
+                question: "What is 2 + 2?",
+                answers: ["3", "4", "5", "6"],
+                correct: "4"
+            },
+            {
+                question: "Capital of France?",
+                answers: ["London", "Paris", "Berlin", "Rome"],
+                correct: "Paris"
+            },
+            {
+                question: "Largest planet in our solar system?",
+                answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
+                correct: "Jupiter"
+            },
+            {
+                question: "What is the chemical symbol for gold?",
+                answers: ["Go", "Gd", "Au", "Ag"],
+                correct: "Au"
+            }
+        ];
 
-// Activate the clicked tab
-document.querySelectorAll('.tab').forEach(tab => {
-if (tab.textContent.toLowerCase().includes(tabName)) {
-tab.classList.add('active');
-}
-});
-}
+        // Initialize variables
+        var currentIndex = 0;
+        var playerName = "";
+        var scores = [
+            { player: "Alex", points: 15 },
+            { player: "Jordan", points: 12 },
+            { player: "Taylor", points: 10 },
+            { player: "Morgan", points: 8 },
+            { player: "Casey", points: 5 }
+        ];
+        var countdownInterval;
+        var timeLeft = 5;
 
-// Example question set
-var questions = [
-{
-question: "What is 2 + 2?",
-answers: ["3", "4", "5", "6"],
-correct: "4"
-},
-{
-question: "Capital of France?",
-answers: ["London", "Paris", "Berlin", "Rome"],
-correct: "Paris"
-},
-{
-question: "Largest planet in our solar system?",
-answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
-correct: "Jupiter"
-},
-{
-question: "What is the chemical symbol for gold?",
-answers: ["Go", "Gd", "Au", "Ag"],
-correct: "Au"
-}
-];
+        // Get saved web app URL from local storage
+        var webAppUrl = localStorage.getItem('webAppUrl') || '';
+        document.getElementById('webAppUrl').value = webAppUrl;
+        
+        // Hide setup tab if URL is already configured
+        if (webAppUrl) {
+            document.getElementById('setup-tab').style.display = 'none';
+        }
 
-// Initialize variables
-var currentIndex = 0;
-var playerName = "";
-var scores = [
-{ player: "Alex", points: 15 },
-{ player: "Jordan", points: 12 },
-{ player: "Taylor", points: 10 },
-{ player: "Morgan", points: 8 },
-{ player: "Casey", points: 5 }
-];
-var countdownInterval;
-var timeLeft = 5;
-var saveUrlTimeout;
+        // Save web app URL to local storage
+        function saveWebAppUrl() {
+            var url = document.getElementById('webAppUrl').value;
+            var urlStatus = document.getElementById('urlStatus');
+            
+            if (url) {
+                localStorage.setItem('webAppUrl', url);
+                urlStatus.textContent = 'URL saved successfully! Setup complete.';
+                urlStatus.className = 'url-status success';
+                
+                // Hide setup form and show completion message
+                document.getElementById('setup-form').style.display = 'none';
+                document.getElementById('setup-complete-message').style.display = 'block';
+                
+                // Hide setup tab
+                document.getElementById('setup-tab').style.display = 'none';
+            } else {
+                urlStatus.textContent = 'Please enter a valid URL';
+                urlStatus.className = 'url-status error';
+            }
+        }
 
-// Get saved web app URL from local storage
-var webAppUrl = localStorage.getItem('webAppUrl') || '';
-document.getElementById('webAppUrl').value = webAppUrl;
+        // Function to send data to Google Sheets
+        function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer) {
+            var webAppUrl = localStorage.getItem('webAppUrl');
 
-// Auto-save web app URL to local storage as user types
-function autoSaveUrl() {
-clearTimeout(saveUrlTimeout);
-var urlStatus = document.getElementById('urlStatus');
-var urlInput = document.getElementById('webAppUrl');
-var url = urlInput.value;
-  
-// Validate URL format
-var urlPattern = /^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9-_]+\/exec$/;
-var isValid = urlPattern.test(url);
-  
-if (url && isValid) {
-urlStatus.textContent = 'URL saved successfully!';
-urlStatus.className = 'url-status success';
-localStorage.setItem('webAppUrl', url);
-} else if (url && !isValid) {
-urlStatus.textContent = 'Please enter a valid Google Apps Script URL';
-urlStatus.className = 'url-status error';
-} else {
-urlStatus.textContent = 'URL will be saved automatically as you type';
-urlStatus.className = 'url-status';
-}
-}
+            if (!webAppUrl) {
+                console.error("Web app URL not configured");
+                alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+                switchTab('setup');
+                return;
+            }
 
-// Function to send data to Google Sheets
-function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer) {
-var webAppUrl = localStorage.getItem('webAppUrl');
+            // Prepare data to send
+            var data = {
+                player: playerName,
+                question: question,
+                answer: selectedAnswer,
+                correct: correctAnswer
+            };
 
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-return;
-}
+            // Send data to Google Apps Script web app
+            fetch(webAppUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                console.log("Data sent to Google Sheets successfully");
+            })
+            .catch(error => {
+                console.error("Error sending data to Google Sheets:", error);
+            });
+        }
 
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer
-};
+        // Countdown timer function
+        function startCountdown() {
+            timeLeft = 5;
+            document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+            
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    moveToNextQuestion();
+                }
+            }, 1000);
+        }
 
-// Send data to Google Apps Script web app
-fetch(webAppUrl, {
-method: "POST",
-mode: "no-cors",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
-}
+        // Move to next question automatically
+        function moveToNextQuestion() {
+            currentIndex++;
+            if (currentIndex < questions.length) {
+                showPlayerQuestion();
+                startCountdown();
+            } else {
+                document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
+                document.getElementById('player-answers').innerHTML = "";
+                document.getElementById('countdown').textContent = "";
+            }
+        }
 
-// Countdown timer function
-function startCountdown() {
-timeLeft = 5;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
-  
-clearInterval(countdownInterval);
-countdownInterval = setInterval(() => {
-timeLeft--;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
-    
-if (timeLeft <= 0) {
-clearInterval(countdownInterval);
-moveToNextQuestion();
-}
-}, 1000);
-}
+        // Host view functions
+        function showHostQuestion() {
+            var q = questions[currentIndex];
+            document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
 
-// Move to next question automatically
-function moveToNextQuestion() {
-currentIndex++;
-if (currentIndex < questions.length) {
-showPlayerQuestion();
-startCountdown();
-} else {
-document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
-document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').textContent = "";
-}
-}
+            var answersDiv = document.getElementById("host-answers");
+            answersDiv.innerHTML = "<h3>Possible Answers:</h3>";
 
-// Host view functions
-function showHostQuestion() {
-var q = questions[currentIndex];
-document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+            q.answers.forEach(a => {
+                var p = document.createElement("p");
+                p.innerText = a;
+                if (a === q.correct) {
+                    p.style.fontWeight = "bold";
+                    p.style.color = "#4caf50";
+                }
+                answersDiv.appendChild(p);
+            });
+        }
 
-var answersDiv = document.getElementById("host-answers");
-answersDiv.innerHTML = "<h3>Possible Answers:</h3>";
+        // Player view functions
+        function showPlayerQuestion() {
+            var q = questions[currentIndex];
+            document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
 
-q.answers.forEach(a => {
-var p = document.createElement("p");
-p.innerText = a;
-if (a === q.correct) {
-p.style.fontWeight = "bold";
-p.style.color = "#4caf50";
-}
-answersDiv.appendChild(p);
-});
-}
+            var answersDiv = document.getElementById("player-answers");
+            answersDiv.innerHTML = "<h3>Select your answer:</h3>";
 
-// Player view functions
-function showPlayerQuestion() {
-var q = questions[currentIndex];
-document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+            q.answers.forEach(a => {
+                var btn = document.createElement("button");
+                btn.className = "answer-btn";
+                btn.innerText = a;
+                btn.onclick = function() {
+                    var selected = a;
+                    var correct = q.correct;
 
-var answersDiv = document.getElementById("player-answers");
-answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+                    // Clear the countdown
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown').textContent = "";
 
-q.answers.forEach(a => {
-var btn = document.createElement("button");
-btn.className = "answer-btn";
-btn.innerText = a;
-btn.onclick = function() {
-var selected = a;
-var correct = q.correct;
+                    // Color the answers
+                    var allButtons = document.querySelectorAll('.answer-btn');
+                    allButtons.forEach(button => {
+                        button.disabled = true;
+                        if (button.innerText === correct) {
+                            button.classList.add('correct');
+                        } else if (button.innerText === selected && selected !== correct) {
+                            button.classList.add('incorrect');
+                        }
+                    });
 
-// Clear the countdown
-clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
+                    // Send to Google Sheets
+                    sendToGoogleSheet(playerName, q.question, selected, correct);
 
-// Color the answers
-var allButtons = document.querySelectorAll('.answer-btn');
-allButtons.forEach(button => {
-button.disabled = true;
-if (button.innerText === correct) {
-button.classList.add('correct');
-} else if (button.innerText === selected && selected !== correct) {
-button.classList.add('incorrect');
-}
-});
+                    // Move to next question after 5 seconds
+                    setTimeout(moveToNextQuestion, 5000);
+                };
+                answersDiv.appendChild(btn);
+            });
 
-// Send to Google Sheets
-sendToGoogleSheet(playerName, q.question, selected, correct);
+            // Start countdown for this question
+            startCountdown();
+        }
 
-// Move to next question after 5 seconds
-setTimeout(moveToNextQuestion, 5000);
-};
-answersDiv.appendChild(btn);
-});
+        // Leaderboard functions
+        function updateLeaderboard() {
+            // Sort scores by points (descending)
+            scores.sort((a, b) => b.points - a.points);
 
-// Start countdown for this question
-startCountdown();
-}
+            var ul = document.getElementById("leaderboard-list");
+            ul.innerHTML = "";
 
-// Leaderboard functions
-function updateLeaderboard() {
-// Sort scores by points (descending)
-scores.sort((a, b) => b.points - a.points);
+            scores.forEach(function(score, index) {
+                var li = document.createElement("li");
 
-var ul = document.getElementById("leaderboard-list");
-ul.innerHTML = "";
+                // Add trophy for top 3
+                var trophy = "";
+                if (index === 0) trophy = "🥇 ";
+                else if (index === 1) trophy = "🥈 ";
+                else if (index === 2) trophy = "🥉 ";
 
-scores.forEach(function(score, index) {
-var li = document.createElement("li");
+                li.innerHTML = `<span>${trophy}${score.player}</span><span>${score.points} pts</span>`;
+                ul.appendChild(li);
+            });
+        }
 
-// Add trophy for top 3
-var trophy = "";
-if (index === 0) trophy = "🥇 ";
-else if (index === 1) trophy = "🥈 ";
-else if (index === 2) trophy = "🥉 ";
+        // Initialize the application
+        document.getElementById("joinBtn").onclick = function() {
+            playerName = document.getElementById("name").value;
+            if (playerName.trim() !== "") {
+                alert("Welcome, " + playerName + "! You've joined the game.");
+                document.getElementById("joinBtn").disabled = true;
+                document.getElementById("name").disabled = true;
 
-li.innerHTML = `<span>${trophy}${score.player}</span><span>${score.points} pts</span>`;
-ul.appendChild(li);
-});
-}
+                // Show first question
+                showPlayerQuestion();
+            } else {
+                alert("Please enter your name to join the game.");
+            }
+        };
 
-// Initialize the application
-document.getElementById("joinBtn").onclick = function() {
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-alert("Welcome, " + playerName + "! You've joined the game.");
-document.getElementById("joinBtn").disabled = true;
-document.getElementById("name").disabled = true;
+        document.getElementById("nextBtn").onclick = function() {
+            currentIndex++;
+            if (currentIndex < questions.length) {
+                showHostQuestion();
 
-// Show first question
-showPlayerQuestion();
-} else {
-alert("Please enter your name to join the game.");
-}
-};
+                // If player has joined, show them the next question too
+                if (playerName) {
+                    showPlayerQuestion();
+                }
+            } else {
+                alert("Quiz completed! No more questions.");
+                document.getElementById("nextBtn").disabled = true;
+            }
+        };
 
-document.getElementById("nextBtn").onclick = function() {
-currentIndex++;
-if (currentIndex < questions.length) {
-showHostQuestion();
+        // Initial setup - show player tab by default
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById('player').classList.add('active');
 
-// If player has joined, show them the next question too
-if (playerName) {
-showPlayerQuestion();
-}
-} else {
-alert("Quiz completed! No more questions.");
-document.getElementById("nextBtn").disabled = true;
-}
-};
+        // Check if web app URL is configured
+        if (!webAppUrl) {
+            console.log("Web app URL not configured. Please set it up in the Setup tab.");
+            // Show setup tab if no URL is configured
+            document.getElementById('setup-tab').style.display = 'flex';
+            switchTab('setup');
+        }
 
-// Initial setup - show player tab by default
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
-document.getElementById('player').classList.add('active');
-
-// Check if web app URL is configured
-if (!webAppUrl) {
-console.log("Web app URL not configured. Please set it up in the Setup tab.");
-}
-
-// Initialize leaderboard
-updateLeaderboard();
-</script>
+        // Initialize leaderboard
+        updateLeaderboard();
+    </script>
 </body>
 </html>
-
-
