@@ -18,11 +18,14 @@ color: #333;
 line-height: 1.6;
 min-height: 100vh;
 padding: 20px;
+display: flex;
+justify-content: center;
+align-items: center;
 }
 
 .container {
+width: 95%;
 max-width: 1000px;
-margin: 0 auto;
 background: white;
 border-radius: 12px;
 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -48,12 +51,12 @@ font-weight: bold;
 }
 
 h1 {
-font-size: 2.5rem;
+font-size: 2.2rem;
 margin-bottom: 1rem;
 }
 
 .subtitle {
-font-size: 1.2rem;
+font-size: 1.1rem;
 opacity: 0.9;
 }
 
@@ -64,12 +67,13 @@ border-bottom: 2px solid #ddd;
 }
 
 .tab {
-padding: 1rem 2rem;
+padding: 1rem;
 cursor: pointer;
 font-weight: 600;
 transition: all 0.3s ease;
 text-align: center;
 flex: 1;
+font-size: 0.9rem;
 }
 
 .tab:hover {
@@ -82,7 +86,7 @@ border-bottom: 3px solid #6e8efb;
 }
 
 .content {
-padding: 2rem;
+padding: 1.5rem;
 min-height: 500px;
 }
 
@@ -110,23 +114,23 @@ border-left: 4px solid #6e8efb;
 }
 
 h2 {
-font-size: 1.8rem;
+font-size: 1.6rem;
 color: #6e8efb;
 margin-bottom: 1rem;
 }
 
 h3 {
-font-size: 1.4rem;
+font-size: 1.3rem;
 color: #a777e3;
-margin: 1.5rem 0 0.8rem;
+margin: 1.2rem 0 0.8rem;
 }
 
 input, button, select, textarea {
-padding: 0.8rem 1.2rem;
+padding: 0.8rem 1rem;
 margin: 0.5rem 0;
 border-radius: 5px;
 border: 1px solid #ddd;
-font-size: 1rem;
+font-size: 0.9rem;
 }
 
 input, select, textarea {
@@ -191,14 +195,14 @@ border-color: #f44336;
 .instructions {
 background: #fff8e1;
 border-left: 4px solid #ffc107;
-padding: 1.5rem;
-margin: 2rem 0;
+padding: 1.2rem;
+margin: 1.5rem 0;
 border-radius: 4px;
 }
 
 .instructions h3 {
 color: #ff9800;
-margin-bottom: 1rem;
+margin-bottom: 0.8rem;
 }
 
 .instructions ol {
@@ -213,28 +217,29 @@ margin-bottom: 0.5rem;
 .sheet-config {
 background: #e8f5e9;
 border-left: 4px solid #4caf50;
-padding: 1.5rem;
-margin: 2rem 0;
+padding: 1.2rem;
+margin: 1.5rem 0;
 border-radius: 4px;
 }
 
 .sheet-config h3 {
 color: #2e7d32;
-margin-bottom: 1rem;
+margin-bottom: 0.8rem;
 }
 
 .code-block {
 background: #2c3e50;
 color: #f5f7fa;
-padding: 1.5rem;
+padding: 1.2rem;
 border-radius: 8px;
 font-family: monospace;
-margin: 1.5rem 0;
+margin: 1.2rem 0;
 overflow-x: auto;
+font-size: 0.9rem;
 }
 
 .countdown {
-font-size: 1.5rem;
+font-size: 1.4rem;
 font-weight: bold;
 text-align: center;
 margin: 1rem 0;
@@ -246,6 +251,7 @@ margin-top: 10px;
 padding: 8px;
 border-radius: 4px;
 text-align: center;
+font-size: 0.9rem;
 }
 
 .url-status.success {
@@ -262,10 +268,10 @@ border: 1px solid #f5c6cb;
 
 .setup-complete {
 text-align: center;
-padding: 2rem;
+padding: 1.5rem;
 background: #e8f5e9;
 border-radius: 8px;
-margin: 2rem 0;
+margin: 1.5rem 0;
 }
 
 .time-info {
@@ -301,8 +307,8 @@ font-weight: 600;
 .admin-section {
 background: #fff3e0;
 border-left: 4px solid #ff9800;
-padding: 1.5rem;
-margin: 1.5rem 0;
+padding: 1.2rem;
+margin: 1.2rem 0;
 border-radius: 4px;
 }
 
@@ -366,13 +372,27 @@ font-size: 0.9rem;
 margin-top: 5px;
 }
 
+.time-input-group {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.time-input-group input {
+max-width: 120px;
+}
+
+.time-input-group select {
+max-width: 80px;
+}
+
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
 }
 
 h1 {
-font-size: 2rem;
+font-size: 1.8rem;
 }
 
 .content {
@@ -382,6 +402,7 @@ padding: 1rem;
 .quiz-timer {
 position: static;
 margin-top: 10px;
+display: inline-block;
 }
 
 .admin-controls {
@@ -398,6 +419,11 @@ width: 100%;
 margin-right: 0;
 margin-bottom: 5px;
 }
+
+.time-input-group {
+flex-direction: column;
+align-items: flex-start;
+}
 }
 </style>
 </head>
@@ -410,12 +436,40 @@ margin-bottom: 5px;
 </header>
 
 <div class="tabs">
-<div class="tab" onclick="switchTab('host')">Host</div>
 <div class="tab active" onclick="switchTab('player')">Player</div>
+<div class="tab" onclick="switchTab('host')">Host</div>
 <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
 </div>
 
 <div class="content">
+<!-- Player Tab -->
+<div id="player" class="tab-content active">
+<h2>Join Quiz</h2>
+<div class="time-info" id="quiz-time-info">
+<p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p>
+<p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p>
+</div>
+
+<div class="card">
+<input id="name" placeholder="Enter your name">
+<button id="joinBtn">Join Game</button>
+
+<div id="player-question"></div>
+<div id="countdown" class="countdown"></div>
+<div id="player-answers"></div>
+</div>
+
+<div class="instructions">
+<h3>Player Instructions</h3>
+<ol>
+<li>Enter your name and click "Join Game"</li>
+<li>Wait for the host to start the quiz</li>
+<li>Select your answer when questions appear</li>
+<li>Your answers and response time will be recorded</li>
+</ol>
+</div>
+</div>
+
 <!-- Host Tab -->
 <div id="host" class="tab-content">
 <h2>Quiz Host (Admin)</h2>
@@ -442,7 +496,14 @@ margin-bottom: 5px;
 
 <div class="form-group">
 <label for="host-start-time">Start Time:</label>
-<input type="time" id="host-start-time" value="12:00">
+<div class="time-input-group">
+<input type="number" id="host-start-hour" min="1" max="12" value="12" placeholder="Hour">
+<input type="number" id="host-start-minute" min="0" max="59" value="0" placeholder="Minute">
+<select id="host-start-ampm">
+<option value="AM">AM</option>
+<option value="PM" selected>PM</option>
+</select>
+</div>
 </div>
 
 <div class="form-group">
@@ -497,12 +558,6 @@ margin-bottom: 5px;
 <h3>Current Questions</h3>
 <div id="questions-container"></div>
 </div>
-
-<div class="card">
-<div id="host-question"></div>
-<div id="host-answers"></div>
-<button id="nextBtn">Next Question</button>
-</div>
 </div>
 
 <div class="instructions">
@@ -515,34 +570,6 @@ margin-bottom: 5px;
 <li>Click "Next Question" to proceed through the quiz</li>
 <li>Players will see questions on their screen</li>
 <li>Answers and response times will be logged to Google Sheets</li>
-</ol>
-</div>
-</div>
-
-<!-- Player Tab -->
-<div id="player" class="tab-content active">
-<h2>Join Quiz</h2>
-<div class="time-info" id="quiz-time-info">
-<p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p>
-<p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p>
-</div>
-
-<div class="card">
-<input id="name" placeholder="Enter your name">
-<button id="joinBtn">Join Game</button>
-
-<div id="player-question"></div>
-<div id="countdown" class="countdown"></div>
-<div id="player-answers"></div>
-</div>
-
-<div class="instructions">
-<h3>Player Instructions</h3>
-<ol>
-<li>Enter your name and click "Join Game"</li>
-<li>Wait for the host to start the quiz</li>
-<li>Select your answer when questions appear</li>
-<li>Your answers and response time will be recorded</li>
 </ol>
 </div>
 </div>
@@ -578,7 +605,7 @@ margin-bottom: 5px;
 </div>
 
 <div class="code-block">
-<p>// Updated Google Apps Script code for your Google Sheet</p>
+<p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
 var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -626,11 +653,7 @@ tab.classList.remove('active');
 });
 
 // Activate the clicked tab
-document.querySelectorAll('.tab').forEach(tab => {
-if (tab.textContent.toLowerCase().includes(tabName)) {
-tab.classList.add('active');
-}
-});
+event.target.classList.add('active');
 
 // If switching to host tab, load the saved time settings
 if (tabName === 'host') {
@@ -708,9 +731,14 @@ var quizDate = new Date(quizStartTime);
 document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
 
 var startTime = new Date(quizStartTime);
-document.getElementById('host-start-time').value =
-String(startTime.getHours()).padStart(2, '0') + ':' +
-String(startTime.getMinutes()).padStart(2, '0');
+var hours = startTime.getHours();
+var ampm = hours >= 12 ? 'PM' : 'AM';
+hours = hours % 12;
+hours = hours ? hours : 12; // Convert 0 to 12
+
+document.getElementById('host-start-hour').value = hours;
+document.getElementById('host-start-minute').value = startTime.getMinutes();
+document.getElementById('host-start-ampm').value = ampm;
 
 // Calculate duration in minutes
 var duration = Math.round((quizEndTime - quizStartTime) / 60000);
@@ -738,16 +766,27 @@ status.className = 'url-status error';
 // Save quiz time configuration from host tab
 function saveHostQuizTime() {
 var date = document.getElementById('host-quiz-date').value;
-var startTime = document.getElementById('host-start-time').value;
+var hour = parseInt(document.getElementById('host-start-hour').value);
+var minute = parseInt(document.getElementById('host-start-minute').value);
+var ampm = document.getElementById('host-start-ampm').value;
 var duration = document.getElementById('host-quiz-duration').value;
 
-if (!date || !startTime || !duration) {
-document.getElementById('host-time-status').textContent = 'Please fill in all fields';
+if (!date || isNaN(hour) || isNaN(minute) || !duration) {
+document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
 document.getElementById('host-time-status').className = 'url-status error';
 return;
 }
 
-var startDate = new Date(date + 'T' + startTime);
+// Convert to 24-hour format
+if (ampm === 'PM' && hour < 12) {
+hour += 12;
+} else if (ampm === 'AM' && hour === 12) {
+hour = 0;
+}
+
+var startDate = new Date(date);
+startDate.setHours(hour, minute, 0, 0);
+
 var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
 
 quizStartTime = startDate.getTime();
@@ -1040,25 +1079,6 @@ document.getElementById('countdown').textContent = "";
 }
 }
 
-// Host view functions
-function showHostQuestion() {
-var q = questions[currentIndex];
-document.getElementById("host-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
-
-var answersDiv = document.getElementById("host-answers");
-answersDiv.innerHTML = "<h3>Possible Answers:</h3>";
-
-q.answers.forEach(a => {
-var p = document.createElement("p");
-p.innerText = a;
-if (a === q.correct) {
-p.style.fontWeight = "bold";
-p.style.color = "#4caf50";
-}
-answersDiv.appendChild(p);
-});
-}
-
 // Player view functions
 function showPlayerQuestion() {
 var q = questions[currentIndex];
@@ -1134,21 +1154,6 @@ alert("Please enter your name to join the game.");
 }
 };
 
-document.getElementById("nextBtn").onclick = function() {
-currentIndex++;
-if (currentIndex < questions.length) {
-showHostQuestion();
-
-// If player has joined, show them the next question too
-if (playerName) {
-showPlayerQuestion();
-}
-} else {
-alert("Quiz completed! No more questions.");
-document.getElementById("nextBtn").disabled = true;
-}
-};
-
 // Initial setup - show player tab by default
 document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
@@ -1160,7 +1165,6 @@ if (!webAppUrl) {
 console.log("Web app URL not configured. Please set it up in the Setup tab.");
 // Show setup tab if no URL is configured
 document.getElementById('setup-tab').style.display = 'flex';
-switchTab('setup');
 }
 
 // Initialize the quiz time display
