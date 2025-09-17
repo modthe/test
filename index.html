@@ -1,3 +1,15 @@
+Conversation opened. 1 read message.
+
+Skip to content
+Using Gmail with screen readers
+1 of 14,652
+(no subject)
+Inbox
+
+Modther Alhadi <modtheralhadi@gmail.com>
+13:02 (21 minutes ago)
+to me
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,14 +17,426 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz Game with Admin Features</title>
 <style>
-/* ---------- Your full CSS from original 1200-line code ---------- */
-/* Keep everything unchanged from your original code */
-* {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-body {background:linear-gradient(135deg,#6a11cb 0%,#2575fc 100%); color:#333; line-height:1.6; min-height:100vh; padding:20px; display:flex; justify-content:center; align-items:center;}
-.container {width:95%; max-width:1000px; background:white; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden;}
-header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding:2rem; text-align:center; position:relative;}
-.quiz-timer {position:absolute; top:10px; right:20px; background:rgba(255,255,255,0.2); padding:5px 10px; border-radius:20px; font-weight:bold;}
-/* ---------- Continue all your existing CSS unchanged ---------- */
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+color: #333;
+line-height: 1.6;
+min-height: 100vh;
+padding: 20px;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.container {
+width: 95%;
+max-width: 1000px;
+background: white;
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+overflow: hidden;
+}
+
+header {
+background: linear-gradient(135deg, #6e8efb, #a777e3);
+color: white;
+padding: 2rem;
+text-align: center;
+position: relative;
+}
+
+.quiz-timer {
+position: absolute;
+top: 10px;
+right: 20px;
+background: rgba(255, 255, 255, 0.2);
+padding: 5px 10px;
+border-radius: 20px;
+font-weight: bold;
+}
+
+h1 {
+font-size: 2.2rem;
+margin-bottom: 1rem;
+}
+
+.subtitle {
+font-size: 1.1rem;
+opacity: 0.9;
+}
+
+.tabs {
+display: flex;
+background: #f0f0f0;
+border-bottom: 2px solid #ddd;
+}
+
+.tab {
+padding: 1rem;
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s ease;
+text-align: center;
+flex: 1;
+font-size: 0.9rem;
+}
+
+.tab:hover {
+background: #e0e0e0;
+}
+
+.tab.active {
+background: white;
+border-bottom: 3px solid #6e8efb;
+}
+
+.content {
+padding: 1.5rem;
+min-height: 500px;
+}
+
+.tab-content {
+display: none;
+}
+
+.tab-content.active {
+display: block;
+animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+background: white;
+border-radius: 10px;
+padding: 1.5rem;
+margin: 1.5rem 0;
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+border-left: 4px solid #6e8efb;
+}
+
+h2 {
+font-size: 1.6rem;
+color: #6e8efb;
+margin-bottom: 1rem;
+}
+
+h3 {
+font-size: 1.3rem;
+color: #a777e3;
+margin: 1.2rem 0 0.8rem;
+}
+
+input, button, select, textarea {
+padding: 0.8rem 1rem;
+margin: 0.5rem 0;
+border-radius: 5px;
+border: 1px solid #ddd;
+font-size: 0.9rem;
+}
+
+input, select, textarea {
+width: 100%;
+max-width: 300px;
+}
+
+textarea {
+min-height: 100px;
+resize: vertical;
+}
+
+button {
+background: #6e8efb;
+color: white;
+border: none;
+cursor: pointer;
+transition: all 0.3s ease;
+font-weight: 600;
+}
+
+button:hover {
+background: #5a7df9;
+transform: translateY(-2px);
+}
+
+button:disabled {
+background: #ccc;
+cursor: not-allowed;
+transform: none;
+}
+
+.answer-btn {
+display: block;
+width: 100%;
+text-align: left;
+margin: 0.5rem 0;
+padding: 1rem;
+background: #f8f9fa;
+color: #333;
+border: 1px solid #ddd;
+transition: all 0.2s ease;
+}
+
+.answer-btn:hover {
+background: #e9ecef;
+transform: translateX(5px);
+}
+
+.answer-btn.correct {
+background-color: #4caf50;
+color: white;
+border-color: #4caf50;
+}
+
+.answer-btn.incorrect {
+background-color: #f44336;
+color: white;
+border-color: #f44336;
+}
+
+.instructions {
+background: #fff8e1;
+border-left: 4px solid #ffc107;
+padding: 1.2rem;
+margin: 1.5rem 0;
+border-radius: 4px;
+}
+
+.instructions h3 {
+color: #ff9800;
+margin-bottom: 0.8rem;
+}
+
+.instructions ol {
+margin-left: 1.5rem;
+margin-bottom: 1rem;
+}
+
+.instructions li {
+margin-bottom: 0.5rem;
+}
+
+.sheet-config {
+background: #e8f5e9;
+border-left: 4px solid #4caf50;
+padding: 1.2rem;
+margin: 1.5rem 0;
+border-radius: 4px;
+}
+
+.sheet-config h3 {
+color: #2e7d32;
+margin-bottom: 0.8rem;
+}
+
+.code-block {
+background: #2c3e50;
+color: #f5f7fa;
+padding: 1.2rem;
+border-radius: 8px;
+font-family: monospace;
+margin: 1.2rem 0;
+overflow-x: auto;
+font-size: 0.9rem;
+}
+
+.countdown {
+font-size: 1.4rem;
+font-weight: bold;
+text-align: center;
+margin: 1rem 0;
+color: #6e8efb;
+}
+
+.url-status {
+margin-top: 10px;
+padding: 8px;
+border-radius: 4px;
+text-align: center;
+font-size: 0.9rem;
+}
+
+.url-status.success {
+background-color: #d4edda;
+color: #155724;
+border: 1px solid #c3e6cb;
+}
+
+.url-status.error {
+background-color: #f8d7da;
+color: #721c24;
+border: 1px solid #f5c6cb;
+}
+
+.setup-complete {
+text-align: center;
+padding: 1.5rem;
+background: #e8f5e9;
+border-radius: 8px;
+margin: 1.5rem 0;
+}
+
+.time-info {
+background: #e3f2fd;
+border-left: 4px solid #2196f3;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.time-config {
+background: #f3e5f5;
+border-left: 4px solid #9c27b0;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.time-config h3 {
+color: #7b1fa2;
+}
+
+.form-group {
+margin: 1rem 0;
+}
+
+label {
+display: block;
+margin-bottom: 0.5rem;
+font-weight: 600;
+}
+
+.admin-section {
+background: #fff3e0;
+border-left: 4px solid #ff9800;
+padding: 1.2rem;
+margin: 1.2rem 0;
+border-radius: 4px;
+}
+
+.admin-section h3 {
+color: #ef6c00;
+}
+
+.question-list {
+margin: 1rem 0;
+max-height: 300px;
+overflow-y: auto;
+border: 1px solid #ddd;
+border-radius: 5px;
+padding: 1rem;
+background: #f9f9f9;
+}
+
+.question-item {
+padding: 0.5rem;
+border-bottom: 1px solid #eee;
+}
+
+.question-item:last-child {
+border-bottom: none;
+}
+
+.admin-controls {
+display: flex;
+gap: 10px;
+margin-top: 0.5rem;
+}
+
+.admin-btn {
+padding: 0.3rem 0.8rem;
+font-size: 0.8rem;
+}
+
+.admin-btn.edit {
+background: #ff9800;
+}
+
+.admin-btn.delete {
+background: #f44336;
+}
+
+.answer-option {
+display: flex;
+align-items: center;
+margin-bottom: 0.5rem;
+}
+
+.answer-option input[type="text"] {
+flex: 1;
+margin-right: 10px;
+}
+
+.response-time {
+font-style: italic;
+color: #666;
+font-size: 0.9rem;
+margin-top: 5px;
+}
+
+.time-input-group {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.time-input-group input {
+max-width: 120px;
+}
+
+.time-input-group select {
+max-width: 80px;
+}
+
+@media (max-width: 768px) {
+.tabs {
+flex-direction: column;
+}
+
+h1 {
+font-size: 1.8rem;
+}
+
+.content {
+padding: 1rem;
+}
+
+.quiz-timer {
+position: static;
+margin-top: 10px;
+display: inline-block;
+}
+
+.admin-controls {
+flex-direction: column;
+}
+
+.answer-option {
+flex-direction: column;
+align-items: flex-start;
+}
+
+.answer-option input[type="text"] {
+width: 100%;
+margin-right: 0;
+margin-bottom: 5px;
+}
+
+.time-input-group {
+flex-direction: column;
+align-items: flex-start;
+}
+}
 </style>
 </head>
 <body>
@@ -34,7 +458,7 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 <div id="player" class="tab-content active">
 <h2>Join Quiz</h2>
 <div class="time-info" id="quiz-time-info">
-<p>This quiz is scheduled for <strong id="quiz-time-range">loading...</strong></p>
+<p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p>
 <p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p>
 </div>
 
@@ -73,13 +497,15 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 </div>
 
 <div id="admin-features" style="display: none;">
-<!-- Quiz timing configuration -->
 <div class="time-config">
 <h3>Quiz Timing Configuration</h3>
+<p>Set when your quiz will be active</p>
+
 <div class="form-group">
 <label for="host-quiz-date">Quiz Date:</label>
 <input type="date" id="host-quiz-date">
 </div>
+
 <div class="form-group">
 <label for="host-start-time">Start Time:</label>
 <div class="time-input-group">
@@ -91,6 +517,7 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 </select>
 </div>
 </div>
+
 <div class="form-group">
 <label for="host-quiz-duration">Quiz Duration (minutes):</label>
 <select id="host-quiz-duration">
@@ -102,13 +529,14 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 <option value="120">2 hours</option>
 </select>
 </div>
+
 <button onclick="saveHostQuizTime()">Save Quiz Time</button>
 <div id="host-time-status" class="url-status">Configure when your quiz will be active</div>
 </div>
 
-<!-- Question Management -->
 <div class="admin-section">
 <h3>Question Management</h3>
+
 <div class="form-group">
 <label for="question-text">Question:</label>
 <textarea id="question-text" placeholder="Enter your question"></textarea>
@@ -133,6 +561,7 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 <input type="radio" name="correct-answer" value="3"> Correct Answer
 </div>
 </div>
+
 <button onclick="addQuestion()">Add Question</button>
 <div id="question-status" class="url-status">Add a new question to the quiz</div>
 </div>
@@ -143,9 +572,24 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 </div>
 </div>
 
+<div class="instructions">
+<h3>Host Instructions</h3>
+<ol>
+<li>Enter the admin code to access host features</li>
+<li>Set the date and time for your quiz</li>
+<li>Add questions using the question management form</li>
+<li>Select which answer is correct using the radio buttons</li>
+<li>Click "Next Question" to proceed through the quiz</li>
+<li>Players will see questions on their screen</li>
+<li>Answers and response times will be logged to Google Sheets</li>
+</ol>
+</div>
+</div>
+
 <!-- Setup Tab -->
 <div id="setup" class="tab-content">
 <h2>Google Sheets Setup</h2>
+
 <div id="setup-complete-message" class="setup-complete" style="display: none;">
 <h3>✅ Setup Complete!</h3>
 <p>Your Google Sheets integration is configured. You can now use the Player and Host tabs.</p>
@@ -171,160 +615,603 @@ header {background:linear-gradient(135deg,#6e8efb,#a777e3); color:white; padding
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
+
+<div class="code-block">
+<p>// Google Apps Script code for your Google Sheet</p>
+<pre>
+function doPost(e) {
+// 1. ACQUIRE A LOCK to prevent concurrent access
+const lock = LockService.getScriptLock();
+try {
+lock.waitLock(30000); // Wait up to 30 seconds to get the lock
+
+// 2. GET THE SPECIFIC SHEET BY NAME
+const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
+// If the sheet doesn't exist, create it and add headers
+if (!sheet) {
+// Handle error: Sheet not found
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
+.setMimeType(ContentService.MimeType.JSON)
+.setStatusCode(500);
+}
+
+// 3. Add headers if sheet is empty (now safe inside the lock)
+if (sheet.getLastRow() === 0) {
+sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
+}
+
+// 4. PARSE the incoming data
+const data = JSON.parse(e.postData.contents);
+
+// 5. APPEND THE NEW ROW
+sheet.appendRow([
+new Date(),
+data.player,
+data.question,
+data.answer,
+data.correct,
+data.responseTime,
+data.status
+]);
+
+// 6. RETURN SUCCESS
+return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
+.setMimeType(ContentService.MimeType.JSON);
+
+} catch (error) {
+// Log the error for you to see
+console.error("Failed to process request:", error);
+// Return an error message to the client
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
+.setMimeType(ContentService.MimeType.JSON)
+.setStatusCode(500);
+
+} finally {
+// 7. ALWAYS RELEASE THE LOCK
+lock.releaseLock();
+}
+}
+</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
 
 <script>
-// ---------- Full JavaScript logic ----------
-
-// Tab switching
+// Tab switching functionality
 function switchTab(tabName) {
-document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+// Hide all tab contents
+document.querySelectorAll('.tab-content').forEach(tab => {
+tab.classList.remove('active');
+});
+
+// Show selected tab content
 document.getElementById(tabName).classList.add('active');
-document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+// Update active tab
+document.querySelectorAll('.tab').forEach(tab => {
+tab.classList.remove('active');
+});
+
+// Activate the clicked tab
 event.target.classList.add('active');
-if(tabName==='host'){loadHostTimeSettings();}
+
+// If switching to host tab, load the saved time settings
+if (tabName === 'host') {
+loadHostTimeSettings();
+}
 }
 
-// Quiz variables
-var questions = [];
-var currentIndex=0, playerName="", countdownInterval, timeLeft=15, questionStartTime, quizActive=false, adminCode="admin123";
-var quizStartTime=0, quizEndTime=0;
-
-// Web app URL
-var webAppUrl = localStorage.getItem('webAppUrl')||'';
-document.getElementById('webAppUrl').value = webAppUrl;
-
-// ---------- Fetch latest questions and time periodically ----------
-function fetchUpdates(){
-if(!webAppUrl) return;
-fetch(webAppUrl+'?action=get').then(r=>r.json()).then(data=>{
-if(data.questions) {questions = data.questions; displayQuestions();}
-if(data.quizStartTime) {quizStartTime = data.quizStartTime; quizEndTime = data.quizEndTime; updateQuizStatus();}
-}).catch(e=>console.error(e));
+// Example question set
+var questions = [
+{
+question: "What is 2 + 2?",
+answers: ["3", "4", "5", "6"],
+correct: "4"
+},
+{
+question: "Capital of France?",
+answers: ["London", "Paris", "Berlin", "Rome"],
+correct: "Paris"
+},
+{
+question: "Largest planet in our solar system?",
+answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
+correct: "Jupiter"
+},
+{
+question: "What is the chemical symbol for gold?",
+answers: ["Go", "Gd", "Au", "Ag"],
+correct: "Au"
 }
-setInterval(fetchUpdates, 5000); // every 5 seconds
+];
 
-// ---------- Save Host Quiz Time ----------
-function saveHostQuizTime(){
+// Initialize variables
+var currentIndex = 0;
+var playerName = "";
+var countdownInterval;
+var timeLeft = 15;
+var questionStartTime;
+var quizActive = false;
+var adminCode = "admin123"; // Default admin code
+
+// Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
+var quizStartTime = localStorage.getItem('quizStartTime');
+var quizEndTime = localStorage.getItem('quizEndTime');
+
+if (!quizStartTime) {
+// Set default to tomorrow at 12:00 PM
+var tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+tomorrow.setHours(12, 0, 0, 0);
+quizStartTime = tomorrow.getTime();
+localStorage.setItem('quizStartTime', quizStartTime);
+} else {
+quizStartTime = parseInt(quizStartTime);
+}
+
+if (!quizEndTime) {
+// Set default to tomorrow at 12:30 PM
+var endTime = new Date(quizStartTime);
+endTime.setMinutes(endTime.getMinutes() + 30);
+quizEndTime = endTime.getTime();
+localStorage.setItem('quizEndTime', quizEndTime);
+} else {
+quizEndTime = parseInt(quizEndTime);
+}
+
+// Load questions from localStorage
+var savedQuestions = localStorage.getItem('quizQuestions');
+if (savedQuestions) {
+questions = JSON.parse(savedQuestions);
+}
+
+// Load host time settings into the form
+function loadHostTimeSettings() {
+var quizDate = new Date(quizStartTime);
+document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
+
+var startTime = new Date(quizStartTime);
+var hours = startTime.getHours();
+var ampm = hours >= 12 ? 'PM' : 'AM';
+hours = hours % 12;
+hours = hours ? hours : 12; // Convert 0 to 12
+
+document.getElementById('host-start-hour').value = hours;
+document.getElementById('host-start-minute').value = startTime.getMinutes();
+document.getElementById('host-start-ampm').value = ampm;
+
+// Calculate duration in minutes
+var duration = Math.round((quizEndTime - quizStartTime) / 60000);
+document.getElementById('host-quiz-duration').value = duration;
+
+// Display questions
+displayQuestions();
+}
+
+// Verify admin code
+function verifyAdmin() {
+var code = document.getElementById('admin-code').value;
+var status = document.getElementById('admin-status');
+
+if (code === adminCode) {
+document.getElementById('admin-features').style.display = 'block';
+status.textContent = 'Admin access granted!';
+status.className = 'url-status success';
+} else {
+status.textContent = 'Invalid admin code. Please try again.';
+status.className = 'url-status error';
+}
+}
+
+// Save quiz time configuration from host tab
+function saveHostQuizTime() {
 var date = document.getElementById('host-quiz-date').value;
 var hour = parseInt(document.getElementById('host-start-hour').value);
-var min = parseInt(document.getElementById('host-start-minute').value);
+var minute = parseInt(document.getElementById('host-start-minute').value);
 var ampm = document.getElementById('host-start-ampm').value;
-if(ampm==="PM" && hour<12) hour+=12;
-if(ampm==="AM" && hour===12) hour=0;
-var startTime = new Date(date+'T'+hour.toString().padStart(2,'0')+':'+min.toString().padStart(2,'0')+':00').getTime();
-var duration = parseInt(document.getElementById('host-quiz-duration').value)*60000;
-var endTime = startTime+duration;
-fetch(webAppUrl+'?action=setTime&start='+startTime+'&end='+endTime).then(r=>r.json()).then(res=>{
-document.getElementById('host-time-status').innerText="Quiz time saved!";
-fetchUpdates();
-}).catch(e=>console.error(e));
+var duration = document.getElementById('host-quiz-duration').value;
+
+if (!date || isNaN(hour) || isNaN(minute) || !duration) {
+document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
+document.getElementById('host-time-status').className = 'url-status error';
+return;
 }
 
-// ---------- Add Question ----------
-function addQuestion(){
-var q = document.getElementById('question-text').value;
-var a1 = document.getElementById('answer-1').value;
-var a2 = document.getElementById('answer-2').value;
-var a3 = document.getElementById('answer-3').value;
-var a4 = document.getElementById('answer-4').value;
-var correct = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
-var newQuestion = {question:q, options:[a1,a2,a3,a4], correct:correct};
-fetch(webAppUrl+'?action=addQuestion', {method:'POST', body:JSON.stringify(newQuestion)}).then(r=>r.json()).then(res=>{
-document.getElementById('question-status').innerText="Question added!";
-fetchUpdates();
-}).catch(e=>console.error(e));
+// Convert to 24-hour format
+if (ampm === 'PM' && hour < 12) {
+hour += 12;
+} else if (ampm === 'AM' && hour === 12) {
+hour = 0;
 }
 
-// ---------- Display Questions in Admin ----------
-function displayQuestions(){
+var startDate = new Date(date);
+startDate.setHours(hour, minute, 0, 0);
+
+var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
+
+quizStartTime = startDate.getTime();
+quizEndTime = endDate.getTime();
+
+localStorage.setItem('quizStartTime', quizStartTime);
+localStorage.setItem('quizEndTime', quizEndTime);
+
+document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
+document.getElementById('host-time-status').className = 'url-status success';
+
+updateQuizTimeInfo();
+
+// Clear status after 3 seconds
+setTimeout(() => {
+document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
+document.getElementById('host-time-status').className = 'url-status';
+}, 3000);
+}
+
+// Add a new question
+function addQuestion() {
+var questionText = document.getElementById('question-text').value;
+var answer1 = document.getElementById('answer-1').value;
+var answer2 = document.getElementById('answer-2').value;
+var answer3 = document.getElementById('answer-3').value;
+var answer4 = document.getElementById('answer-4').value;
+
+if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
+document.getElementById('question-status').textContent = 'Please fill in all fields';
+document.getElementById('question-status').className = 'url-status error';
+return;
+}
+
+// Get the selected correct answer
+var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
+var answers = [answer1, answer2, answer3, answer4];
+var correctAnswer = answers[correctAnswerIndex];
+
+var newQuestion = {
+question: questionText,
+answers: answers,
+correct: correctAnswer
+};
+
+questions.push(newQuestion);
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+
+document.getElementById('question-status').textContent = 'Question added successfully!';
+document.getElementById('question-status').className = 'url-status success';
+
+// Clear form
+document.getElementById('question-text').value = '';
+document.getElementById('answer-1').value = '';
+document.getElementById('answer-2').value = '';
+document.getElementById('answer-3').value = '';
+document.getElementById('answer-4').value = '';
+document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
+
+// Update questions display
+displayQuestions();
+
+// Clear status after 3 seconds
+setTimeout(() => {
+document.getElementById('question-status').textContent = 'Add a new question to the quiz';
+document.getElementById('question-status').className = 'url-status';
+}, 3000);
+}
+
+// Display all questions
+function displayQuestions() {
 var container = document.getElementById('questions-container');
 container.innerHTML = '';
-questions.forEach((q,i)=>{var div = document.createElement('div'); div.innerText=(i+1)+". "+q.question; container.appendChild(div);});
+
+if (questions.length === 0) {
+container.innerHTML = '<p>No questions added yet.</p>';
+return;
 }
 
-// ---------- Player Join ----------
-document.getElementById('joinBtn').addEventListener('click', function(){
-playerName=document.getElementById('name').value.trim();
-if(!playerName){alert("Enter your name"); return;}
-currentIndex=0;
-displayPlayerQuestion();
+questions.forEach((q, index) => {
+var questionItem = document.createElement('div');
+questionItem.className = 'question-item';
+
+// Find the index of the correct answer
+var correctIndex = q.answers.indexOf(q.correct);
+
+questionItem.innerHTML = `
+<strong>Q${index + 1}:</strong> ${q.question}
+<div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
+<div class="admin-controls">
+<button class="admin-btn edit" onclick="editQuestion(${index})">Edit</button>
+<button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
+</div>
+`;
+container.appendChild(questionItem);
+});
+}
+
+// Edit a question
+function editQuestion(index) {
+var q = questions[index];
+
+document.getElementById('question-text').value = q.question;
+document.getElementById('answer-1').value = q.answers[0];
+document.getElementById('answer-2').value = q.answers[1];
+document.getElementById('answer-3').value = q.answers[2];
+document.getElementById('answer-4').value = q.answers[3];
+
+// Find and select the correct answer
+var correctIndex = q.answers.indexOf(q.correct);
+document.querySelector(`input[name="correct-answer"][value="${correctIndex}"]`).checked = true;
+
+// Remove the question being edited
+questions.splice(index, 1);
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+
+// Update display
+displayQuestions();
+
+document.getElementById('question-status').textContent = 'Editing question. Update the fields and click "Add Question" to save changes.';
+document.getElementById('question-status').className = 'url-status';
+}
+
+// Delete a question
+function deleteQuestion(index) {
+if (confirm('Are you sure you want to delete this question?')) {
+questions.splice(index, 1);
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+displayQuestions();
+}
+}
+
+// Update quiz time info display
+function updateQuizTimeInfo() {
+var start = new Date(quizStartTime);
+var end = new Date(quizEndTime);
+
+var options = {
+weekday: 'long',
+year: 'numeric',
+month: 'long',
+day: 'numeric',
+hour: '2-digit',
+minute: '2-digit'
+};
+
+var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
+end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+
+document.getElementById('quiz-time-range').textContent = timeRange;
+
+// Update quiz status
+var now = new Date().getTime();
+var quizTimer = document.getElementById('quiz-timer');
+var quizStatus = document.getElementById('quiz-status-text');
+
+if (now < quizStartTime) {
+// Quiz hasn't started yet
+var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
+var hours = Math.floor(timeUntilStart / 3600);
+var minutes = Math.floor((timeUntilStart % 3600) / 60);
+var seconds = timeUntilStart % 60;
+
+quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+quizStatus.textContent = 'Not started';
+quizStatus.style.color = '#ff9800';
+quizActive = false;
+} else if (now >= quizStartTime && now <= quizEndTime) {
+// Quiz is active
+var timeLeft = Math.floor((quizEndTime - now) / 1000);
+var minutes = Math.floor(timeLeft / 60);
+var seconds = timeLeft % 60;
+
+quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
+quizStatus.textContent = 'Active';
+quizStatus.style.color = '#4caf50';
+quizActive = true;
+} else {
+// Quiz has ended
+quizTimer.textContent = 'Quiz ended';
+quizStatus.textContent = 'Ended';
+quizStatus.style.color = '#f44336';
+quizActive = false;
+}
+}
+
+// Update quiz timer every second
+setInterval(updateQuizTimeInfo, 1000);
+updateQuizTimeInfo();
+
+// Get saved web app URL from local storage
+var webAppUrl = localStorage.getItem('webAppUrl') || '';
+document.getElementById('webAppUrl').value = webAppUrl;
+
+// Hide setup tab if URL is already configured
+if (webAppUrl) {
+document.getElementById('setup-tab').style.display = 'none';
+}
+
+// Save web app URL to local storage
+function saveWebAppUrl() {
+var url = document.getElementById('webAppUrl').value;
+var urlStatus = document.getElementById('urlStatus');
+
+if (url) {
+localStorage.setItem('webAppUrl', url);
+urlStatus.textContent = 'URL saved successfully! Setup complete.';
+urlStatus.className = 'url-status success';
+
+// Hide setup form and show completion message
+document.getElementById('setup-form').style.display = 'none';
+document.getElementById('setup-complete-message').style.display = 'block';
+
+// Hide setup tab
+document.getElementById('setup-tab').style.display = 'none';
+} else {
+urlStatus.textContent = 'Please enter a valid URL';
+urlStatus.className = 'url-status error';
+}
+}
+
+// Function to send data to Google Sheets
+function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+var webAppUrl = localStorage.getItem('webAppUrl');
+
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return;
+}
+
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
+
+// Send data to Google Apps Script web app
+fetch(webAppUrl, {
+method: "POST",
+mode: "no-cors",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(() => {
+console.log("Data sent to Google Sheets successfully");
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+});
+}
+
+// Countdown timer function
+function startCountdown() {
+timeLeft = 15;
+document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+
+clearInterval(countdownInterval);
+countdownInterval = setInterval(() => {
+timeLeft--;
+document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+
+if (timeLeft <= 0) {
+clearInterval(countdownInterval);
+// Record unanswered question
+var q = questions[currentIndex];
+var responseTime = (Date.now() - questionStartTime) / 1000;
+sendToGoogleSheet(playerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+moveToNextQuestion();
+}
+}, 1000);
+}
+
+// Move to next question automatically
+function moveToNextQuestion() {
+currentIndex++;
+if (currentIndex < questions.length) {
+showPlayerQuestion();
+} else {
+document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
+document.getElementById('player-answers').innerHTML = "";
+document.getElementById('countdown').textContent = "";
+}
+}
+
+// Player view functions
+function showPlayerQuestion() {
+var q = questions[currentIndex];
+document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+
+var answersDiv = document.getElementById("player-answers");
+answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+
+// Record question start time for response timing
+questionStartTime = Date.now();
+
+q.answers.forEach(a => {
+var btn = document.createElement("button");
+btn.className = "answer-btn";
+btn.innerText = a;
+btn.onclick = function() {
+// Check if quiz is active
+if (!quizActive) {
+alert("The quiz is not currently active. Please check the quiz schedule.");
+return;
+}
+
+var selected = a;
+var correct = q.correct;
+var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
+
+// Clear the countdown
+clearInterval(countdownInterval);
+document.getElementById('countdown').textContent = "";
+
+// Color the answers
+var allButtons = document.querySelectorAll('.answer-btn');
+allButtons.forEach(button => {
+button.disabled = true;
+if (button.innerText === correct) {
+button.classList.add('correct');
+} else if (button.innerText === selected && selected !== correct) {
+button.classList.add('incorrect');
+}
 });
 
-// ---------- Display Player Question ----------
-function displayPlayerQuestion(){
-if(!quizActive){document.getElementById('player-question').innerText="Quiz not active yet."; return;}
-if(currentIndex>=questions.length){document.getElementById('player-question').innerText="Quiz finished!"; return;}
-var q=questions[currentIndex];
-document.getElementById('player-question').innerHTML=`<p>${q.question}</p>`;
-var ansDiv=document.getElementById('player-answers');
-ansDiv.innerHTML="";
-q.options.forEach((o,i)=>{
-var btn=document.createElement('button');
-btn.innerText=o;
-btn.onclick=function(){submitAnswer(i);}
-ansDiv.appendChild(btn);
+// Send to Google Sheets with response time
+sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
+
+// Move to next question after 5 seconds
+setTimeout(moveToNextQuestion, 5000);
+};
+answersDiv.appendChild(btn);
 });
-questionStartTime=Date.now();
-timeLeft=15;
+
+// Start countdown for this question
 startCountdown();
 }
 
-// ---------- Submit Answer ----------
-function submitAnswer(optionIndex){
-var q=questions[currentIndex];
-var correct=q.correct;
-var timeTaken=(Date.now()-questionStartTime)/1000;
-alert(`You selected: ${q.options[optionIndex]}. Correct: ${q.options[correct]}. Time: ${timeTaken.toFixed(2)}s`);
-currentIndex++; displayPlayerQuestion();
+// Initialize the application
+document.getElementById("joinBtn").onclick = function() {
+// Check if quiz is active
+if (!quizActive) {
+alert("The quiz is not currently active. Please check the quiz schedule.");
+return;
 }
 
-// ---------- Countdown ----------
-function startCountdown(){
-clearInterval(countdownInterval);
-countdownInterval=setInterval(()=>{
-timeLeft--;
-document.getElementById('countdown').innerText=`Time left: ${timeLeft}s`;
-if(timeLeft<=0){clearInterval(countdownInterval); submitAnswer(-1);}
-},1000);
+playerName = document.getElementById("name").value;
+if (playerName.trim() !== "") {
+// Remove the welcome message by hiding the input elements
+document.getElementById("name").style.display = "none";
+document.getElementById("joinBtn").style.display = "none";
+
+// Show first question
+showPlayerQuestion();
+} else {
+alert("Please enter your name to join the game.");
+}
+};
+
+// Initial setup - show player tab by default
+document.querySelectorAll('.tab-content').forEach(tab => {
+tab.classList.remove('active');
+});
+document.getElementById('player').classList.add('active');
+
+// Check if web app URL is configured
+if (!webAppUrl) {
+console.log("Web app URL not configured. Please set it up in the Setup tab.");
+// Show setup tab if no URL is configured
+document.getElementById('setup-tab').style.display = 'flex';
 }
 
-// ---------- Admin Verification ----------
-function verifyAdmin(){
-var code=document.getElementById('admin-code').value;
-if(code===adminCode){document.getElementById('admin-features').style.display='block'; document.getElementById('admin-status').innerText="Access granted";}
-else{alert("Wrong admin code");}
-}
-
-// ---------- Save Web App URL ----------
-function saveWebAppUrl(){
-webAppUrl=document.getElementById('webAppUrl').value;
-localStorage.setItem('webAppUrl', webAppUrl);
-document.getElementById('urlStatus').innerText="URL saved!";
-fetchUpdates();
-}
-
-// ---------- Load Host Time Settings ----------
-function loadHostTimeSettings(){
-if(!webAppUrl) return;
-fetch(webAppUrl+'?action=getTime').then(r=>r.json()).then(res=>{
-if(res.start){quizStartTime=res.start; quizEndTime=res.end; updateQuizStatus();}
-}).catch(e=>console.error(e));
-}
-
-// ---------- Update Quiz Status ----------
-function updateQuizStatus(){
-var now=Date.now();
-if(now>=quizStartTime && now<=quizEndTime){quizActive=true; document.getElementById('quiz-status-text').innerText="Active";}
-else if(now<quizStartTime){quizActive=false; document.getElementById('quiz-status-text').innerText="Upcoming";}
-else{quizActive=false; document.getElementById('quiz-status-text').innerText="Ended";}
-document.getElementById('quiz-time-range').innerText=new Date(quizStartTime).toLocaleString()+" - "+new Date(quizEndTime).toLocaleString();
-}
-
-// Initial fetch
-fetchUpdates();
+// Initialize the quiz time display
+updateQuizTimeInfo();
 </script>
 </body>
 </html>
+
