@@ -608,15 +608,30 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
-var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-var data = JSON.parse(e.postData.contents);
+// 1. ACQUIRE A LOCK to prevent concurrent access
+const lock = LockService.getScriptLock();
+try {
+lock.waitLock(30000); // Wait up to 30 seconds to get the lock
 
-// Add headers if sheet is empty
+// 2. GET THE SPECIFIC SHEET BY NAME
+const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
+// If the sheet doesn't exist, create it and add headers
+if (!sheet) {
+// Handle error: Sheet not found
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
+.setMimeType(ContentService.MimeType.JSON)
+.setStatusCode(500);
+}
+
+// 3. Add headers if sheet is empty (now safe inside the lock)
 if (sheet.getLastRow() === 0) {
 sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
 }
 
-// Add new row with data
+// 4. PARSE the incoming data
+const data = JSON.parse(e.postData.contents);
+
+// 5. APPEND THE NEW ROW
 sheet.appendRow([
 new Date(),
 data.player,
@@ -627,7 +642,22 @@ data.responseTime,
 data.status
 ]);
 
-return ContentService.createTextOutput("Success");
+// 6. RETURN SUCCESS
+return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
+.setMimeType(ContentService.MimeType.JSON);
+
+} catch (error) {
+// Log the error for you to see
+console.error("Failed to process request:", error);
+// Return an error message to the client
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
+.setMimeType(ContentService.MimeType.JSON)
+.setStatusCode(500);
+
+} finally {
+// 7. ALWAYS RELEASE THE LOCK
+lock.releaseLock();
+}
 }
 </pre>
 </div>
@@ -1172,3 +1202,4 @@ updateQuizTimeInfo();
 </script>
 </body>
 </html>
+
