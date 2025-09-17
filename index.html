@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game with Pusher Integration</title>
+    <title>Quiz Game with Firebase Integration</title>
     <style>
         * {
             margin: 0;
@@ -407,7 +407,7 @@
             border-bottom: none;
         }
 
-        .pusher-config {
+        .firebase-config {
             background: #e1f5fe;
             border-left: 4px solid #03a9f4;
             padding: 1.2rem;
@@ -415,9 +415,20 @@
             border-radius: 4px;
         }
 
-        .pusher-config h3 {
+        .firebase-config h3 {
             color: #0288d1;
             margin-bottom: 0.8rem;
+        }
+
+        .sync-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
 
         @media (max-width: 768px) {
@@ -460,11 +471,15 @@
             }
         }
     </style>
+    <!-- Firebase App (core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Quiz Game with Pusher Integration</h1>
+            <h1>Quiz Game with Firebase Integration</h1>
             <p class="subtitle">Real-time multiplayer quiz with synchronized timing</p>
             <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
         </header>
@@ -620,46 +635,62 @@
 
             <!-- Setup Tab -->
             <div id="setup" class="tab-content">
-                <h2>Pusher & Google Sheets Setup</h2>
+                <h2>Firebase & Google Sheets Setup</h2>
 
                 <div id="setup-complete-message" class="setup-complete" style="display: none;">
                     <h3>✅ Setup Complete!</h3>
-                    <p>Your Pusher integration is configured. You can now use the Player and Host tabs.</p>
+                    <p>Your Firebase integration is configured. You can now use the Player and Host tabs.</p>
                     <button onclick="switchTab('player')">Go to Player Tab</button>
                 </div>
 
                 <div id="setup-form">
-                    <div class="pusher-config">
-                        <h3>Pusher Configuration</h3>
-                        <p>Pusher handles real-time communication between players and the host. You need to:</p>
+                    <div class="firebase-config">
+                        <h3>Firebase Configuration</h3>
+                        <p>Firebase handles real-time communication between players and the host. You need to:</p>
                         <ol>
-                            <li>Create a free account at <a href="https://pusher.com/" target="_blank">pusher.com</a></li>
-                            <li>Create a new Channels app</li>
-                            <li>Copy your app credentials and paste them below</li>
+                            <li>Create a free account at <a href="https://firebase.google.com/" target="_blank">firebase.google.com</a></li>
+                            <li>Create a new Firebase project</li>
+                            <li>Enable Realtime Database in your project</li>
+                            <li>Copy your Firebase config and paste it below</li>
                         </ol>
 
                         <div class="form-group">
-                            <label for="pusher-app-id">App ID:</label>
-                            <input type="text" id="pusher-app-id" placeholder="2052207">
+                            <label for="firebase-apiKey">API Key:</label>
+                            <input type="text" id="firebase-apiKey" placeholder="AIzaSyD...">
                         </div>
 
                         <div class="form-group">
-                            <label for="pusher-key">Key:</label>
-                            <input type="text" id="pusher-key" placeholder="a837ca86d781e5315a69">
+                            <label for="firebase-authDomain">Auth Domain:</label>
+                            <input type="text" id="firebase-authDomain" placeholder="your-project.firebaseapp.com">
                         </div>
 
                         <div class="form-group">
-                            <label for="pusher-secret">Secret:</label>
-                            <input type="text" id="pusher-secret" placeholder="33222d20bb04703bffbd">
+                            <label for="firebase-databaseURL">Database URL:</label>
+                            <input type="text" id="firebase-databaseURL" placeholder="https://your-project.firebaseio.com">
                         </div>
 
                         <div class="form-group">
-                            <label for="pusher-cluster">Cluster:</label>
-                            <input type="text" id="pusher-cluster" placeholder="ap2" value="mt1">
+                            <label for="firebase-projectId">Project ID:</label>
+                            <input type="text" id="firebase-projectId" placeholder="your-project-id">
                         </div>
 
-                        <button onclick="savePusherConfig()">Save Pusher Configuration</button>
-                        <div id="pusher-status" class="url-status">Please enter your Pusher credentials</div>
+                        <div class="form-group">
+                            <label for="firebase-storageBucket">Storage Bucket:</label>
+                            <input type="text" id="firebase-storageBucket" placeholder="your-project.appspot.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="firebase-messagingSenderId">Messaging Sender ID:</label>
+                            <input type="text" id="firebase-messagingSenderId" placeholder="123456789">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="firebase-appId">App ID:</label>
+                            <input type="text" id="firebase-appId" placeholder="1:123456789:web:abc123">
+                        </div>
+
+                        <button onclick="saveFirebaseConfig()">Save Firebase Configuration</button>
+                        <div id="firebase-status" class="url-status">Please enter your Firebase credentials</div>
                     </div>
 
                     <div class="sheet-config">
@@ -731,11 +762,9 @@ function doPost(e) {
         </div>
     </div>
 
-    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
     <script>
         // Initialize variables
-        let pusher = null;
-        let quizChannel = null;
+        let db = null;
         let currentIndex = 0;
         let playerName = "";
         let countdownInterval;
@@ -745,30 +774,10 @@ function doPost(e) {
         let adminCode = "admin123";
         let players = {};
         let playerId = Math.random().toString(36).substring(2, 10);
-        let timingCheckInterval;
 
         // Quiz timing configuration
-        let quizStartTime = localStorage.getItem('quizStartTime');
-        let quizEndTime = localStorage.getItem('quizEndTime');
-
-        if (!quizStartTime) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(12, 0, 0, 0);
-            quizStartTime = tomorrow.getTime();
-            localStorage.setItem('quizStartTime', quizStartTime);
-        } else {
-            quizStartTime = parseInt(quizStartTime);
-        }
-
-        if (!quizEndTime) {
-            const endTime = new Date(quizStartTime);
-            endTime.setMinutes(endTime.getMinutes() + 30);
-            quizEndTime = endTime.getTime();
-            localStorage.setItem('quizEndTime', quizEndTime);
-        } else {
-            quizEndTime = parseInt(quizEndTime);
-        }
+        let quizStartTime = null;
+        let quizEndTime = null;
 
         // Load questions from localStorage
         let questions = [];
@@ -777,55 +786,128 @@ function doPost(e) {
             questions = JSON.parse(savedQuestions);
         }
 
-        // Initialize Pusher if credentials are available
-        function initializePusher() {
-            const appId = localStorage.getItem('pusherAppId');
-            const key = localStorage.getItem('pusherKey');
-            const secret = localStorage.getItem('pusherSecret');
-            const cluster = localStorage.getItem('pusherCluster') || 'mt1';
+        // Initialize Firebase if credentials are available
+        function initializeFirebase() {
+            const apiKey = localStorage.getItem('firebase-apiKey');
+            const authDomain = localStorage.getItem('firebase-authDomain');
+            const databaseURL = localStorage.getItem('firebase-databaseURL');
+            const projectId = localStorage.getItem('firebase-projectId');
+            const storageBucket = localStorage.getItem('firebase-storageBucket');
+            const messagingSenderId = localStorage.getItem('firebase-messagingSenderId');
+            const appId = localStorage.getItem('firebase-appId');
             
-            if (appId && key && secret) {
-                pusher = new Pusher(key, {
-                    cluster: cluster,
-                    encrypted: true
+            if (apiKey && authDomain && databaseURL) {
+                const firebaseConfig = {
+                    apiKey: apiKey,
+                    authDomain: authDomain,
+                    databaseURL: databaseURL,
+                    projectId: projectId,
+                    storageBucket: storageBucket,
+                    messagingSenderId: messagingSenderId,
+                    appId: appId
+                };
+                
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                
+                // Listen for timing updates
+                db.ref('quiz/timing').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        quizStartTime = data.startTime;
+                        quizEndTime = data.endTime;
+                        localStorage.setItem('quizStartTime', quizStartTime);
+                        localStorage.setItem('quizEndTime', quizEndTime);
+                        updateQuizTimeInfo();
+                        console.log('Timing updated from Firebase');
+                    }
                 });
                 
-                quizChannel = pusher.subscribe('quiz-game-channel');
-                
                 // Listen for player joined events
-                quizChannel.bind('player-joined', function(data) {
-                    if (data.playerId !== playerId) {
-                        players[data.playerId] = data.playerName;
+                db.ref('players').on('child_added', (snapshot) => {
+                    const playerData = snapshot.val();
+                    if (playerData.id !== playerId) {
+                        players[playerData.id] = playerData.name;
                         updatePlayersList();
                     }
                 });
                 
                 // Listen for quiz control events
-                quizChannel.bind('quiz-control', function(data) {
-                    if (data.action === 'start') {
-                        quizActive = true;
-                        updateQuizStatus();
-                        alert('Quiz has started!');
-                    } else if (data.action === 'stop') {
-                        quizActive = false;
-                        updateQuizStatus();
-                        alert('Quiz has ended!');
-                    } else if (data.action === 'next') {
-                        currentIndex = data.currentIndex;
-                        if (playerName) {
-                            showPlayerQuestion();
+                db.ref('quiz/control').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        if (data.action === 'start') {
+                            quizActive = true;
+                            updateQuizStatus();
+                            alert('Quiz has started!');
+                        } else if (data.action === 'stop') {
+                            quizActive = false;
+                            updateQuizStatus();
+                            alert('Quiz has ended!');
+                        } else if (data.action === 'next') {
+                            currentIndex = data.currentIndex;
+                            if (playerName) {
+                                showPlayerQuestion();
+                            }
                         }
                     }
                 });
                 
                 // Listen for question events
-                quizChannel.bind('new-question', function(data) {
-                    if (playerName) {
-                        showQuestion(data.question);
+                db.ref('quiz/currentQuestion').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data && playerName) {
+                        showQuestion(data);
                     }
                 });
                 
-                console.log('Pusher initialized successfully');
+                console.log('Firebase initialized successfully');
+                
+                // Load initial timing if available
+                db.ref('quiz/timing').once('value').then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        quizStartTime = data.startTime;
+                        quizEndTime = data.endTime;
+                        localStorage.setItem('quizStartTime', quizStartTime);
+                        localStorage.setItem('quizEndTime', quizEndTime);
+                        updateQuizTimeInfo();
+                    } else {
+                        // Set default timing if not exists
+                        setDefaultTiming();
+                    }
+                });
+            }
+        }
+
+        // Set default timing if not configured
+        function setDefaultTiming() {
+            if (!quizStartTime) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(12, 0, 0, 0);
+                quizStartTime = tomorrow.getTime();
+                localStorage.setItem('quizStartTime', quizStartTime);
+            } else {
+                quizStartTime = parseInt(quizStartTime);
+            }
+
+            if (!quizEndTime) {
+                const endTime = new Date(quizStartTime);
+                endTime.setMinutes(endTime.getMinutes() + 30);
+                quizEndTime = endTime.getTime();
+                localStorage.setItem('quizEndTime', quizEndTime);
+            } else {
+                quizEndTime = parseInt(quizEndTime);
+            }
+            
+            // Save to Firebase
+            if (db) {
+                db.ref('quiz/timing').set({
+                    startTime: quizStartTime,
+                    endTime: quizEndTime
+                });
             }
         }
 
@@ -852,19 +934,21 @@ function doPost(e) {
 
         // Send player joined event
         function sendPlayerJoined() {
-            if (pusher && quizChannel) {
-                quizChannel.trigger('client-player-joined', {
-                    playerId: playerId,
-                    playerName: playerName
+            if (db) {
+                db.ref('players/' + playerId).set({
+                    id: playerId,
+                    name: playerName,
+                    joinedAt: Date.now()
                 });
             }
         }
 
         // Send quiz control event
         function sendQuizControl(action, data = {}) {
-            if (pusher && quizChannel) {
-                quizChannel.trigger('client-quiz-control', {
+            if (db) {
+                db.ref('quiz/control').set({
                     action: action,
+                    timestamp: Date.now(),
                     ...data
                 });
             }
@@ -872,10 +956,8 @@ function doPost(e) {
 
         // Send new question event
         function sendNewQuestion(question) {
-            if (pusher && quizChannel) {
-                quizChannel.trigger('client-new-question', {
-                    question: question
-                });
+            if (db) {
+                db.ref('quiz/currentQuestion').set(question);
             }
         }
 
@@ -928,7 +1010,7 @@ function doPost(e) {
                 document.getElementById('admin-features').style.display = 'block';
                 status.textContent = 'Admin access granted!';
                 status.className = 'url-status success';
-            } else {
+            else {
                 status.textContent = 'Invalid admin code. Please try again.';
                 status.className = 'url-status error';
             }
@@ -966,6 +1048,14 @@ function doPost(e) {
 
             localStorage.setItem('quizStartTime', quizStartTime);
             localStorage.setItem('quizEndTime', quizEndTime);
+
+            // Save to Firebase
+            if (db) {
+                db.ref('quiz/timing').set({
+                    startTime: quizStartTime,
+                    endTime: quizEndTime
+                });
+            }
 
             document.getElementById('host-time-status').textContent = 'Quiz time saved and synchronized!';
             document.getElementById('host-time-status').className = 'url-status success';
@@ -1274,33 +1364,39 @@ function doPost(e) {
             alert(`Welcome ${playerName}! You've joined the game. Wait for the quiz to start.`);
         });
 
-        // Save Pusher configuration
-        function savePusherConfig() {
-            const appId = document.getElementById('pusher-app-id').value;
-            const key = document.getElementById('pusher-key').value;
-            const secret = document.getElementById('pusher-secret').value;
-            const cluster = document.getElementById('pusher-cluster').value;
+        // Save Firebase configuration
+        function saveFirebaseConfig() {
+            const apiKey = document.getElementById('firebase-apiKey').value;
+            const authDomain = document.getElementById('firebase-authDomain').value;
+            const databaseURL = document.getElementById('firebase-databaseURL').value;
+            const projectId = document.getElementById('firebase-projectId').value;
+            const storageBucket = document.getElementById('firebase-storageBucket').value;
+            const messagingSenderId = document.getElementById('firebase-messagingSenderId').value;
+            const appId = document.getElementById('firebase-appId').value;
             
-            if (!appId || !key || !secret) {
-                document.getElementById('pusher-status').textContent = 'Please fill in all required fields';
-                document.getElementById('pusher-status').className = 'url-status error';
+            if (!apiKey || !authDomain || !databaseURL) {
+                document.getElementById('firebase-status').textContent = 'Please fill in all required fields';
+                document.getElementById('firebase-status').className = 'url-status error';
                 return;
             }
             
-            localStorage.setItem('pusherAppId', appId);
-            localStorage.setItem('pusherKey', key);
-            localStorage.setItem('pusherSecret', secret);
-            localStorage.setItem('pusherCluster', cluster);
+            localStorage.setItem('firebase-apiKey', apiKey);
+            localStorage.setItem('firebase-authDomain', authDomain);
+            localStorage.setItem('firebase-databaseURL', databaseURL);
+            localStorage.setItem('firebase-projectId', projectId);
+            localStorage.setItem('firebase-storageBucket', storageBucket);
+            localStorage.setItem('firebase-messagingSenderId', messagingSenderId);
+            localStorage.setItem('firebase-appId', appId);
             
-            document.getElementById('pusher-status').textContent = 'Pusher configuration saved successfully!';
-            document.getElementById('pusher-status').className = 'url-status success';
+            document.getElementById('firebase-status').textContent = 'Firebase configuration saved successfully!';
+            document.getElementById('firebase-status').className = 'url-status success';
             
-            // Initialize Pusher with new credentials
-            initializePusher();
+            // Initialize Firebase with new credentials
+            initializeFirebase();
             
             setTimeout(() => {
-                document.getElementById('pusher-status').textContent = 'Pusher configuration saved';
-                document.getElementById('pusher-status').className = 'url-status';
+                document.getElementById('firebase-status').textContent = 'Firebase configuration saved';
+                document.getElementById('firebase-status').className = 'url-status';
             }, 3000);
         }
 
@@ -1327,8 +1423,13 @@ function doPost(e) {
 
         // Update quiz time information
         function updateQuizTimeInfo() {
-            const startTime = new Date(quizStartTime);
-            const endTime = new Date(quizEndTime);
+            if (!quizStartTime || !quizEndTime) {
+                setDefaultTiming();
+                return;
+            }
+            
+            const startTime = new Date(parseInt(quizStartTime));
+            const endTime = new Date(parseInt(quizEndTime));
             
             const options = { 
                 weekday: 'long', 
@@ -1370,45 +1471,33 @@ function doPost(e) {
             }
         }
 
-        // Check for timing updates from localStorage
-        function checkForTimingUpdates() {
-            const storedStartTime = localStorage.getItem('quizStartTime');
-            const storedEndTime = localStorage.getItem('quizEndTime');
-            
-            if (storedStartTime && storedEndTime) {
-                const startTime = parseInt(storedStartTime);
-                const endTime = parseInt(storedEndTime);
-                
-                if (startTime !== quizStartTime || endTime !== quizEndTime) {
-                    quizStartTime = startTime;
-                    quizEndTime = endTime;
-                    updateQuizTimeInfo();
-                    console.log('Timing updated from localStorage');
-                }
-            }
-        }
-
         // Initialize the application
         function initApp() {
             // Load saved configurations
-            const pusherAppId = localStorage.getItem('pusherAppId');
-            const pusherKey = localStorage.getItem('pusherKey');
-            const pusherSecret = localStorage.getItem('pusherSecret');
-            const pusherCluster = localStorage.getItem('pusherCluster');
+            const apiKey = localStorage.getItem('firebase-apiKey');
+            const authDomain = localStorage.getItem('firebase-authDomain');
+            const databaseURL = localStorage.getItem('firebase-databaseURL');
+            const projectId = localStorage.getItem('firebase-projectId');
+            const storageBucket = localStorage.getItem('firebase-storageBucket');
+            const messagingSenderId = localStorage.getItem('firebase-messagingSenderId');
+            const appId = localStorage.getItem('firebase-appId');
             const webAppUrl = localStorage.getItem('webAppUrl');
             
-            if (pusherAppId && pusherKey && pusherSecret) {
-                document.getElementById('pusher-app-id').value = pusherAppId;
-                document.getElementById('pusher-key').value = pusherKey;
-                document.getElementById('pusher-secret').value = pusherSecret;
-                document.getElementById('pusher-cluster').value = pusherCluster || 'mt1';
+            if (apiKey && authDomain && databaseURL) {
+                document.getElementById('firebase-apiKey').value = apiKey;
+                document.getElementById('firebase-authDomain').value = authDomain;
+                document.getElementById('firebase-databaseURL').value = databaseURL;
+                document.getElementById('firebase-projectId').value = projectId || '';
+                document.getElementById('firebase-storageBucket').value = storageBucket || '';
+                document.getElementById('firebase-messagingSenderId').value = messagingSenderId || '';
+                document.getElementById('firebase-appId').value = appId || '';
                 
                 // Show setup complete message
                 document.getElementById('setup-complete-message').style.display = 'block';
                 document.getElementById('setup-form').style.display = 'none';
                 
-                // Initialize Pusher
-                initializePusher();
+                // Initialize Firebase
+                initializeFirebase();
             }
             
             if (webAppUrl) {
@@ -1420,12 +1509,6 @@ function doPost(e) {
             
             // Update quiz time information
             updateQuizTimeInfo();
-            
-            // Set up periodic time updates
-            setInterval(updateQuizTimeInfo, 60000); // Update every minute
-            
-            // NEW: Set up timing synchronization
-            timingCheckInterval = setInterval(checkForTimingUpdates, 3000); // Check every 3 seconds
         }
 
         // Initialize the app when the page loads
