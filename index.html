@@ -637,7 +637,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzAryffQc6YegG5enhurSYbXO6wW3mKxAxO2-cBhJhoOCdrolOOn1cQxJ601eKghRmJNQ/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -726,7 +726,7 @@ event.target.classList.add('active');
 // If switching to host tab, load the saved time settings
 if (tabName === 'host') {
 loadHostTimeSettings();
-updateShareLink();
+updateShareLink(); // Make sure share link is updated
 }
 }
 
@@ -913,7 +913,7 @@ document.getElementById('host-time-status').textContent = 'Quiz time saved succe
 document.getElementById('host-time-status').className = 'url-status success';
 
 updateQuizTimeInfo();
-updateShareLink();
+updateShareLink(); // Update the share link when time changes
 
 // Clear status after 3 seconds
 setTimeout(() => {
@@ -963,7 +963,7 @@ document.querySelector('input[name="correct-answer"][value="0"]').checked = true
 
 // Update questions display
 displayQuestions();
-updateShareLink();
+updateShareLink(); // Update the share link when questions change
 
 // Clear status after 3 seconds
 setTimeout(() => {
@@ -1032,7 +1032,7 @@ if (confirm('Are you sure you want to delete this question?')) {
 questions.splice(index, 1);
 localStorage.setItem('quizQuestions', JSON.stringify(questions));
 displayQuestions();
-updateShareLink();
+updateShareLink(); // Update the share link when questions change
 }
 }
 
@@ -1210,85 +1210,74 @@ questionStartTime = Date.now();
 q.answers.forEach(a => {
 var btn = document.createElement("button");
 btn.className = "answer-btn";
-btn.innerText = a;
+btn.textContent = a;
 btn.onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
-}
-
-var selected = a;
-var correct = q.correct;
-var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
-
-// Clear the countdown
 clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
+var responseTime = (Date.now() - questionStartTime) / 1000;
+var status = a === q.correct ? "Correct" : "Incorrect";
 
-// Color the answers
-var allButtons = document.querySelectorAll('.answer-btn');
-allButtons.forEach(button => {
-button.disabled = true;
-if (button.innerText === correct) {
+// Send to Google Sheets
+sendToGoogleSheet(playerName, q.question, a, q.correct, responseTime, status);
+
+// Visual feedback
+document.querySelectorAll('.answer-btn').forEach(button => {
+if (button.textContent === q.correct) {
 button.classList.add('correct');
-} else if (button.innerText === selected && selected !== correct) {
+}
+if (button.textContent === a && a !== q.correct) {
 button.classList.add('incorrect');
 }
+button.disabled = true;
 });
 
-// Send to Google Sheets with response time
-sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
-
-// Move to next question after 5 seconds
-setTimeout(moveToNextQuestion, 5000);
+// Move to next question after a delay
+setTimeout(moveToNextQuestion, 2000);
 };
 answersDiv.appendChild(btn);
 });
 
-// Start countdown for this question
 startCountdown();
 }
 
-// Initialize the application
-document.getElementById("joinBtn").onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
+// Join game button functionality
+document.getElementById("joinBtn").addEventListener("click", function() {
+playerName = document.getElementById("name").value.trim();
+if (!playerName) {
+alert("Please enter your name");
 return;
 }
 
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-// Remove the welcome message by hiding the input elements
-document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
+document.getElementById("name").disabled = true;
+this.disabled = true;
 
-// Show first question
+// Check if quiz is active
+var now = new Date().getTime();
+if (now >= quizStartTime && now <= quizEndTime) {
+// Quiz is active, show first question
+currentIndex = 0;
 showPlayerQuestion();
+} else if (now < quizStartTime) {
+// Quiz hasn't started yet
+document.getElementById("player-question").innerHTML = "<h3>Quiz Not Started</h3><p>The quiz will begin at " + new Date(quizStartTime).toLocaleString() + "</p>";
 } else {
-alert("Please enter your name to join the game.");
+// Quiz has ended
+document.getElementById("player-question").innerHTML = "<h3>Quiz Ended</h3><p>The quiz has already ended.</p>";
 }
-};
-
-// Initial setup - show player tab by default
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
 });
-document.getElementById('player').classList.add('active');
 
-// Check if web app URL is configured
-if (!webAppUrl) {
-console.log("Web app URL not configured. Please set it up in the Setup tab.");
-// Show setup tab if no URL is configured
-document.getElementById('setup-tab').style.display = 'flex';
-}
-
-// Initialize the quiz time display
+// Initialize the page
+window.onload = function() {
+// Update quiz time info
 updateQuizTimeInfo();
 
 // Update share link on page load
 updateShareLink();
+
+// Check if we have a web app URL configured
+if (localStorage.getItem('webAppUrl')) {
+document.getElementById('setup-tab').style.display = 'none';
+}
+};
 </script>
 </body>
 </html>
