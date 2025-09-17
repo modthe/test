@@ -1212,34 +1212,36 @@ var btn = document.createElement("button");
 btn.className = "answer-btn";
 btn.textContent = a;
 btn.onclick = function() {
-clearInterval(countdownInterval);
+// Calculate response time
 var responseTime = (Date.now() - questionStartTime) / 1000;
-var status = a === q.correct ? "Correct" : "Incorrect";
 
-// Send to Google Sheets
+// Record answer
+var status = a === q.correct ? "Correct" : "Incorrect";
 sendToGoogleSheet(playerName, q.question, a, q.correct, responseTime, status);
 
 // Visual feedback
+clearInterval(countdownInterval);
 document.querySelectorAll('.answer-btn').forEach(button => {
+button.disabled = true;
 if (button.textContent === q.correct) {
 button.classList.add('correct');
 }
 if (button.textContent === a && a !== q.correct) {
 button.classList.add('incorrect');
 }
-button.disabled = true;
 });
 
 // Move to next question after a delay
-setTimeout(moveToNextQuestion, 2000);
+setTimeout(moveToNextQuestion, 3000);
 };
 answersDiv.appendChild(btn);
 });
 
+// Start the countdown
 startCountdown();
 }
 
-// Join game button functionality
+// Join button functionality
 document.getElementById("joinBtn").addEventListener("click", function() {
 playerName = document.getElementById("name").value.trim();
 if (!playerName) {
@@ -1247,37 +1249,36 @@ alert("Please enter your name");
 return;
 }
 
-document.getElementById("name").disabled = true;
-this.disabled = true;
+if (!quizActive) {
+alert("The quiz is not active yet. Please wait for the host to start it.");
+return;
+}
 
-// Check if quiz is active
-var now = new Date().getTime();
-if (now >= quizStartTime && now <= quizEndTime) {
-// Quiz is active, show first question
+// Hide the join form and show the first question
+document.getElementById("name").style.display = "none";
+this.style.display = "none";
+
 currentIndex = 0;
 showPlayerQuestion();
-} else if (now < quizStartTime) {
-// Quiz hasn't started yet
-document.getElementById("player-question").innerHTML = "<h3>Quiz Not Started</h3><p>The quiz will begin at " + new Date(quizStartTime).toLocaleString() + "</p>";
-} else {
-// Quiz has ended
-document.getElementById("player-question").innerHTML = "<h3>Quiz Ended</h3><p>The quiz has already ended.</p>";
-}
 });
 
-// Initialize the page
-window.onload = function() {
+// Initialize the application
+function initApp() {
+// Update the share link when the page loads
+updateShareLink();
+
 // Update quiz time info
 updateQuizTimeInfo();
 
-// Update share link on page load
-updateShareLink();
-
-// Check if we have a web app URL configured
-if (localStorage.getItem('webAppUrl')) {
-document.getElementById('setup-tab').style.display = 'none';
+// Check if we have URL parameters and update display accordingly
+if (urlParams.has('start') && urlParams.has('end')) {
+document.getElementById('quiz-time-info').innerHTML +=
+'<p class="url-status success">Using shared quiz timing configuration</p>';
 }
-};
+}
+
+// Run initialization when page loads
+window.onload = initApp;
 </script>
 </body>
 </html>
