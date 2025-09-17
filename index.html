@@ -448,9 +448,9 @@ align-items: flex-start;
 </header>
 
 <div class="tabs">
-<div class="tab active" onclick="switchTab('player', event)">Player</div>
-<div class="tab" onclick="switchTab('host', event)">Host</div>
-<div class="tab" id="setup-tab" onclick="switchTab('setup', event)">Setup</div>
+<div class="tab active" onclick="switchTab('player')">Player</div>
+<div class="tab" onclick="switchTab('host')">Host</div>
+<div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
 </div>
 
 <div class="content">
@@ -789,7 +789,7 @@ questions = JSON.parse(savedQuestions);
 }
 
 // Tab switching functionality
-function switchTab(tabName, event) {
+function switchTab(tabName) {
 // Hide all tab contents
 document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
@@ -804,12 +804,12 @@ tab.classList.remove('active');
 });
 
 // Activate the clicked tab
-if (event && event.target) {
-event.target.classList.add('active');
-} else {
-// Fallback if event is not passed
-document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+document.querySelectorAll('.tab').forEach(tab => {
+if (tab.textContent.trim().toLowerCase() === tabName.toLowerCase() || 
+    tab.getAttribute('onclick').includes(tabName)) {
+    tab.classList.add('active');
 }
+});
 
 // If switching to host tab, load the saved time settings
 if (tabName === 'host') {
@@ -1179,15 +1179,6 @@ quizActive = false;
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-// Get saved web app URL from local storage
-var webAppUrl = localStorage.getItem('webAppUrl') || '';
-document.getElementById('webAppUrl').value = webAppUrl;
-
-// Hide setup tab if URL is already configured
-if (webAppUrl) {
-document.getElementById('setup-tab').style.display = 'none';
-}
-
 // Save web app URL to local storage
 function saveWebAppUrl() {
 var url = document.getElementById('webAppUrl').value;
@@ -1212,11 +1203,7 @@ loadQuizSettings();
 urlStatus.textContent = 'Please enter a valid URL';
 urlStatus.className = 'url-status error';
 }
-});
-
-// Player functionality
 }
-});
 
 // Player functionality
 document.getElementById('joinBtn').addEventListener('click', function() {
@@ -1362,12 +1349,17 @@ function initApp() {
     // Check if web app URL is configured
     var webAppUrl = localStorage.getItem('webAppUrl');
     if (webAppUrl) {
+        document.getElementById('webAppUrl').value = webAppUrl;
+        
         // Load questions and settings from Google Sheets
         loadQuestionsFromSheet();
         loadQuizSettings();
         
         // Hide setup tab
         document.getElementById('setup-tab').style.display = 'none';
+    } else {
+        // Show setup tab if no URL is configured
+        document.getElementById('setup-tab').style.display = 'block';
     }
     
     // Display any existing questions
@@ -1383,4 +1375,3 @@ window.onload = initApp;
 </script>
 </body>
 </html>
-
