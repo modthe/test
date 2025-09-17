@@ -607,29 +607,107 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doGet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var questionsSheet = ss.getSheetByName("QuizQuestions");
-  var timingSheet = ss.getSheetByName("QuizTiming");
-  
-  var questions = questionsSheet.getDataRange().getValues().slice(1).map(r => ({
-    question: r[0],
-    answers: [r[1], r[2], r[3], r[4]],
-    correct: r[5]
-  }));
-  
-  var timing = timingSheet.getRange(2,1,1,2).getValues()[0]; // StartTime, EndTime
-  return ContentService.createTextOutput(JSON.stringify({questions, timing}))
-                       .setMimeType(ContentService.MimeType.JSON);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // Get or create QuizQuestions sheet
+    var questionsSheet = ss.getSheetByName("QuizQuestions");
+    if (!questionsSheet) {
+      questionsSheet = ss.insertSheet("QuizQuestions");
+      // Set up headers
+      questionsSheet.getRange(1, 1, 1, 6).setValues([[
+        "Question", "Answer1", "Answer2", "Answer3", "Answer4", "CorrectAnswer"
+      ]]);
+    }
+    
+    // Get or create QuizTiming sheet
+    var timingSheet = ss.getSheetByName("QuizTiming");
+    if (!timingSheet) {
+      timingSheet = ss.insertSheet("QuizTiming");
+      // Set up headers
+      timingSheet.getRange(1, 1, 1, 2).setValues([[
+        "StartTime", "EndTime"
+      ]]);
+      
+      // Set default timing (tomorrow 12:00 PM to 12:30 PM)
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(12, 0, 0, 0);
+      
+      var endTime = new Date(tomorrow);
+      endTime.setMinutes(endTime.getMinutes() + 30);
+      
+      timingSheet.getRange(2, 1, 1, 2).setValues([[tomorrow, endTime]]);
+    }
+    
+    // Get questions data
+    var questionsData = questionsSheet.getDataRange().getValues();
+    var questions = [];
+    
+    // Skip header row and process questions
+    for (var i = 1; i < questionsData.length; i++) {
+      var row = questionsData[i];
+      if (row[0]) { // Only process if question exists
+        questions.push({
+          question: row[0],
+          answers: [row[1], row[2], row[3], row[4]],
+          correct: row[5]
+        });
+      }
+    }
+    
+    // Get timing data
+    var timingData = timingSheet.getRange(2, 1, 1, 2).getValues()[0];
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      questions: questions,
+      timing: timingData
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("QuizResults");
-  
-  var data = JSON.parse(e.postData.contents);
-  sheet.appendRow([new Date(), data.player, data.question, data.answer, data.correct, data.responseTime, data.status]);
-  
-  return ContentService.createTextOutput(JSON.stringify({result:"Success"})).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // Get or create QuizResults sheet
+    var sheet = ss.getSheetByName("QuizResults");
+    if (!sheet) {
+      sheet = ss.insertSheet("QuizResults");
+      // Set up headers
+      sheet.getRange(1, 1, 1, 7).setValues([[
+        "Timestamp", "Player", "Question", "Answer", "Correct", "ResponseTime", "Status"
+      ]]);
+    }
+    
+    // Parse the received data
+    var data = JSON.parse(e.postData.contents);
+    
+    // Append the data to the sheet
+    sheet.appendRow([
+      new Date(),
+      data.player,
+      data.question,
+      data.answer,
+      data.correct,
+      data.responseTime,
+      data.status
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      result: "Success"
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 </pre>
 </div>
@@ -663,31 +741,8 @@ loadHostTimeSettings();
 }
 }
 
-// Example question set
-var questions = [
-{
-question: "What is 2 + 2?",
-answers: ["3", "4", "5", "6"],
-correct: "4"
-},
-{
-question: "Capital of France?",
-answers: ["London", "Paris", "Berlin", "Rome"],
-correct: "Paris"
-},
-{
-question: "Largest planet in our solar system?",
-answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
-correct: "Jupiter"
-},
-{
-question: "What is the chemical symbol for gold?",
-answers: ["Go", "Gd", "Au", "Ag"],
-correct: "Au"
-}
-];
-
 // Initialize variables
+var questions = [];
 var currentIndex = 0;
 var playerName = "";
 var countdownInterval;
@@ -696,10 +751,11 @@ var questionStartTime;
 var quizActive = false;
 var adminCode = "admin123"; // Default admin code
 
-// Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
+// Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
 var quizEndTime = localStorage.getItem('quizEndTime');
 
+// Set default quiz timing if not set
 if (!quizStartTime) {
 // Set default to tomorrow at 12:00 PM
 var tomorrow = new Date();
@@ -730,19 +786,37 @@ questions = JSON.parse(savedQuestions);
 // Load quiz data from Google Sheets
 async function loadQuizData() {
   var webAppUrl = localStorage.getItem('webAppUrl');
-  if (!webAppUrl) return;
+  if (!webAppUrl) {
+    console.log("Web app URL not configured");
+    return;
+  }
 
   try {
     const response = await fetch(webAppUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
-    questions = data.questions;
-    quizStartTime = new Date(data.timing[0]).getTime();
-    quizEndTime = new Date(data.timing[1]).getTime();
     
-    // Save to localStorage
-    localStorage.setItem('quizStartTime', quizStartTime);
-    localStorage.setItem('quizEndTime', quizEndTime);
-    localStorage.setItem('quizQuestions', JSON.stringify(questions));
+    if (data.error) {
+      console.error("Error from server:", data.error);
+      return;
+    }
+    
+    // Update questions and timing from server
+    if (data.questions && data.questions.length > 0) {
+      questions = data.questions;
+      localStorage.setItem('quizQuestions', JSON.stringify(questions));
+    }
+    
+    if (data.timing && data.timing.length === 2) {
+      quizStartTime = new Date(data.timing[0]).getTime();
+      quizEndTime = new Date(data.timing[1]).getTime();
+      
+      // Save to localStorage
+      localStorage.setItem('quizStartTime', quizStartTime);
+      localStorage.setItem('quizEndTime', quizEndTime);
+    }
     
     updateQuizTimeInfo();
     displayQuestions();
@@ -1038,7 +1112,7 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+async function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
 var webAppUrl = localStorage.getItem('webAppUrl');
 
 if (!webAppUrl) {
@@ -1058,21 +1132,25 @@ responseTime: responseTime,
 status: status
 };
 
+try {
 // Send data to Google Apps Script web app
-fetch(webAppUrl, {
+const response = await fetch(webAppUrl, {
 method: "POST",
-mode: "no-cors",
 headers: {
 "Content-Type": "application/json"
 },
 body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
 });
+
+if (!response.ok) {
+throw new Error(`HTTP error! status: ${response.status}`);
+}
+
+const result = await response.json();
+console.log("Data sent to Google Sheets successfully:", result);
+} catch(error) {
+console.error("Error sending data to Google Sheets:", error);
+}
 }
 
 // Countdown timer function
@@ -1136,74 +1214,85 @@ var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in 
 
 // Clear the countdown
 clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
 
-// Color the answers
+// Check if answer is correct
+var isCorrect = (selected === correct);
+
+// Add visual feedback
+if (isCorrect) {
+btn.classList.add("correct");
+} else {
+btn.classList.add("incorrect");
+// Highlight the correct answer
 var allButtons = document.querySelectorAll('.answer-btn');
 allButtons.forEach(button => {
-button.disabled = true;
 if (button.innerText === correct) {
-button.classList.add('correct');
-} else if (button.innerText === selected && selected !== correct) {
-button.classList.add('incorrect');
+button.classList.add("correct");
 }
 });
+}
 
-// Send to Google Sheets with response time
-sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
+// Disable all buttons after selection
+allButtons.forEach(button => {
+button.disabled = true;
+});
 
-// Move to next question after 5 seconds
-setTimeout(moveToNextQuestion, 5000);
+// Send data to Google Sheets
+sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, isCorrect ? "Correct" : "Incorrect");
+
+// Move to next question after a delay
+setTimeout(moveToNextQuestion, 3000);
 };
 answersDiv.appendChild(btn);
 });
 
-// Start countdown for this question
 startCountdown();
 }
 
-// Initialize the application
-document.getElementById("joinBtn").onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
+// Join game functionality
+document.getElementById("joinBtn").addEventListener("click", function() {
+playerName = document.getElementById("name").value.trim();
+if (!playerName) {
+alert("Please enter your name");
 return;
 }
 
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-// Remove the welcome message by hiding the input elements
+// Check if quiz is active
+var now = new Date().getTime();
+if (now < quizStartTime) {
+alert("The quiz hasn't started yet. Please check back at the scheduled time.");
+return;
+} else if (now > quizEndTime) {
+alert("The quiz has already ended.");
+return;
+}
+
+// Hide join form and show first question
 document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
+this.style.display = "none";
 
-// Show first question
+// Start with first question
+currentIndex = 0;
 showPlayerQuestion();
-} else {
-alert("Please enter your name to join the game.");
-}
-};
-
-// Initial setup - show player tab by default
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
 });
-document.getElementById('player').classList.add('active');
 
-// Check if web app URL is configured
-if (!webAppUrl) {
-console.log("Web app URL not configured. Please set it up in the Setup tab.");
-// Show setup tab if no URL is configured
-document.getElementById('setup-tab').style.display = 'flex';
-}
-
-// Initialize the quiz time display
-updateQuizTimeInfo();
-
-// Load quiz data from Google Sheets if URL is configured
-if (webAppUrl) {
+// Initialize the app
+function initApp() {
+// Load quiz data if web app URL is configured
+if (localStorage.getItem('webAppUrl')) {
 loadQuizData();
 }
+
+// Display questions in admin tab
+displayQuestions();
+
+// Set up quiz timer
+setInterval(updateQuizTimeInfo, 1000);
+updateQuizTimeInfo();
+}
+
+// Initialize the application
+initApp();
 </script>
 </body>
 </html>
-
