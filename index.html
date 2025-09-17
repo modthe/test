@@ -448,9 +448,9 @@ align-items: flex-start;
 </header>
 
 <div class="tabs">
-<div class="tab active" onclick="switchTab('player')">Player</div>
-<div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
+<div class="tab active" onclick="switchTab('player', event)">Player</div>
+<div class="tab" onclick="switchTab('host', event)">Host</div>
+<div class="tab" id="setup-tab" onclick="switchTab('setup', event)">Setup</div>
 </div>
 
 <div class="content">
@@ -746,30 +746,6 @@ function doGet(e) {
 </div>
 
 <script>
-// Tab switching functionality
-function switchTab(tabName) {
-// Hide all tab contents
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
-
-// Show selected tab content
-document.getElementById(tabName).classList.add('active');
-
-// Update active tab
-document.querySelectorAll('.tab').forEach(tab => {
-tab.classList.remove('active');
-});
-
-// Activate the clicked tab
-event.target.classList.add('active');
-
-// If switching to host tab, load the saved time settings
-if (tabName === 'host') {
-loadHostTimeSettings();
-}
-}
-
 // Initialize variables
 var questions = [];
 var currentIndex = 0;
@@ -812,6 +788,35 @@ if (savedQuestions) {
 questions = JSON.parse(savedQuestions);
 }
 
+// Tab switching functionality
+function switchTab(tabName, event) {
+// Hide all tab contents
+document.querySelectorAll('.tab-content').forEach(tab => {
+tab.classList.remove('active');
+});
+
+// Show selected tab content
+document.getElementById(tabName).classList.add('active');
+
+// Update active tab
+document.querySelectorAll('.tab').forEach(tab => {
+tab.classList.remove('active');
+});
+
+// Activate the clicked tab
+if (event && event.target) {
+event.target.classList.add('active');
+} else {
+// Fallback if event is not passed
+document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+}
+
+// If switching to host tab, load the saved time settings
+if (tabName === 'host') {
+loadHostTimeSettings();
+}
+}
+
 // Load questions from Google Sheets
 function loadQuestionsFromSheet() {
   var webAppUrl = localStorage.getItem('webAppUrl');
@@ -821,7 +826,12 @@ function loadQuestionsFromSheet() {
   }
   
   fetch(webAppUrl + "?type=questions")
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+      return res.json();
+    })
     .then(data => {
       console.log("Loaded questions from sheet:", data);
       if (data && data.length > 0) {
@@ -842,7 +852,12 @@ function loadQuizSettings() {
   }
   
   fetch(webAppUrl + "?type=settings")
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to fetch settings');
+      }
+      return res.json();
+    })
     .then(data => {
       console.log("Loaded settings:", data);
       
@@ -905,7 +920,12 @@ function saveQuizSettings() {
     body: JSON.stringify(settings),
     headers: { "Content-Type": "application/json" }
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Failed to save settings');
+    }
+    return res.json();
+  })
   .then(data => {
     console.log("Settings saved:", data);
     document.getElementById('host-time-status').textContent = 'Quiz time saved to Google Sheets!';
@@ -1001,7 +1021,12 @@ function addQuestion() {
       body: JSON.stringify(newQuestion),
       headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to save question');
+      }
+      return res.json();
+    })
     .then(data => {
       console.log("Saved to Google Sheet:", data);
       document.getElementById('question-status').textContent = 'Question added to Google Sheets!';
@@ -1187,192 +1212,170 @@ loadQuizSettings();
 urlStatus.textContent = 'Please enter a valid URL';
 urlStatus.className = 'url-status error';
 }
-}
-
-// Function to send data to Google Sheets
-async function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-  var webAppUrl = localStorage.getItem('webAppUrl');
-
-  if (!webAppUrl) {
-    console.error("Web app URL not configured");
-    return;
-  }
-
-  // Prepare data to send
-  var data = {
-    type: "result",
-    player: playerName,
-    question: question,
-    answer: selectedAnswer,
-    correct: correctAnswer,
-    responseTime: responseTime,
-    status: status
-  };
-
-  try {
-    // Send the data to Google Sheets
-    const response = await fetch(webAppUrl, {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-    
-    const result = await response.json();
-    console.log("Data sent to Google Sheets:", result);
-    return result;
-  } catch (error) {
-    console.error("Error sending data to Google Sheets:", error);
-    throw error;
-  }
-}
-
-// Join game functionality
-document.getElementById('joinBtn').addEventListener('click', function() {
-  playerName = document.getElementById('name').value.trim();
-  
-  if (!playerName) {
-    alert('Please enter your name');
-    return;
-  }
-  
-  if (!quizActive) {
-    alert('The quiz is not active yet. Please wait for the host to start it.');
-    return;
-  }
-  
-  // Hide join form and show quiz interface
-  document.getElementById('name').style.display = 'none';
-  this.style.display = 'none';
-  
-  // Display first question
-  displayQuestion();
 });
 
-// Display current question
-function displayQuestion() {
-  if (currentIndex >= questions.length) {
-    endQuiz();
-    return;
-  }
-  
-  var question = questions[currentIndex];
-  var questionElement = document.getElementById('player-question');
-  var answersElement = document.getElementById('player-answers');
-  
-  // Display question
-  questionElement.innerHTML = `<h3>Question ${currentIndex + 1}/${questions.length}</h3><p>${question.question}</p>`;
-  
-  // Display answers
-  answersElement.innerHTML = '';
-  question.answers.forEach((answer, index) => {
-    var button = document.createElement('button');
-    button.className = 'answer-btn';
-    button.textContent = answer;
-    button.onclick = function() {
-      answerQuestion(index);
-    };
-    answersElement.appendChild(button);
-  });
-  
-  // Start countdown timer
-  timeLeft = 15; // Reset timer for each question
-  questionStartTime = new Date().getTime();
-  startCountdown();
+// Player functionality
+document.getElementById('joinBtn').addEventListener('click', function() {
+    playerName = document.getElementById('name').value.trim();
+    
+    if (!playerName) {
+        alert('Please enter your name');
+        return;
+    }
+    
+    if (!quizActive) {
+        alert('The quiz is not active yet. Please wait for the host to start it.');
+        return;
+    }
+    
+    // Hide join form and show quiz interface
+    document.getElementById('name').style.display = 'none';
+    this.style.display = 'none';
+    
+    // Start the quiz for this player
+    startQuizForPlayer();
+});
+
+function startQuizForPlayer() {
+    if (questions.length === 0) {
+        document.getElementById('player-question').innerHTML = '<p>No questions available yet. Please wait.</p>';
+        return;
+    }
+    
+    currentIndex = 0;
+    displayQuestionForPlayer();
 }
 
-// Start countdown timer for current question
-function startCountdown() {
-  clearInterval(countdownInterval);
-  
-  countdownInterval = setInterval(function() {
+function displayQuestionForPlayer() {
+    if (currentIndex >= questions.length) {
+        // Quiz completed
+        document.getElementById('player-question').innerHTML = '<h3>Quiz Completed!</h3><p>Thank you for participating.</p>';
+        document.getElementById('player-answers').innerHTML = '';
+        document.getElementById('countdown').innerHTML = '';
+        return;
+    }
+    
+    var question = questions[currentIndex];
+    document.getElementById('player-question').innerHTML = `<h3>Question ${currentIndex + 1}/${questions.length}</h3><p>${question.question}</p>`;
+    
+    // Display answer buttons
+    var answersHtml = '';
+    question.answers.forEach((answer, index) => {
+        answersHtml += `<button class="answer-btn" onclick="submitAnswer(${index})">${answer}</button>`;
+    });
+    document.getElementById('player-answers').innerHTML = answersHtml;
+    
+    // Start countdown for this question
+    timeLeft = 15; // 15 seconds per question
+    questionStartTime = new Date().getTime();
+    updateCountdown();
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
     document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
     
     if (timeLeft <= 0) {
-      clearInterval(countdownInterval);
-      // Time's up, mark as incorrect and move to next question
-      answerQuestion(-1); // -1 indicates no answer (timeout)
+        clearInterval(countdownInterval);
+        // Time's up, mark as incorrect and move to next question
+        recordAnswer(-1, 'Time\'s up');
+        return;
     }
     
     timeLeft--;
-  }, 1000);
 }
 
-// Handle answer selection
-function answerQuestion(selectedIndex) {
-  clearInterval(countdownInterval);
-  
-  var question = questions[currentIndex];
-  var isCorrect = selectedIndex === question.correct;
-  var responseTime = new Date().getTime() - questionStartTime;
-  var status = isCorrect ? "Correct" : "Incorrect";
-  
-  if (selectedIndex === -1) {
-    status = "Timeout";
-  }
-  
-  // Visual feedback
-  var answerButtons = document.querySelectorAll('.answer-btn');
-  
-  answerButtons.forEach((button, index) => {
-    if (index === question.correct) {
-      button.classList.add('correct');
-    } else if (index === selectedIndex && index !== question.correct) {
-      button.classList.add('incorrect');
+function submitAnswer(answerIndex) {
+    clearInterval(countdownInterval);
+    
+    var responseTime = (new Date().getTime() - questionStartTime) / 1000; // in seconds
+    var isCorrect = (answerIndex === questions[currentIndex].correct);
+    
+    // Visual feedback
+    var answerButtons = document.querySelectorAll('.answer-btn');
+    answerButtons.forEach((btn, index) => {
+        if (index === questions[currentIndex].correct) {
+            btn.classList.add('correct');
+        } else if (index === answerIndex && !isCorrect) {
+            btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+    });
+    
+    // Record answer
+    recordAnswer(answerIndex, responseTime, isCorrect);
+    
+    // Move to next question after a delay
+    setTimeout(() => {
+        currentIndex++;
+        displayQuestionForPlayer();
+    }, 2000);
+}
+
+function recordAnswer(answerIndex, responseTime, isCorrect) {
+    var question = questions[currentIndex];
+    var answerText = answerIndex >= 0 ? question.answers[answerIndex] : 'No answer';
+    
+    var resultData = {
+        type: "result",
+        player: playerName,
+        question: question.question,
+        answer: answerText,
+        correct: isCorrect,
+        responseTime: responseTime,
+        status: isCorrect ? "Correct" : "Incorrect"
+    };
+    
+    // Save to Google Sheets if configured
+    var webAppUrl = localStorage.getItem('webAppUrl');
+    if (webAppUrl) {
+        fetch(webAppUrl, {
+            method: "POST",
+            body: JSON.stringify(resultData),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(res => res.json())
+        .then(data => console.log("Result saved to sheet:", data))
+        .catch(err => console.error("Error saving result:", err));
     }
     
-    button.disabled = true;
-  });
-  
-  // Send result to Google Sheets
-  sendToGoogleSheet(
-    playerName,
-    question.question,
-    selectedIndex === -1 ? "No answer" : question.answers[selectedIndex],
-    question.answers[question.correct],
-    responseTime,
-    status
-  ).catch(error => {
-    console.error("Failed to send result to Google Sheets:", error);
-  });
-  
-  // Wait a moment before moving to next question
-  setTimeout(function() {
-    currentIndex++;
-    displayQuestion();
-  }, 2000);
+    // Also store locally
+    var playerResults = JSON.parse(localStorage.getItem('playerResults') || '[]');
+    playerResults.push({
+        timestamp: new Date().toISOString(),
+        ...resultData
+    });
+    localStorage.setItem('playerResults', JSON.stringify(playerResults));
 }
 
-// End of quiz
-function endQuiz() {
-  document.getElementById('player-question').innerHTML = '<h3>Quiz Completed!</h3>';
-  document.getElementById('countdown').textContent = '';
-  document.getElementById('player-answers').innerHTML = `
-    <p>Thank you for participating, ${playerName}!</p>
-    <button onclick="location.reload()">Play Again</button>
-  `;
-}
-
-// Initialize the application
+// Initialize the app
 function initApp() {
-  // Check if web app URL is configured
-  var webAppUrl = localStorage.getItem('webAppUrl');
-  if (webAppUrl) {
-    // Load questions and settings from Google Sheets
-    loadQuestionsFromSheet();
-    loadQuizSettings();
+    // Check if web app URL is configured
+    var webAppUrl = localStorage.getItem('webAppUrl');
+    if (webAppUrl) {
+        // Load questions and settings from Google Sheets
+        loadQuestionsFromSheet();
+        loadQuizSettings();
+        
+        // Hide setup tab
+        document.getElementById('setup-tab').style.display = 'none';
+    }
     
-    // Hide setup tab if URL is configured
-    document.getElementById('setup-tab').style.display = 'none';
-  }
-  
-  // Update quiz time info
-  updateQuizTimeInfo();
+    // Display any existing questions
+    displayQuestions();
+    
+    // Start quiz timer updates
+    setInterval(updateQuizTimeInfo, 1000);
+    updateQuizTimeInfo();
 }
 
-// Start the application
-initApp();
+// Start the app when page loads
+window.onload = initApp;
 </script>
 </body>
 </html>
