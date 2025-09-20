@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -388,6 +389,18 @@ max-width: 120px;
 max-width: 80px;
 }
 
+.firebase-config-help {
+background: #ffebee;
+border-left: 4px solid #f44336;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.firebase-config-help h3 {
+color: #c62828;
+}
+
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -441,6 +454,7 @@ align-items: flex-start;
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
 <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
+<div class="tab" onclick="switchTab('firebase-help')">Firebase Help</div>
 </div>
 
 <div class="content">
@@ -665,6 +679,54 @@ lock.releaseLock();
 </div>
 </div>
 </div>
+
+<!-- Firebase Help Tab -->
+<div id="firebase-help" class="tab-content">
+<h2>Firebase Setup Help</h2>
+
+<div class="firebase-config-help">
+<h3>Firebase Configuration Issues</h3>
+<p>If your Firebase real-time updates aren't working, follow these steps:</p>
+</div>
+
+<div class="card">
+<h3>Step 1: Check Firebase Database Rules</h3>
+<p>Your Firebase Realtime Database rules must allow read and write access:</p>
+<div class="code-block">
+{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}
+</div>
+<p>Go to Firebase Console → Realtime Database → Rules and update them.</p>
+</div>
+
+<div class="card">
+<h3>Step 2: Verify Firebase Configuration</h3>
+<p>Your Firebase config should look like this (with your actual values):</p>
+<div class="code-block">
+const firebaseConfig = {
+  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
+  authDomain: "thequizfs.firebaseapp.com",
+  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
+  projectId: "thequizfs",
+  storageBucket: "thequizfs.firebasestorage.app",
+  messagingSenderId: "16144411406",
+  appId: "1:16144411406:web:d83affb2013dea665e055f",
+  measurementId: "G-NXX4GQZ4NF"
+};
+</div>
+</div>
+
+<div class="card">
+<h3>Step 3: Initialize Data Structure</h3>
+<p>Click the button below to initialize the required data structure in your Firebase database:</p>
+<button onclick="initializeFirebaseData()">Initialize Firebase Data</button>
+<div id="firebase-init-status" class="url-status">Click to initialize Firebase data structure</div>
+</div>
+</div>
 </div>
 </div>
 
@@ -755,7 +817,12 @@ function loadDataFromFirebase() {
       localStorage.setItem('quizStartTime', quizStartTime);
       localStorage.setItem('quizEndTime', quizEndTime);
       updateQuizTimeInfo();
+      console.log("Quiz time updated from Firebase");
     }
+  }, (error) => {
+    console.error("Firebase read failed:", error);
+    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
+    document.getElementById('firebase-init-status').className = 'url-status error';
   });
 
   // Listen for question changes
@@ -765,6 +832,7 @@ function loadDataFromFirebase() {
       questions = Object.values(data);
       localStorage.setItem('quizQuestions', JSON.stringify(questions));
       displayQuestions();
+      console.log("Questions updated from Firebase");
       
       // If we're on the player tab and a question is active, update it
       if (document.getElementById('player').classList.contains('active') && 
@@ -772,6 +840,64 @@ function loadDataFromFirebase() {
         showPlayerQuestion();
       }
     }
+  }, (error) => {
+    console.error("Firebase read failed:", error);
+    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
+    document.getElementById('firebase-init-status').className = 'url-status error';
+  });
+}
+
+// Initialize Firebase data structure
+function initializeFirebaseData() {
+  const statusElement = document.getElementById('firebase-init-status');
+  statusElement.textContent = "Initializing Firebase data...";
+  statusElement.className = 'url-status';
+  
+  // Initialize with default values if they don't exist
+  database.ref('quizTime').once('value').then((snapshot) => {
+    if (!snapshot.exists()) {
+      // Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(12, 0, 0, 0);
+      var startTime = tomorrow.getTime();
+      var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
+      
+      return database.ref('quizTime').set({
+        startTime: startTime,
+        endTime: endTime
+      });
+    }
+  }).then(() => {
+    return database.ref('questions').once('value');
+  }).then((snapshot) => {
+    if (!snapshot.exists()) {
+      // Set default questions
+      const defaultQuestions = [
+        {
+          question: "What is 2 + 2?",
+          answers: ["3", "4", "5", "6"],
+          correct: "4"
+        },
+        {
+          question: "Capital of France?",
+          answers: ["London", "Paris", "Berlin", "Rome"],
+          correct: "Paris"
+        }
+      ];
+      return database.ref('questions').set(defaultQuestions);
+    }
+  }).then(() => {
+    statusElement.textContent = "Firebase data initialized successfully!";
+    statusElement.className = 'url-status success';
+    console.log("Firebase data initialized");
+    
+    // Reload data
+    loadDataFromFirebase();
+  }).catch((error) => {
+    statusElement.textContent = "Error initializing Firebase: " + error.message;
+    statusElement.className = 'url-status error';
+    console.error("Firebase initialization error:", error);
   });
 }
 
@@ -784,7 +910,7 @@ function saveQuizTimeToFirebase(startTime, endTime) {
     document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
     document.getElementById('host-time-status').className = 'url-status success';
   }).catch((error) => {
-    document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error;
+    document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
     document.getElementById('host-time-status').className = 'url-status error';
   });
 }
@@ -795,7 +921,7 @@ function saveQuestionsToFirebase() {
     document.getElementById('question-status').textContent = 'Questions saved successfully!';
     document.getElementById('question-status').className = 'url-status success';
   }).catch((error) => {
-    document.getElementById('question-status').textContent = 'Error saving questions: ' + error;
+    document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
     document.getElementById('question-status').className = 'url-status error';
   });
 }
