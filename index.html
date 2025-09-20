@@ -681,8 +681,17 @@ document.querySelectorAll('.tab').forEach(tab => {
 tab.classList.remove('active');
 });
 
-// Activate the clicked tab
-event.target.classList.add('active');
+// Find and activate the clicked tab
+const tabs = document.querySelectorAll('.tab');
+for (let i = 0; i < tabs.length; i++) {
+if (tabs[i].textContent.trim() === 
+    (tabName === 'player' ? 'Player' : 
+     tabName === 'host' ? 'Host' : 
+     tabName === 'setup' ? 'Setup' : '')) {
+tabs[i].classList.add('active');
+break;
+}
+}
 
 // If switching to host tab, load the saved time settings
 if (tabName === 'host') {
@@ -754,12 +763,52 @@ if (savedQuestions) {
 questions = JSON.parse(savedQuestions);
 }
 
+// Add a timestamp to track changes
+var lastUpdateTime = localStorage.getItem('lastUpdateTime') || 0;
+
+// Polling function to check for updates
+function checkForUpdates() {
+var currentUpdateTime = localStorage.getItem('lastUpdateTime');
+if (currentUpdateTime && currentUpdateTime > lastUpdateTime) {
+lastUpdateTime = currentUpdateTime;
+    
+// Check if questions were updated
+var updatedQuestions = localStorage.getItem('quizQuestions');
+if (updatedQuestions) {
+questions = JSON.parse(updatedQuestions);
+    
+// If player is in the middle of the quiz, update the current question
+if (playerName && currentIndex < questions.length) {
+showPlayerQuestion();
+}
+}
+
+// Check if quiz time was updated
+var newQuizStartTime = localStorage.getItem('quizStartTime');
+var newQuizEndTime = localStorage.getItem('quizEndTime');
+if (newQuizStartTime && newQuizEndTime) {
+quizStartTime = parseInt(newQuizStartTime);
+quizEndTime = parseInt(newQuizEndTime);
+updateQuizTimeInfo();
+}
+
+// If admin tab is open, refresh the questions display
+if (document.getElementById('host').classList.contains('active') && 
+document.getElementById('admin-features').style.display !== 'none') {
+displayQuestions();
+}
+}
+}
+
+// Set up polling every 2 seconds
+setInterval(checkForUpdates, 2000);
+
 // Load host time settings into the form
 function loadHostTimeSettings() {
-var quizDate = new Date(quizStartTime);
+var quizDate = new Date(parseInt(localStorage.getItem('quizStartTime') || quizStartTime));
 document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
 
-var startTime = new Date(quizStartTime);
+var startTime = new Date(parseInt(localStorage.getItem('quizStartTime') || quizStartTime));
 var hours = startTime.getHours();
 var ampm = hours >= 12 ? 'PM' : 'AM';
 hours = hours % 12;
@@ -823,6 +872,7 @@ quizEndTime = endDate.getTime();
 
 localStorage.setItem('quizStartTime', quizStartTime);
 localStorage.setItem('quizEndTime', quizEndTime);
+localStorage.setItem('lastUpdateTime', Date.now()); // Update timestamp
 
 document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
 document.getElementById('host-time-status').className = 'url-status success';
@@ -863,6 +913,7 @@ correct: correctAnswer
 
 questions.push(newQuestion);
 localStorage.setItem('quizQuestions', JSON.stringify(questions));
+localStorage.setItem('lastUpdateTime', Date.now()); // Update timestamp
 
 document.getElementById('question-status').textContent = 'Question added successfully!';
 document.getElementById('question-status').className = 'url-status success';
@@ -931,6 +982,7 @@ document.querySelector(`input[name="correct-answer"][value="${correctIndex}"]`).
 // Remove the question being edited
 questions.splice(index, 1);
 localStorage.setItem('quizQuestions', JSON.stringify(questions));
+localStorage.setItem('lastUpdateTime', Date.now()); // Update timestamp
 
 // Update display
 displayQuestions();
@@ -944,6 +996,7 @@ function deleteQuestion(index) {
 if (confirm('Are you sure you want to delete this question?')) {
 questions.splice(index, 1);
 localStorage.setItem('quizQuestions', JSON.stringify(questions));
+localStorage.setItem('lastUpdateTime', Date.now()); // Update timestamp
 displayQuestions();
 }
 }
