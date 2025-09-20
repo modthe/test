@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game with Fixed Sheets Integration</title>
+    <title>Quiz Game - Firebase to Sheets Integration</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -468,7 +468,7 @@
 <body>
 <div class="container">
 <header>
-<h1>Quiz Game with Fixed Sheets Integration</h1>
+<h1>Quiz Game - Firebase to Sheets</h1>
 <p class="subtitle">Answer questions within the time limit</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
@@ -633,6 +633,7 @@
 <li>Replace the default code with the provided script</li>
 <li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
 <li>Copy the web app URL and paste it in the field below</li>
+<li>Add your Firebase configuration to the script</li>
 </ol>
 </div>
 
@@ -646,75 +647,143 @@
 <div class="code-block">
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
-function doPost(e) {
-  // Add CORS headers
-  var headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  };
-  
-  // Handle preflight OPTIONS request
-  if (e && e.parameter && e.parameter === 'options') {
-    return ContentService.createTextOutput(JSON.stringify({}))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
-  }
-  
-  // 1. ACQUIRE A LOCK to prevent concurrent access
-  const lock = LockService.getScriptLock();
+// Firebase configuration - replace with your own
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase in Apps Script
+function initializeFirebase() {
   try {
-    lock.waitLock(30000); // Wait up to 30 seconds to get the lock
+    // Firebase is not natively supported in Apps Script
+    // We'll use UrlFetchApp to make REST API calls instead
+    return true;
+  } catch (error) {
+    Logger.log('Error initializing Firebase: ' + error.toString());
+    return false;
+  }
+}
 
-    // 2. GET THE SPECIFIC SHEET BY NAME
+// Function to fetch data from Firebase
+function fetchFromFirebase(path) {
+  try {
+    const baseUrl = firebaseConfig.databaseURL;
+    const url = baseUrl + path + '.json';
+    
+    const options = {
+      'method': 'GET',
+      'muteHttpExceptions': true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText());
+    
+    return data;
+  } catch (error) {
+    Logger.log('Error fetching from Firebase: ' + error.toString());
+    return null;
+  }
+}
+
+// Main function to process quiz results
+function processQuizResults() {
+  const lock = LockService.getScriptLock();
+  
+  try {
+    lock.waitLock(30000); // Wait for the lock
+    
+    // Initialize Firebase (conceptual)
+    initializeFirebase();
+    
+    // Get the sheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-    // If the sheet doesn't exist, create it and add headers
     if (!sheet) {
-      // Handle error: Sheet not found
-      return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(headers)
-        .setStatusCode(500);
+      Logger.log('Sheet "Quiz Results" not found');
+      return;
     }
-
-    // 3. Add headers if sheet is empty (now safe inside the lock)
+    
+    // Add headers if sheet is empty
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
     }
-
-    // 4. PARSE the incoming data
-    const data = JSON.parse(e.postData.contents);
-
-    // 5. APPEND THE NEW ROW
-    sheet.appendRow([
-      new Date(),
-      data.player,
-      data.question,
-      data.answer,
-      data.correct,
-      data.responseTime,
-      data.status
-    ]);
-
-    // 6. RETURN SUCCESS
-    return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
-
-  } catch (error) {
-    // Log the error for you to see
-    console.error("Failed to process request:", error);
-    // Return an error message to the client
-    return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers)
-      .setStatusCode(500);
-
+    
+    // Fetch quiz responses from Firebase
+    const responses = fetchFromFirebase('/quizResponses');
+    
+    if (responses) {
+      // Process each response
+      for (const key in responses) {
+        if (responses.hasOwnProperty(key)) {
+          const response = responses[key];
+          
+          // Append to sheet
+          sheet.appendRow([
+            new Date(response.timestamp || new Date()),
+            response.player,
+            response.question,
+            response.answer,
+            response.correct,
+            response.responseTime,
+            response.status
+          ]);
+          
+          // Delete the response from Firebase after processing
+          deleteFromFirebase('/quizResponses/' + key);
+        }
+      }
+    }
+    
+    // Update last processed timestamp
+    sheet.getRange("Z1").setValue(new Date());
+    
+  } catch (e) {
+    Logger.log('Failed to get lock: ' + e.toString());
   } finally {
-    // 7. ALWAYS RELEASE THE LOCK
-    lock.releaseLock();
+    lock.releaseLock(); // Always release the lock!
   }
+}
+
+// Function to delete data from Firebase after processing
+function deleteFromFirebase(path) {
+  try {
+    const baseUrl = firebaseConfig.databaseURL;
+    const url = baseUrl + path + '.json';
+    
+    const options = {
+      'method': 'DELETE',
+      'muteHttpExceptions': true
+    };
+    
+    UrlFetchApp.fetch(url, options);
+  } catch (error) {
+    Logger.log('Error deleting from Firebase: ' + error.toString());
+  }
+}
+
+// Function to handle manual triggers
+function manualProcessQuizResults() {
+  processQuizResults();
+}
+
+// Function to set up time-based trigger
+function setupTrigger() {
+  // Delete existing triggers
+  const triggers = ScriptApp.getProjectTriggers();
+  for (const trigger of triggers) {
+    ScriptApp.deleteTrigger(trigger);
+  }
+  
+  // Create new trigger to run every 5 minutes
+  ScriptApp.newTrigger('processQuizResults')
+    .timeBased()
+    .everyMinutes(5)
+    .create();
 }
 </pre>
 </div>
@@ -760,7 +829,7 @@ Firebase data will appear here
 <label for="test-answer">Answer:</label>
 <input type="text" id="test-answer" value="Test answer">
 </div>
-<button onclick="sendTestData()">Send Test Data to Sheets</button>
+<button onclick="sendTestData()">Send Test Data to Firebase</button>
 <div id="test-result" class="url-status">Test not run yet</div>
 </div>
 </div>
@@ -861,8 +930,6 @@ function loadDataFromFirebase() {
     }
   }, (error) => {
     console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
   });
 
   // Listen for question changes
@@ -882,8 +949,6 @@ function loadDataFromFirebase() {
     }
   }, (error) => {
     console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
   });
 
   // Listen for web app URL changes
@@ -944,6 +1009,29 @@ function saveQuestionsToFirebase() {
     document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
     document.getElementById('question-status').className = 'url-status error';
   });
+}
+
+// Save quiz response to Firebase
+function saveQuizResponseToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+  const responseData = {
+    player: playerName,
+    question: question,
+    answer: selectedAnswer,
+    correct: correctAnswer,
+    responseTime: responseTime,
+    status: status,
+    timestamp: Date.now()
+  };
+  
+  return database.ref('quizResponses').push(responseData)
+    .then(() => {
+      console.log("Quiz response saved to Firebase");
+      return true;
+    })
+    .catch((error) => {
+      console.error("Error saving quiz response to Firebase:", error);
+      return false;
+    });
 }
 
 // Load questions from localStorage
@@ -1238,66 +1326,17 @@ urlStatus.className = 'url-status error';
 }
 }
 
-// Function to send data to Google Sheets
+// Function to send data to Firebase (instead of directly to Sheets)
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-    // Use the webAppUrl from the variable (which is synced from Firebase)
-    if (!webAppUrl) {
-        console.error("Web app URL not configured");
-        alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-        switchTab('setup');
-        return;
-    }
-
-    // Prepare data to send
-    var data = {
-        player: playerName,
-        question: question,
-        answer: selectedAnswer,
-        correct: correctAnswer,
-        responseTime: responseTime,
-        status: status
-    };
-
-    // Send data to Google Apps Script web app
-    fetch(webAppUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(text => {
-        try {
-            const result = JSON.parse(text);
-            console.log("Data sent to Google Sheets successfully", result);
-        } catch (e) {
-            console.log("Data sent to Google Sheets successfully", text);
-        }
-    })
-    .catch(error => {
-        console.error("Error sending data to Google Sheets:", error);
-        // Fallback: try with no-cors mode for browsers that might need it
-        fetch(webAppUrl, {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        })
-        .then(() => {
-            console.log("Data sent using no-cors fallback");
-        })
-        .catch(fallbackError => {
-            console.error("Fallback also failed:", fallbackError);
+    // Save to Firebase instead of directly to Sheets
+    saveQuizResponseToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status)
+        .then((success) => {
+            if (success) {
+                console.log("Quiz response saved to Firebase. It will be processed by Apps Script.");
+            } else {
+                console.error("Failed to save quiz response to Firebase");
+            }
         });
-    });
 }
 
 // Countdown timer function
@@ -1374,7 +1413,7 @@ button.classList.add('incorrect');
 }
 });
 
-// Send to Google Sheets with response time
+// Send to Firebase (will be processed by Apps Script)
 sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
 
 // Move to next question after 5 seconds
@@ -1446,10 +1485,16 @@ function sendTestData() {
     resultElement.textContent = "Sending test data...";
     resultElement.className = 'url-status';
     
-    sendToGoogleSheet(player, question, answer, answer, 5.0, "Test");
-    
-    resultElement.textContent = "Test data sent! Check your Google Sheet.";
-    resultElement.className = 'url-status success';
+    saveQuizResponseToFirebase(player, question, answer, answer, 5.0, "Test")
+        .then(success => {
+            if (success) {
+                resultElement.textContent = "Test data sent to Firebase! It will be processed by Apps Script.";
+                resultElement.className = 'url-status success';
+            } else {
+                resultElement.textContent = "Failed to send test data to Firebase";
+                resultElement.className = 'url-status error';
+            }
+        });
 }
 
 // Initialize the application
