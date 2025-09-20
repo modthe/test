@@ -624,56 +624,74 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
-// 1. ACQUIRE A LOCK to prevent concurrent access
-const lock = LockService.getScriptLock();
-try {
-lock.waitLock(30000); // Wait up to 30 seconds to get the lock
+  // Add CORS headers
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+  
+  // Handle preflight OPTIONS request
+  if (e && e.parameter && e.parameter === 'options') {
+    return ContentService.createTextOutput(JSON.stringify({}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+  }
+  
+  // 1. ACQUIRE A LOCK to prevent concurrent access
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000); // Wait up to 30 seconds to get the lock
 
-// 2. GET THE SPECIFIC SHEET BY NAME
-const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-// If the sheet doesn't exist, create it and add headers
-if (!sheet) {
-// Handle error: Sheet not found
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
-}
+    // 2. GET THE SPECIFIC SHEET BY NAME
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
+    // If the sheet doesn't exist, create it and add headers
+    if (!sheet) {
+      // Handle error: Sheet not found
+      return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeaders(headers)
+        .setStatusCode(500);
+    }
 
-// 3. Add headers if sheet is empty (now safe inside the lock)
-if (sheet.getLastRow() === 0) {
-sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
-}
+    // 3. Add headers if sheet is empty (now safe inside the lock)
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
+    }
 
-// 4. PARSE the incoming data
-const data = JSON.parse(e.postData.contents);
+    // 4. PARSE the incoming data
+    const data = JSON.parse(e.postData.contents);
 
-// 5. APPEND THE NEW ROW
-sheet.appendRow([
-new Date(),
-data.player,
-data.question,
-data.answer,
-data.correct,
-data.responseTime,
-data.status
-]);
+    // 5. APPEND THE NEW ROW
+    sheet.appendRow([
+      new Date(),
+      data.player,
+      data.question,
+      data.answer,
+      data.correct,
+      data.responseTime,
+      data.status
+    ]);
 
-// 6. RETURN SUCCESS
-return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
-.setMimeType(ContentService.MimeType.JSON);
+    // 6. RETURN SUCCESS
+    return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
 
-} catch (error) {
-// Log the error for you to see
-console.error("Failed to process request:", error);
-// Return an error message to the client
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
+  } catch (error) {
+    // Log the error for you to see
+    console.error("Failed to process request:", error);
+    // Return an error message to the client
+    return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers)
+      .setStatusCode(500);
 
-} finally {
-// 7. ALWAYS RELEASE THE LOCK
-lock.releaseLock();
-}
+  } finally {
+    // 7. ALWAYS RELEASE THE LOCK
+    lock.releaseLock();
+  }
 }
 </pre>
 </div>
@@ -1262,39 +1280,64 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-// Use the webAppUrl from the variable (which is synced from Firebase)
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-switchTab('setup');
-return;
-}
+    // Use the webAppUrl from the variable (which is synced from Firebase)
+    if (!webAppUrl) {
+        console.error("Web app URL not configured");
+        alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+        switchTab('setup');
+        return;
+    }
 
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer,
-responseTime: responseTime,
-status: status
-};
+    // Prepare data to send
+    var data = {
+        player: playerName,
+        question: question,
+        answer: selectedAnswer,
+        correct: correctAnswer,
+        responseTime: responseTime,
+        status: status
+    };
 
-// Send data to Google Apps Script web app
-fetch(webAppUrl, {
-method: "POST",
-mode: "no-cors",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
+    // Send data to Google Apps Script web app
+    fetch(webAppUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(text => {
+        try {
+            const result = JSON.parse(text);
+            console.log("Data sent to Google Sheets successfully", result);
+        } catch (e) {
+            console.log("Data sent to Google Sheets successfully", text);
+        }
+    })
+    .catch(error => {
+        console.error("Error sending data to Google Sheets:", error);
+        // Fallback: try with no-cors mode for browsers that might need it
+        fetch(webAppUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            console.log("Data sent using no-cors fallback");
+        })
+        .catch(fallbackError => {
+            console.error("Fallback also failed:", fallbackError);
+        });
+    });
 }
 
 // Countdown timer function
@@ -1426,4 +1469,5 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
