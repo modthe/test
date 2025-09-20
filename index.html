@@ -401,37 +401,6 @@ border-radius: 4px;
 color: #c62828;
 }
 
-.sync-status {
-display: flex;
-align-items: center;
-margin-top: 10px;
-padding: 8px;
-border-radius: 4px;
-background: #e3f2fd;
-}
-
-.sync-indicator {
-width: 12px;
-height: 12px;
-border-radius: 50%;
-margin-right: 8px;
-}
-
-.sync-indicator.connected {
-background-color: #4caf50;
-animation: pulse 1.5s infinite;
-}
-
-.sync-indicator.disconnected {
-background-color: #f44336;
-}
-
-@keyframes pulse {
-0% { opacity: 1; }
-50% { opacity: 0.5; }
-100% { opacity: 1; }
-}
-
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -628,10 +597,6 @@ align-items: flex-start;
 <div id="setup-complete-message" class="setup-complete" style="display: none;">
 <h3>✅ Setup Complete!</h3>
 <p>Your Google Sheets integration is configured. You can now use the Player and Host tabs.</p>
-<div class="sync-status">
-    <div id="sync-indicator" class="sync-indicator connected"></div>
-    <span id="sync-text">Connected to Firebase</span>
-</div>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
@@ -882,37 +847,25 @@ function loadDataFromFirebase() {
     document.getElementById('firebase-init-status').className = 'url-status error';
   });
 
-  // Listen for web app URL changes
+  // NEW: Listen for web app URL changes
   database.ref('webAppUrl').on('value', (snapshot) => {
     const url = snapshot.val();
     if (url) {
       webAppUrl = url;
-      localStorage.setItem('webAppUrl', webAppUrl);
-      document.getElementById('webAppUrl').value = webAppUrl;
+      localStorage.setItem('webAppUrl', url);
+      document.getElementById('webAppUrl').value = url;
       
       // Hide setup tab if URL is configured
-      if (webAppUrl) {
+      if (url) {
         document.getElementById('setup-tab').style.display = 'none';
         document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
         document.getElementById('urlStatus').className = 'url-status success';
       }
-      console.log("Web App URL updated from Firebase:", webAppUrl);
+      
+      console.log("Web App URL updated from Firebase:", url);
     }
   }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('urlStatus').textContent = "Error reading URL from Firebase: " + error.message;
-    document.getElementById('urlStatus').className = 'url-status error';
-  });
-
-  // Monitor connection status
-  database.ref('.info/connected').on('value', (snapshot) => {
-    if (snapshot.val() === true) {
-      document.getElementById('sync-indicator').className = 'sync-indicator connected';
-      document.getElementById('sync-text').textContent = 'Connected to Firebase';
-    } else {
-      document.getElementById('sync-indicator').className = 'sync-indicator disconnected';
-      document.getElementById('sync-text').textContent = 'Disconnected from Firebase';
-    }
+    console.error("Firebase URL read failed:", error);
   });
 }
 
@@ -979,20 +932,15 @@ function initializeFirebaseData() {
 
 // Save web app URL to Firebase
 function saveWebAppUrlToFirebase(url) {
-  database.ref('webAppUrl').set(url).then(() => {
-    document.getElementById('urlStatus').textContent = 'URL saved to Firebase and synced across all devices!';
-    document.getElementById('urlStatus').className = 'url-status success';
-    
-    // Hide setup tab
-    document.getElementById('setup-tab').style.display = 'none';
-    
-    // Hide setup form and show completion message
-    document.getElementById('setup-form').style.display = 'none';
-    document.getElementById('setup-complete-message').style.display = 'block';
-  }).catch((error) => {
-    document.getElementById('urlStatus').textContent = 'Error saving URL to Firebase: ' + error.message;
-    document.getElementById('urlStatus').className = 'url-status error';
-  });
+  return database.ref('webAppUrl').set(url)
+    .then(() => {
+      console.log("Web App URL saved to Firebase:", url);
+      return true;
+    })
+    .catch((error) => {
+      console.error("Error saving URL to Firebase:", error);
+      return false;
+    });
 }
 
 // Save quiz time to Firebase
@@ -1270,7 +1218,7 @@ quizActive = false;
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-// Get saved web app URL from local storage
+// Get saved web app URL from local storage initially
 webAppUrl = localStorage.getItem('webAppUrl') || '';
 document.getElementById('webAppUrl').value = webAppUrl;
 
@@ -1279,14 +1227,33 @@ if (webAppUrl) {
 document.getElementById('setup-tab').style.display = 'none';
 }
 
-// Save web app URL to Firebase
+// Save web app URL to Firebase and local storage
 function saveWebAppUrl() {
 var url = document.getElementById('webAppUrl').value;
 var urlStatus = document.getElementById('urlStatus');
 
 if (url) {
-// Save to Firebase instead of localStorage
-saveWebAppUrlToFirebase(url);
+// Save to Firebase first
+saveWebAppUrlToFirebase(url).then((success) => {
+  if (success) {
+    // Also save to local storage as backup
+    localStorage.setItem('webAppUrl', url);
+    webAppUrl = url;
+    
+    urlStatus.textContent = 'URL saved successfully! Setup complete.';
+    urlStatus.className = 'url-status success';
+
+    // Hide setup form and show completion message
+    document.getElementById('setup-form').style.display = 'none';
+    document.getElementById('setup-complete-message').style.display = 'block';
+
+    // Hide setup tab
+    document.getElementById('setup-tab').style.display = 'none';
+  } else {
+    urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
+    urlStatus.className = 'url-status error';
+  }
+});
 } else {
 urlStatus.textContent = 'Please enter a valid URL';
 urlStatus.className = 'url-status error';
@@ -1295,6 +1262,7 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+// Use the webAppUrl from the variable (which is synced from Firebase)
 if (!webAppUrl) {
 console.error("Web app URL not configured");
 alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
