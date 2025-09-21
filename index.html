@@ -1039,40 +1039,64 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-var webAppUrl = localStorage.getItem('webAppUrl');
-
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-switchTab('setup');
-return;
-}
-
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer,
-responseTime: responseTime,
-status: status
-};
-
-// Send data to Google Apps Script web app
-fetch(webAppUrl, {
-method: "POST",
-mode: "no-cors",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
+   var webAppUrl = localStorage.getItem('webAppUrl');
+   if (!webAppUrl) {
+       console.error("Web app URL not configured");
+       alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+       switchTab('setup');
+       return;
+   }
+   // Prepare data to send
+   var data = {
+       player: playerName,
+       question: question,
+       answer: selectedAnswer,
+       correct: correctAnswer,
+       responseTime: responseTime,
+       status: status
+   };
+   // Send data to Google Apps Script web app
+   fetch(webAppUrl, {
+       method: "POST",
+       headers: {
+           "Content-Type": "application/json"
+       },
+       body: JSON.stringify(data)
+   })
+   .then(response => {
+       if (!response.ok) {
+           throw new Error('Network response was not ok');
+       }
+       return response.text();
+   })
+   .then(text => {
+       try {
+           const result = JSON.parse(text);
+           console.log("Data sent to Google Sheets successfully:", result);
+       } catch (e) {
+           console.log("Data sent to Google Sheets successfully (non-JSON response):", text);
+       }
+   })
+   .catch(error => {
+       console.error("Error sending data to Google Sheets:", error);
+       // Try alternative method for CORS issues
+       const form = document.createElement('form');
+       form.method = 'POST';
+       form.action = webAppUrl;
+       form.target = '_blank';
+       for (const key in data) {
+           if (data.hasOwnProperty(key)) {
+               const input = document.createElement('input');
+               input.type = 'hidden';
+               input.name = key;
+               input.value = data[key];
+               form.appendChild(input);
+           }
+       }
+       document.body.appendChild(form);
+       form.submit();
+       document.body.removeChild(form);
+   });
 }
 
 // Countdown timer function
@@ -1201,4 +1225,5 @@ updateQuizTimeInfo();
 </script>
 </body>
 </html>
+
 
