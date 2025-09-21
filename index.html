@@ -1263,42 +1263,44 @@ urlStatus.className = 'url-status error';
 // Function to send data to Google Sheets
 // Function to send data to Google Sheets - FIXED VERSION
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-    // Use the webAppUrl from the variable (which is synced from Firebase)
-    if (!webAppUrl) {
-        console.error("Web app URL not configured");
-        alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-        switchTab('setup');
-        return;
-    }
+  if (!webAppUrl) {
+    console.error("Web app URL not configured");
+    alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+    switchTab('setup');
+    return;
+  }
 
-    // Prepare data to send - FIXED: Ensure all parameters are properly included
-    var data = {
-        player: playerName || "Unknown Player",
-        question: question || "Unknown Question",
-        answer: selectedAnswer || "No Answer",
-        correct: correctAnswer || "Unknown Correct Answer",
-        responseTime: responseTime || 0,
-        status: status || "Unknown Status"
-    };
+  // Prepare the data object
+  var data = {
+    player: playerName,
+    question: question,
+    answer: selectedAnswer,
+    correct: correctAnswer,
+    responseTime: responseTime,
+    status: status
+  };
 
-    console.log("Sending to Google Sheets:", data); // Debug log
-
-    // Send data to Google Apps Script web app
-    fetch(webAppUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(() => {
-        console.log("Data sent to Google Sheets successfully");
-    })
-    .catch(error => {
-        console.error("Error sending data to Google Sheets:", error);
-    });
+  // Send data to Google Apps Script web app
+  fetch(webAppUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Network response was not ok");
+    return response.json();
+  })
+  .then(res => {
+    console.log("Data sent to Google Sheets successfully:", res);
+  })
+  .catch(err => {
+    console.error("Failed to send data to Google Sheets:", err);
+    alert("Failed to send data to Google Sheets. Check console for details.");
+  });
 }
+
 
 // Countdown timer function
 function startCountdown() {
@@ -1429,4 +1431,5 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
