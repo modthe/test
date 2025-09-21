@@ -1,12 +1,8 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz Game with Admin Features</title>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
 * {
 margin: 0;
@@ -389,18 +385,6 @@ max-width: 120px;
 max-width: 80px;
 }
 
-.firebase-config-help {
-background: #ffebee;
-border-left: 4px solid #f44336;
-padding: 1rem;
-margin: 1rem 0;
-border-radius: 4px;
-}
-
-.firebase-config-help h3 {
-color: #c62828;
-}
-
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -454,7 +438,6 @@ align-items: flex-start;
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
 <div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
-<div class="tab" onclick="switchTab('firebase-help')">Firebase Help</div>
 </div>
 
 <div class="content">
@@ -615,7 +598,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbz4SQRiHyBvnWfSkDTv3LmUonZ9h83bi6xp6pBGU8rzZoB9hHdyuy18VrFBLcM1OK2wfw/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -679,74 +662,10 @@ lock.releaseLock();
 </div>
 </div>
 </div>
-
-<!-- Firebase Help Tab -->
-<div id="firebase-help" class="tab-content">
-<h2>Firebase Setup Help</h2>
-
-<div class="firebase-config-help">
-<h3>Firebase Configuration Issues</h3>
-<p>If your Firebase real-time updates aren't working, follow these steps:</p>
-</div>
-
-<div class="card">
-<h3>Step 1: Check Firebase Database Rules</h3>
-<p>Your Firebase Realtime Database rules must allow read and write access:</p>
-<div class="code-block">
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
-</div>
-<p>Go to Firebase Console → Realtime Database → Rules and update them.</p>
-</div>
-
-<div class="card">
-<h3>Step 2: Verify Firebase Configuration</h3>
-<p>Your Firebase config should look like this (with your actual values):</p>
-<div class="code-block">
-const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
-};
-</div>
-</div>
-
-<div class="card">
-<h3>Step 3: Initialize Data Structure</h3>
-<p>Click the button below to initialize the required data structure in your Firebase database:</p>
-<button onclick="initializeFirebaseData()">Initialize Firebase Data</button>
-<div id="firebase-init-status" class="url-status">Click to initialize Firebase data structure</div>
-</div>
-</div>
 </div>
 </div>
 
 <script>
-// Firebase configuration - Replace with your own config
-const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
 // Tab switching functionality
 function switchTab(tabName) {
 // Hide all tab contents
@@ -771,8 +690,31 @@ loadHostTimeSettings();
 }
 }
 
+// Example question set
+var questions = [
+{
+question: "What is 2 + 2?",
+answers: ["3", "4", "5", "6"],
+correct: "4"
+},
+{
+question: "Capital of France?",
+answers: ["London", "Paris", "Berlin", "Rome"],
+correct: "Paris"
+},
+{
+question: "Largest planet in our solar system?",
+answers: ["Earth", "Saturn", "Jupiter", "Neptune"],
+correct: "Jupiter"
+},
+{
+question: "What is the chemical symbol for gold?",
+answers: ["Go", "Gd", "Au", "Ag"],
+correct: "Au"
+}
+];
+
 // Initialize variables
-var questions = [];
 var currentIndex = 0;
 var playerName = "";
 var countdownInterval;
@@ -780,7 +722,6 @@ var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
 var adminCode = "admin123"; // Default admin code
-var webAppUrl = ""; // Will be loaded from Firebase
 
 // Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -805,167 +746,6 @@ quizEndTime = endTime.getTime();
 localStorage.setItem('quizEndTime', quizEndTime);
 } else {
 quizEndTime = parseInt(quizEndTime);
-}
-
-// Load data from Firebase
-function loadDataFromFirebase() {
-  // Listen for quiz time changes
-  database.ref('quizTime').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      quizStartTime = data.startTime;
-      quizEndTime = data.endTime;
-      localStorage.setItem('quizStartTime', quizStartTime);
-      localStorage.setItem('quizEndTime', quizEndTime);
-      updateQuizTimeInfo();
-      console.log("Quiz time updated from Firebase");
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
-
-  // Listen for question changes
-  database.ref('questions').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      questions = Object.values(data);
-      localStorage.setItem('quizQuestions', JSON.stringify(questions));
-      displayQuestions();
-      console.log("Questions updated from Firebase");
-      
-      // If we're on the player tab and a question is active, update it
-      if (document.getElementById('player').classList.contains('active') && 
-          document.getElementById('player-question').innerHTML !== "") {
-        showPlayerQuestion();
-      }
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
-
-  // NEW: Listen for web app URL changes
-  database.ref('webAppUrl').on('value', (snapshot) => {
-    const url = snapshot.val();
-    if (url) {
-      webAppUrl = url;
-      localStorage.setItem('webAppUrl', url);
-      document.getElementById('webAppUrl').value = url;
-      
-      // Hide setup tab if URL is configured
-      if (url) {
-        document.getElementById('setup-tab').style.display = 'none';
-        document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
-        document.getElementById('urlStatus').className = 'url-status success';
-      }
-      
-      console.log("Web App URL updated from Firebase:", url);
-    }
-  }, (error) => {
-    console.error("Firebase URL read failed:", error);
-  });
-}
-
-// Initialize Firebase data structure
-function initializeFirebaseData() {
-  const statusElement = document.getElementById('firebase-init-status');
-  statusElement.textContent = "Initializing Firebase data...";
-  statusElement.className = 'url-status';
-  
-  // Initialize with default values if they don't exist
-  database.ref('quizTime').once('value').then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
-      var tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(12, 0, 0, 0);
-      var startTime = tomorrow.getTime();
-      var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-      
-      return database.ref('quizTime').set({
-        startTime: startTime,
-        endTime: endTime
-      });
-    }
-  }).then(() => {
-    return database.ref('questions').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default questions
-      const defaultQuestions = [
-        {
-          question: "What is 2 + 2?",
-          answers: ["3", "4", "5", "6"],
-          correct: "4"
-        },
-        {
-          question: "Capital of France?",
-          answers: ["London", "Paris", "Berlin", "Rome"],
-          correct: "Paris"
-        }
-      ];
-      return database.ref('questions').set(defaultQuestions);
-    }
-  }).then(() => {
-    return database.ref('webAppUrl').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Initialize with empty URL
-      return database.ref('webAppUrl').set("");
-    }
-  }).then(() => {
-    statusElement.textContent = "Firebase data initialized successfully!";
-    statusElement.className = 'url-status success';
-    console.log("Firebase data initialized");
-    
-    // Reload data
-    loadDataFromFirebase();
-  }).catch((error) => {
-    statusElement.textContent = "Error initializing Firebase: " + error.message;
-    statusElement.className = 'url-status error';
-    console.error("Firebase initialization error:", error);
-  });
-}
-
-// Save web app URL to Firebase
-function saveWebAppUrlToFirebase(url) {
-  return database.ref('webAppUrl').set(url)
-    .then(() => {
-      console.log("Web App URL saved to Firebase:", url);
-      return true;
-    })
-    .catch((error) => {
-      console.error("Error saving URL to Firebase:", error);
-      return false;
-    });
-}
-
-// Save quiz time to Firebase
-function saveQuizTimeToFirebase(startTime, endTime) {
-  database.ref('quizTime').set({
-    startTime: startTime,
-    endTime: endTime
-  }).then(() => {
-    document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
-    document.getElementById('host-time-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
-    document.getElementById('host-time-status').className = 'url-status error';
-  });
-}
-
-// Save questions to Firebase
-function saveQuestionsToFirebase() {
-  database.ref('questions').set(questions).then(() => {
-    document.getElementById('question-status').textContent = 'Questions saved successfully!';
-    document.getElementById('question-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
-    document.getElementById('question-status').className = 'url-status error';
-  });
 }
 
 // Load questions from localStorage
@@ -1041,8 +821,12 @@ var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
 quizStartTime = startDate.getTime();
 quizEndTime = endDate.getTime();
 
-// Save to Firebase instead of localStorage
-saveQuizTimeToFirebase(quizStartTime, quizEndTime);
+localStorage.setItem('quizStartTime', quizStartTime);
+localStorage.setItem('quizEndTime', quizEndTime);
+
+document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
+document.getElementById('host-time-status').className = 'url-status success';
+
 updateQuizTimeInfo();
 
 // Clear status after 3 seconds
@@ -1078,8 +862,7 @@ correct: correctAnswer
 };
 
 questions.push(newQuestion);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
 
 document.getElementById('question-status').textContent = 'Question added successfully!';
 document.getElementById('question-status').className = 'url-status success';
@@ -1091,6 +874,9 @@ document.getElementById('answer-2').value = '';
 document.getElementById('answer-3').value = '';
 document.getElementById('answer-4').value = '';
 document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
+
+// Update questions display
+displayQuestions();
 
 // Clear status after 3 seconds
 setTimeout(() => {
@@ -1144,8 +930,10 @@ document.querySelector(`input[name="correct-answer"][value="${correctIndex}"]`).
 
 // Remove the question being edited
 questions.splice(index, 1);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+
+// Update display
+displayQuestions();
 
 document.getElementById('question-status').textContent = 'Editing question. Update the fields and click "Add Question" to save changes.';
 document.getElementById('question-status').className = 'url-status';
@@ -1155,8 +943,8 @@ document.getElementById('question-status').className = 'url-status';
 function deleteQuestion(index) {
 if (confirm('Are you sure you want to delete this question?')) {
 questions.splice(index, 1);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+displayQuestions();
 }
 }
 
@@ -1218,8 +1006,8 @@ quizActive = false;
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-// Get saved web app URL from local storage initially
-webAppUrl = localStorage.getItem('webAppUrl') || '';
+// Get saved web app URL from local storage
+var webAppUrl = localStorage.getItem('webAppUrl') || '';
 document.getElementById('webAppUrl').value = webAppUrl;
 
 // Hide setup tab if URL is already configured
@@ -1227,33 +1015,22 @@ if (webAppUrl) {
 document.getElementById('setup-tab').style.display = 'none';
 }
 
-// Save web app URL to Firebase and local storage
+// Save web app URL to local storage
 function saveWebAppUrl() {
 var url = document.getElementById('webAppUrl').value;
 var urlStatus = document.getElementById('urlStatus');
 
 if (url) {
-// Save to Firebase first
-saveWebAppUrlToFirebase(url).then((success) => {
-  if (success) {
-    // Also save to local storage as backup
-    localStorage.setItem('webAppUrl', url);
-    webAppUrl = url;
-    
-    urlStatus.textContent = 'URL saved successfully! Setup complete.';
-    urlStatus.className = 'url-status success';
+localStorage.setItem('webAppUrl', url);
+urlStatus.textContent = 'URL saved successfully! Setup complete.';
+urlStatus.className = 'url-status success';
 
-    // Hide setup form and show completion message
-    document.getElementById('setup-form').style.display = 'none';
-    document.getElementById('setup-complete-message').style.display = 'block';
+// Hide setup form and show completion message
+document.getElementById('setup-form').style.display = 'none';
+document.getElementById('setup-complete-message').style.display = 'block';
 
-    // Hide setup tab
-    document.getElementById('setup-tab').style.display = 'none';
-  } else {
-    urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
-    urlStatus.className = 'url-status error';
-  }
-});
+// Hide setup tab
+document.getElementById('setup-tab').style.display = 'none';
 } else {
 urlStatus.textContent = 'Please enter a valid URL';
 urlStatus.className = 'url-status error';
@@ -1262,7 +1039,8 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-// Use the webAppUrl from the variable (which is synced from Firebase)
+var webAppUrl = localStorage.getItem('webAppUrl');
+
 if (!webAppUrl) {
 console.error("Web app URL not configured");
 alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
@@ -1420,9 +1198,6 @@ document.getElementById('setup-tab').style.display = 'flex';
 
 // Initialize the quiz time display
 updateQuizTimeInfo();
-
-// Load data from Firebase when the page loads
-loadDataFromFirebase();
 </script>
 </body>
 </html>
