@@ -1287,7 +1287,7 @@ fetch(webAppUrl, {
     "Content-Type": "application/json"
   },
   body: JSON.stringify(data)
-})
+});
 .then(response => response.json())
 .then(() => {
 console.log("Data sent to Google Sheets successfully");
@@ -1426,5 +1426,6 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
 
