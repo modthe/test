@@ -1039,6 +1039,7 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+   console.log("Attempting to send data to Google Sheets...");
    var webAppUrl = localStorage.getItem('webAppUrl');
    if (!webAppUrl) {
        console.error("Web app URL not configured");
@@ -1055,7 +1056,8 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
        responseTime: responseTime,
        status: status
    };
-   // Send data to Google Apps Script web app
+   console.log("Sending data:", data);
+   // Use fetch API to send data
    fetch(webAppUrl, {
        method: "POST",
        headers: {
@@ -1067,35 +1069,14 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
        if (!response.ok) {
            throw new Error('Network response was not ok');
        }
-       return response.text();
+       return response.json();
    })
-   .then(text => {
-       try {
-           const result = JSON.parse(text);
-           console.log("Data sent to Google Sheets successfully:", result);
-       } catch (e) {
-           console.log("Data sent to Google Sheets successfully (non-JSON response):", text);
-       }
+   .then(result => {
+       console.log("Success:", result);
    })
    .catch(error => {
        console.error("Error sending data to Google Sheets:", error);
-       // Try alternative method for CORS issues
-       const form = document.createElement('form');
-       form.method = 'POST';
-       form.action = webAppUrl;
-       form.target = '_blank';
-       for (const key in data) {
-           if (data.hasOwnProperty(key)) {
-               const input = document.createElement('input');
-               input.type = 'hidden';
-               input.name = key;
-               input.value = data[key];
-               form.appendChild(input);
-           }
-       }
-       document.body.appendChild(form);
-       form.submit();
-       document.body.removeChild(form);
+       alert("Error sending data to Google Sheets. Please check your Apps Script setup.");
    });
 }
 
@@ -1225,5 +1206,6 @@ updateQuizTimeInfo();
 </script>
 </body>
 </html>
+
 
 
