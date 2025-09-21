@@ -615,7 +615,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbxzQGhKnY3KCqQscTs2twns5TQ_Yl1yv8kK1s1IS3WIHscYvnUMKIiDJvVwTRp74Ze5vA/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbz4SQRiHyBvnWfSkDTv3LmUonZ9h83bi6xp6pBGU8rzZoB9hHdyuy18VrFBLcM1OK2wfw/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -1262,40 +1262,40 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-  if (!webAppUrl) {
-    console.error("Web app URL not configured");
-    alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-    switchTab('setup');
-    return;
-  }
-
-  // Prepare the data object to send
-  var data = {
-    player: playerName,
-    question: question,
-    answer: selectedAnswer,
-    correct: correctAnswer,
-    responseTime: responseTime,
-    status: status
-  };
-
-  // Send POST request to Google Apps Script Web App
-  fetch(webAppUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => {
-    // Optionally, you can log success (but Apps Script may respond with empty content if "no-cors" is used)
-    console.log("Data sent to Google Sheet:", data);
-  })
-  .catch(error => {
-    console.error("Error sending data to Google Sheet:", error);
-  });
+// Use the webAppUrl from the variable (which is synced from Firebase)
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return;
 }
 
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
+
+// Send data to Google Apps Script web app
+fetch(webAppUrl, {
+method: "POST",
+mode: "no-cors",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(() => {
+console.log("Data sent to Google Sheets successfully");
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+});
+}
 
 // Countdown timer function
 function startCountdown() {
@@ -1426,5 +1426,3 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
-
-
