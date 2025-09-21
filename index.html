@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
+/* Your existing CSS styles remain unchanged */
 * {
 margin: 0;
 padding: 0;
@@ -615,7 +616,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbz4SQRiHyBvnWfSkDTv3LmUonZ9h83bi6xp6pBGU8rzZoB9hHdyuy18VrFBLcM1OK2wfw/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/...">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -624,56 +625,41 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
-// 1. ACQUIRE A LOCK to prevent concurrent access
-const lock = LockService.getScriptLock();
-try {
-lock.waitLock(30000); // Wait up to 30 seconds to get the lock
-
-// 2. GET THE SPECIFIC SHEET BY NAME
-const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-// If the sheet doesn't exist, create it and add headers
-if (!sheet) {
-// Handle error: Sheet not found
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
-}
-
-// 3. Add headers if sheet is empty (now safe inside the lock)
-if (sheet.getLastRow() === 0) {
-sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
-}
-
-// 4. PARSE the incoming data
-const data = JSON.parse(e.postData.contents);
-
-// 5. APPEND THE NEW ROW
-sheet.appendRow([
-new Date(),
-data.player,
-data.question,
-data.answer,
-data.correct,
-data.responseTime,
-data.status
-]);
-
-// 6. RETURN SUCCESS
-return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
-.setMimeType(ContentService.MimeType.JSON);
-
-} catch (error) {
-// Log the error for you to see
-console.error("Failed to process request:", error);
-// Return an error message to the client
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
-
-} finally {
-// 7. ALWAYS RELEASE THE LOCK
-lock.releaseLock();
-}
+  try {
+    // 1. Get or create the sheet
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
+    if (!sheet) {
+      sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Quiz Results");
+    }
+    
+    // 2. Add headers if sheet is empty
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
+    }
+    
+    // 3. Parse the incoming data
+    var data = JSON.parse(e.postData.contents);
+    
+    // 4. Append the new row
+    sheet.appendRow([
+      new Date(),
+      data.player,
+      data.question,
+      data.answer,
+      data.correct,
+      data.responseTime,
+      data.status
+    ]);
+    
+    // 5. Return success
+    return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    // Return error message
+    return ContentService.createTextOutput(JSON.stringify({result: "Error", message: error.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 </pre>
 </div>
@@ -1260,8 +1246,7 @@ urlStatus.className = 'url-status error';
 }
 }
 
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
+// Function to send data to Google Sheets - FIXED VERSION
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
     // Use the webAppUrl from the variable (which is synced from Firebase)
     if (!webAppUrl) {
@@ -1283,49 +1268,31 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
 
     console.log("Sending data to Google Sheets:", data);
 
-    // Send data to Google Apps Script web app
-    // Use a proxy to avoid CORS issues if needed
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    // Create a form and submit it as a workaround for CORS issues
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = webAppUrl;
+    form.target = '_blank'; // Open in new tab to avoid navigation
+
+    // Add data as hidden input fields
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = data[key];
+            form.appendChild(input);
+        }
+    }
+
+    // Add the form to the document and submit it
+    document.body.appendChild(form);
+    form.submit();
     
-    fetch(proxyUrl + webAppUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(text => {
-        try {
-            const result = JSON.parse(text);
-            console.log("Data sent to Google Sheets successfully:", result);
-        } catch (e) {
-            console.log("Data sent to Google Sheets successfully (non-JSON response):", text);
-        }
-    })
-    .catch(error => {
-        console.error("Error sending data to Google Sheets:", error);
-        // Try without proxy if proxy fails
-        fetch(webAppUrl, {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        })
-        .then(() => {
-            console.log("Data sent to Google Sheets using no-cors mode");
-        })
-        .catch(error2 => {
-            console.error("Error with no-cors mode too:", error2);
-        });
-    });
+    // Remove the form after submission
+    setTimeout(function() {
+        document.body.removeChild(form);
+    }, 1000);
 }
 
 // Countdown timer function
@@ -1457,4 +1424,3 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
-
