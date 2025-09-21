@@ -1264,6 +1264,7 @@ urlStatus.className = 'url-status error';
 // Function to send data to Google Sheets
 // Function to send data to Google Sheets
 // Function to send data to Google Sheets
+// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
     // Use the webAppUrl from the variable (which is synced from Firebase)
     if (!webAppUrl) {
@@ -1273,7 +1274,7 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
         return;
     }
 
-    // Prepare data to send - ensure all values are properly formatted
+    // Prepare data to send
     var data = {
         player: playerName || "Unknown Player",
         question: question || "Unknown Question",
@@ -1285,28 +1286,117 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
 
     console.log("Sending data to Google Sheets:", data);
 
-    // Send data to Google Apps Script web app
-    fetch(webAppUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok: ' + response.status);
+    // Use XMLHttpRequest instead of fetch for better compatibility
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', webAppUrl, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                console.log("Data sent to Google Sheets successfully:", xhr.responseText);
+            } else {
+                console.error("Error sending data to Google Sheets:", xhr.status, xhr.statusText);
+                
+                // Try an alternative approach using a form submission
+                tryAlternativeMethod(data);
+            }
         }
-        return response.json();
-    })
-    .then(result => {
-        console.log("Data sent to Google Sheets successfully:", result);
-    })
-    .catch(error => {
-        console.error("Error sending data to Google Sheets:", error);
-        // You might want to implement a retry mechanism or offline storage here
-    });
+    };
+    
+    xhr.onerror = function() {
+        console.error("Request failed");
+        tryAlternativeMethod(data);
+    };
+    
+    xhr.send(JSON.stringify(data));
 }
+
+// Alternative method using a form if the direct POST fails
+function tryAlternativeMethod(data) {
+    console.log("Trying alternative method to send data");
+    
+    // Create a form and submit it
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = webAppUrl;
+    form.style.display = 'none';
+    
+    // Add data as hidden fields
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = data[key];
+            form.appendChild(input);
+        }
+    }
+    
+    document.body.appendChild(form);
+    
+    // Use a timeout to handle the form submission
+    setTimeout(function() {
+        try {
+            form.submit();
+            console.log("Data sent via form submission");
+        } catch (error) {
+            console.error("Form submission also failed:", error);
+            
+            // Last resort: store data locally to send later
+            storeDataForLater(data);
+        }
+    }, 1000);
+}
+
+// Store data in localStorage to send later if online
+function storeDataForLater(data) {
+    var pendingData = JSON.parse(localStorage.getItem('pendingQuizData') || '[]');
+    pendingData.push({
+        data: data,
+        timestamp: new Date().getTime()
+    });
+    localStorage.setItem('pendingQuizData', JSON.stringify(pendingData));
+    console.log("Data stored locally for later submission");
+}
+
+// Function to retry sending pending data
+function retryPendingSubmissions() {
+    var pendingData = JSON.parse(localStorage.getItem('pendingQuizData') || '[]');
+    if (pendingData.length > 0 && webAppUrl) {
+        console.log("Retrying", pendingData.length, "pending submissions");
+        
+        // Try to send each pending item
+        var successfulSubmissions = [];
+        
+        pendingData.forEach(function(item, index) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', webAppUrl, false); // Synchronous for simplicity
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            try {
+                xhr.send(JSON.stringify(item.data));
+                if (xhr.status === 200) {
+                    successfulSubmissions.push(index);
+                    console.log("Successfully sent pending data:", item.data);
+                }
+            } catch (error) {
+                console.error("Failed to send pending data:", error);
+            }
+        });
+        
+        // Remove successfully sent items
+        if (successfulSubmissions.length > 0) {
+            var newPendingData = pendingData.filter(function(item, index) {
+                return !successfulSubmissions.includes(index);
+            });
+            localStorage.setItem('pendingQuizData', JSON.stringify(newPendingData));
+        }
+    }
+}
+
+// Call this function periodically to retry pending submissions
+setInterval(retryPendingSubmissions, 30000); // Every 30 seconds
 
 // Countdown timer function
 function startCountdown() {
@@ -1437,6 +1527,7 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
 
 
