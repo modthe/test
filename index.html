@@ -1263,6 +1263,7 @@ urlStatus.className = 'url-status error';
 // Function to send data to Google Sheets
 // Function to send data to Google Sheets
 // Function to send data to Google Sheets
+// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
     // Use the webAppUrl from the variable (which is synced from Firebase)
     if (!webAppUrl) {
@@ -1274,15 +1275,15 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
 
     // Prepare data to send - ensure all values are properly formatted
     var data = {
-        player: playerName || "Unknown Player", // Add fallback for player name
-        question: question || "Unknown Question", // Add fallback for question
-        answer: selectedAnswer || "No Answer", // Add fallback for selected answer
-        correct: correctAnswer || "Unknown Correct Answer", // Add fallback for correct answer
-        responseTime: responseTime || 0, // Add fallback for response time
-        status: status || "Unknown Status" // Add fallback for status
+        player: playerName || "Unknown Player",
+        question: question || "Unknown Question",
+        answer: selectedAnswer || "No Answer",
+        correct: correctAnswer || "Unknown Correct Answer",
+        responseTime: responseTime || 0,
+        status: status || "Unknown Status"
     };
 
-    console.log("Sending data to Google Sheets:", data); // Debug log
+    console.log("Sending data to Google Sheets:", data);
 
     // Send data to Google Apps Script web app
     fetch(webAppUrl, {
@@ -1294,15 +1295,16 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok: ' + response.status);
         }
         return response.json();
     })
-    .then(data => {
-        console.log("Data sent to Google Sheets successfully:", data);
+    .then(result => {
+        console.log("Data sent to Google Sheets successfully:", result);
     })
     .catch(error => {
         console.error("Error sending data to Google Sheets:", error);
+        // You might want to implement a retry mechanism or offline storage here
     });
 }
 
@@ -1435,6 +1437,7 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
 
 
