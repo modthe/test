@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -314,7 +313,6 @@ border-radius: 4px;
 
 .admin-section h3 {
 color: #ef6c00;
-margin-bottom: 0.8rem;
 }
 
 .question-list {
@@ -600,7 +598,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbyNrcs0jjJ1bvMu6ugzsYXM7e8Sv3uJ7wjha4-ZlWh9g7PNv6VJVt8fUwTxT1FYIcSRAg/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbx60lVmbXqAMRWdGgvAJl5k_oE5jnssV7A5PZHkXnDcFkcElnVQcMQJw1LTB6LV_0OmIQ/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -659,11 +657,6 @@ return ContentService.createTextOutput(JSON.stringify({result: "Error", message:
 // 7. ALWAYS RELEASE THE LOCK
 lock.releaseLock();
 }
-}
-
-function doGet(e) {
-return ContentService.createTextOutput("Quiz API is running. Use POST to submit data.")
-.setMimeType(ContentService.MimeType.TEXT);
 }
 </pre>
 </div>
@@ -1208,4 +1201,3 @@ updateQuizTimeInfo();
 </script>
 </body>
 </html>
-
