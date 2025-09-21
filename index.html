@@ -615,7 +615,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbxzQGhKnY3KCqQscTs2twns5TQ_Yl1yv8kK1s1IS3WIHscYvnUMKIiDJvVwTRp74Ze5vA/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbz4SQRiHyBvnWfSkDTv3LmUonZ9h83bi6xp6pBGU8rzZoB9hHdyuy18VrFBLcM1OK2wfw/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -1261,32 +1261,41 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-function sendToGoogleSheet(playerName, question, playerAnswer, correctAnswer, responseTime, status) {
-    var scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_URL"; // Replace with your URL
-
-    var data = {
-        name: playerName,
-        question: question,
-        playerAnswer: playerAnswer,
-        correctAnswer: correctAnswer,
-        responseTime: responseTime,
-        status: status,
-        timestamp: new Date().toLocaleString()
-    };
-
-    fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-    .then(res => res.text())
-    .then(result => console.log("Answer saved:", result))
-    .catch(err => console.error("Error saving answer:", err));
+function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+// Use the webAppUrl from the variable (which is synced from Firebase)
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return;
 }
 
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
 
+// Send data to Google Apps Script web app
+fetch(webAppUrl, {
+method: "POST",
+mode: "no-cors",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(() => {
+console.log("Data sent to Google Sheets successfully");
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+});
+}
 
 // Countdown timer function
 function startCountdown() {
@@ -1363,7 +1372,7 @@ button.classList.add('incorrect');
 });
 
 // Send to Google Sheets with response time
-saveAnswerToSheet(playerName, q.question, correct, selected);
+sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
 
 // Move to next question after 5 seconds
 setTimeout(moveToNextQuestion, 5000);
@@ -1414,33 +1423,6 @@ updateQuizTimeInfo();
 
 // Load data from Firebase when the page loads
 loadDataFromFirebase();
-// Function to send answers to Google Sheets
-function saveAnswerToSheet(playerName, question, correctAnswer, playerAnswer) {
-    var scriptURL = "https://script.google.com/macros/s/AKfycbxzQGhKnY3KCqQscTs2twns5TQ_Yl1yv8kK1s1IS3WIHscYvnUMKIiDJvVwTRp74Ze5vA/exec"; // replace with your script URL
-
-    var data = {
-        name: playerName,
-        question: question,
-        correctAnswer: correctAnswer,
-        playerAnswer: playerAnswer,
-        timestamp: new Date().toLocaleString()
-    };
-
-    fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-    .then(response => response.text())
-    .then(result => {
-        console.log("Answer saved to sheet:", result);
-    })
-    .catch(error => {
-        console.error("Error saving answer:", error);
-    });
-}
 </script>
 </body>
 </html>
