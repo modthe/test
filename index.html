@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Game with Admin Features</title>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<title>Quiz Game with Google Sheets Integration</title>
 <style>
 * {
 margin: 0;
@@ -401,6 +398,18 @@ border-radius: 4px;
 color: #c62828;
 }
 
+.test-section {
+background: #e8f5e9;
+border-left: 4px solid #4caf50;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.test-section h3 {
+color: #2e7d32;
+}
+
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -445,16 +454,15 @@ align-items: flex-start;
 <body>
 <div class="container">
 <header>
-<h1>Quiz Game with Admin Features</h1>
-<p class="subtitle">Answer questions within the time limit</p>
+<h1>Quiz Game with Google Sheets Integration</h1>
+<p class="subtitle">Answer questions and send data to Google Sheets</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
 
 <div class="tabs">
 <div class="tab active" onclick="switchTab('player')">Player</div>
-<div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" id="setup-tab" onclick="switchTab('setup')">Setup</div>
-<div class="tab" onclick="switchTab('firebase-help')">Firebase Help</div>
+<div class="tab" onclick="switchTab('setup')">Google Sheets Setup</div>
+<div class="tab" onclick="switchTab('test')">Test Integration</div>
 </div>
 
 <div class="content">
@@ -462,8 +470,8 @@ align-items: flex-start;
 <div id="player" class="tab-content active">
 <h2>Join Quiz</h2>
 <div class="time-info" id="quiz-time-info">
-<p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p>
-<p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p>
+<p>This quiz is scheduled for <strong id="quiz-time-range">anytime</strong></p>
+<p id="quiz-status">Status: <span id="quiz-status-text">Ready to play</span></p>
 </div>
 
 <div class="card">
@@ -479,113 +487,8 @@ align-items: flex-start;
 <h3>Player Instructions</h3>
 <ol>
 <li>Enter your name and click "Join Game"</li>
-<li>Wait for the host to start the quiz</li>
-<li>Select your answer when questions appear</li>
-<li>Your answers and response time will be recorded</li>
-</ol>
-</div>
-</div>
-
-<!-- Host Tab -->
-<div id="host" class="tab-content">
-<h2>Quiz Host (Admin)</h2>
-
-<div class="admin-section">
-<h3>Admin Access</h3>
-<div class="form-group">
-<label for="admin-code">Enter Admin Code:</label>
-<input type="password" id="admin-code" placeholder="Enter admin code">
-<button onclick="verifyAdmin()">Access Admin Features</button>
-</div>
-<div id="admin-status" class="url-status">Enter the admin code to access host features</div>
-</div>
-
-<div id="admin-features" style="display: none;">
-<div class="time-config">
-<h3>Quiz Timing Configuration</h3>
-<p>Set when your quiz will be active</p>
-
-<div class="form-group">
-<label for="host-quiz-date">Quiz Date:</label>
-<input type="date" id="host-quiz-date">
-</div>
-
-<div class="form-group">
-<label for="host-start-time">Start Time:</label>
-<div class="time-input-group">
-<input type="number" id="host-start-hour" min="1" max="12" value="12" placeholder="Hour">
-<input type="number" id="host-start-minute" min="0" max="59" value="0" placeholder="Minute">
-<select id="host-start-ampm">
-<option value="AM">AM</option>
-<option value="PM" selected>PM</option>
-</select>
-</div>
-</div>
-
-<div class="form-group">
-<label for="host-quiz-duration">Quiz Duration (minutes):</label>
-<select id="host-quiz-duration">
-<option value="15">15 minutes</option>
-<option value="30" selected>30 minutes</option>
-<option value="45">45 minutes</option>
-<option value="60">1 hour</option>
-<option value="90">1.5 hours</option>
-<option value="120">2 hours</option>
-</select>
-</div>
-
-<button onclick="saveHostQuizTime()">Save Quiz Time</button>
-<div id="host-time-status" class="url-status">Configure when your quiz will be active</div>
-</div>
-
-<div class="admin-section">
-<h3>Question Management</h3>
-
-<div class="form-group">
-<label for="question-text">Question:</label>
-<textarea id="question-text" placeholder="Enter your question"></textarea>
-</div>
-
-<div class="form-group">
-<label>Answer Options:</label>
-<div class="answer-option">
-<input type="text" id="answer-1" placeholder="Enter answer 1">
-<input type="radio" name="correct-answer" value="0" checked> Correct Answer
-</div>
-<div class="answer-option">
-<input type="text" id="answer-2" placeholder="Enter answer 2">
-<input type="radio" name="correct-answer" value="1"> Correct Answer
-</div>
-<div class="answer-option">
-<input type="text" id="answer-3" placeholder="Enter answer 3">
-<input type="radio" name="correct-answer" value="2"> Correct Answer
-</div>
-<div class="answer-option">
-<input type="text" id="answer-4" placeholder="Enter answer 4">
-<input type="radio" name="correct-answer" value="3"> Correct Answer
-</div>
-</div>
-
-<button onclick="addQuestion()">Add Question</button>
-<div id="question-status" class="url-status">Add a new question to the quiz</div>
-</div>
-
-<div class="question-list">
-<h3>Current Questions</h3>
-<div id="questions-container"></div>
-</div>
-</div>
-
-<div class="instructions">
-<h3>Host Instructions</h3>
-<ol>
-<li>Enter the admin code to access host features</li>
-<li>Set the date and time for your quiz</li>
-<li>Add questions using the question management form</li>
-<li>Select which answer is correct using the radio buttons</li>
-<li>Click "Next Question" to proceed through the quiz</li>
-<li>Players will see questions on their screen</li>
-<li>Answers and response times will be logged to Google Sheets</li>
+<li>Answer the questions when they appear</li>
+<li>Your answers will be sent to Google Sheets</li>
 </ol>
 </div>
 </div>
@@ -596,7 +499,7 @@ align-items: flex-start;
 
 <div id="setup-complete-message" class="setup-complete" style="display: none;">
 <h3>✅ Setup Complete!</h3>
-<p>Your Google Sheets integration is configured. You can now use the Player and Host tabs.</p>
+<p>Your Google Sheets integration is configured. You can now use the Player tab.</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
@@ -615,7 +518,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbz4SQRiHyBvnWfSkDTv3LmUonZ9h83bi6xp6pBGU8rzZoB9hHdyuy18VrFBLcM1OK2wfw/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -624,30 +527,20 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
-// 1. ACQUIRE A LOCK to prevent concurrent access
-const lock = LockService.getScriptLock();
 try {
-lock.waitLock(30000); // Wait up to 30 seconds to get the lock
+// Open the active spreadsheet and get the 'Quiz Results' sheet
+var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
 
-// 2. GET THE SPECIFIC SHEET BY NAME
-const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-// If the sheet doesn't exist, create it and add headers
+// If the sheet doesn't exist, create it
 if (!sheet) {
-// Handle error: Sheet not found
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
-}
-
-// 3. Add headers if sheet is empty (now safe inside the lock)
-if (sheet.getLastRow() === 0) {
+sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Quiz Results");
 sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
 }
 
-// 4. PARSE the incoming data
-const data = JSON.parse(e.postData.contents);
+// Parse the incoming data
+var data = JSON.parse(e.postData.contents);
 
-// 5. APPEND THE NEW ROW
+// Append the new row
 sheet.appendRow([
 new Date(),
 data.player,
@@ -658,95 +551,61 @@ data.responseTime,
 data.status
 ]);
 
-// 6. RETURN SUCCESS
-return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
+// Return success
+return ContentService.createTextOutput(JSON.stringify({result: "Success", message: "Data saved successfully"}))
 .setMimeType(ContentService.MimeType.JSON);
 
 } catch (error) {
-// Log the error for you to see
-console.error("Failed to process request:", error);
-// Return an error message to the client
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
+// Return an error message
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: error.toString()}))
 .setMimeType(ContentService.MimeType.JSON)
 .setStatusCode(500);
-
-} finally {
-// 7. ALWAYS RELEASE THE LOCK
-lock.releaseLock();
 }
+}
+
+// For testing purposes
+function doGet(e) {
+return ContentService.createTextOutput(JSON.stringify({result: "Success", message: "Web app is working!"}))
+.setMimeType(ContentService.MimeType.JSON);
 }
 </pre>
 </div>
 </div>
 </div>
 
-<!-- Firebase Help Tab -->
-<div id="firebase-help" class="tab-content">
-<h2>Firebase Setup Help</h2>
+<!-- Test Tab -->
+<div id="test" class="tab-content">
+<h2>Test Google Sheets Integration</h2>
 
-<div class="firebase-config-help">
-<h3>Firebase Configuration Issues</h3>
-<p>If your Firebase real-time updates aren't working, follow these steps:</p>
-</div>
-
-<div class="card">
-<h3>Step 1: Check Firebase Database Rules</h3>
-<p>Your Firebase Realtime Database rules must allow read and write access:</p>
-<div class="code-block">
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
-</div>
-<p>Go to Firebase Console → Realtime Database → Rules and update them.</p>
+<div class="test-section">
+<h3>Test Connection</h3>
+<p>Click the button below to test if your Google Sheets connection is working:</p>
+<button onclick="testGoogleSheetsConnection()">Test Connection</button>
+<div id="testConnectionStatus" class="url-status">Test not run yet</div>
 </div>
 
-<div class="card">
-<h3>Step 2: Verify Firebase Configuration</h3>
-<p>Your Firebase config should look like this (with your actual values):</p>
-<div class="code-block">
-const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
-};
-</div>
+<div class="test-section">
+<h3>Send Sample Data</h3>
+<p>Click the button below to send sample data to your Google Sheet:</p>
+<button onclick="sendSampleData()">Send Sample Data</button>
+<div id="sampleDataStatus" class="url-status">Sample data not sent yet</div>
 </div>
 
-<div class="card">
-<h3>Step 3: Initialize Data Structure</h3>
-<p>Click the button below to initialize the required data structure in your Firebase database:</p>
-<button onclick="initializeFirebaseData()">Initialize Firebase Data</button>
-<div id="firebase-init-status" class="url-status">Click to initialize Firebase data structure</div>
+<div class="instructions">
+<h3>Troubleshooting Tips</h3>
+<ol>
+<li>Make sure you've deployed your Google Apps Script as a web app</li>
+<li>Set "Execute as me" and "Anyone" access permissions</li>
+<li>Check your browser's console for error messages (F12)</li>
+<li>Ensure your Google Sheet has a sheet named "Quiz Results"</li>
+<li>Try the test connection first before sending player data</li>
+</ol>
 </div>
 </div>
 </div>
 </div>
 
 <script>
-// Firebase configuration - Replace with your own config
-const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
 // Tab switching functionality
 function switchTab(tabName) {
 // Hide all tab contents
@@ -764,496 +623,84 @@ tab.classList.remove('active');
 
 // Activate the clicked tab
 event.target.classList.add('active');
-
-// If switching to host tab, load the saved time settings
-if (tabName === 'host') {
-loadHostTimeSettings();
-}
 }
 
 // Initialize variables
-var questions = [];
+var questions = [
+{
+question: "What is 2 + 2?",
+answers: ["3", "4", "5", "6"],
+correct: "4"
+},
+{
+question: "Capital of France?",
+answers: ["London", "Paris", "Berlin", "Rome"],
+correct: "Paris"
+},
+{
+question: "Largest planet in our solar system?",
+answers: ["Earth", "Mars", "Jupiter", "Saturn"],
+correct: "Jupiter"
+}
+];
+
 var currentIndex = 0;
 var playerName = "";
 var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
-var quizActive = false;
-var adminCode = "admin123"; // Default admin code
-var webAppUrl = ""; // Will be loaded from Firebase
+var webAppUrl = localStorage.getItem('webAppUrl') || '';
 
-// Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
-var quizStartTime = localStorage.getItem('quizStartTime');
-var quizEndTime = localStorage.getItem('quizEndTime');
-
-if (!quizStartTime) {
-// Set default to tomorrow at 12:00 PM
-var tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(12, 0, 0, 0);
-quizStartTime = tomorrow.getTime();
-localStorage.setItem('quizStartTime', quizStartTime);
-} else {
-quizStartTime = parseInt(quizStartTime);
-}
-
-if (!quizEndTime) {
-// Set default to tomorrow at 12:30 PM
-var endTime = new Date(quizStartTime);
-endTime.setMinutes(endTime.getMinutes() + 30);
-quizEndTime = endTime.getTime();
-localStorage.setItem('quizEndTime', quizEndTime);
-} else {
-quizEndTime = parseInt(quizEndTime);
-}
-
-// Load data from Firebase
-function loadDataFromFirebase() {
-  // Listen for quiz time changes
-  database.ref('quizTime').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      quizStartTime = data.startTime;
-      quizEndTime = data.endTime;
-      localStorage.setItem('quizStartTime', quizStartTime);
-      localStorage.setItem('quizEndTime', quizEndTime);
-      updateQuizTimeInfo();
-      console.log("Quiz time updated from Firebase");
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
-
-  // Listen for question changes
-  database.ref('questions').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      questions = Object.values(data);
-      localStorage.setItem('quizQuestions', JSON.stringify(questions));
-      displayQuestions();
-      console.log("Questions updated from Firebase");
-      
-      // If we're on the player tab and a question is active, update it
-      if (document.getElementById('player').classList.contains('active') && 
-          document.getElementById('player-question').innerHTML !== "") {
-        showPlayerQuestion();
-      }
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
-
-  // NEW: Listen for web app URL changes
-  database.ref('webAppUrl').on('value', (snapshot) => {
-    const url = snapshot.val();
-    if (url) {
-      webAppUrl = url;
-      localStorage.setItem('webAppUrl', url);
-      document.getElementById('webAppUrl').value = url;
-      
-      // Hide setup tab if URL is configured
-      if (url) {
-        document.getElementById('setup-tab').style.display = 'none';
-        document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
-        document.getElementById('urlStatus').className = 'url-status success';
-      }
-      
-      console.log("Web App URL updated from Firebase:", url);
-    }
-  }, (error) => {
-    console.error("Firebase URL read failed:", error);
-  });
-}
-
-// Initialize Firebase data structure
-function initializeFirebaseData() {
-  const statusElement = document.getElementById('firebase-init-status');
-  statusElement.textContent = "Initializing Firebase data...";
-  statusElement.className = 'url-status';
-  
-  // Initialize with default values if they don't exist
-  database.ref('quizTime').once('value').then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
-      var tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(12, 0, 0, 0);
-      var startTime = tomorrow.getTime();
-      var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-      
-      return database.ref('quizTime').set({
-        startTime: startTime,
-        endTime: endTime
-      });
-    }
-  }).then(() => {
-    return database.ref('questions').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default questions
-      const defaultQuestions = [
-        {
-          question: "What is 2 + 2?",
-          answers: ["3", "4", "5", "6"],
-          correct: "4"
-        },
-        {
-          question: "Capital of France?",
-          answers: ["London", "Paris", "Berlin", "Rome"],
-          correct: "Paris"
-        }
-      ];
-      return database.ref('questions').set(defaultQuestions);
-    }
-  }).then(() => {
-    return database.ref('webAppUrl').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Initialize with empty URL
-      return database.ref('webAppUrl').set("");
-    }
-  }).then(() => {
-    statusElement.textContent = "Firebase data initialized successfully!";
-    statusElement.className = 'url-status success';
-    console.log("Firebase data initialized");
-    
-    // Reload data
-    loadDataFromFirebase();
-  }).catch((error) => {
-    statusElement.textContent = "Error initializing Firebase: " + error.message;
-    statusElement.className = 'url-status error';
-    console.error("Firebase initialization error:", error);
-  });
-}
-
-// Save web app URL to Firebase
-function saveWebAppUrlToFirebase(url) {
-  return database.ref('webAppUrl').set(url)
-    .then(() => {
-      console.log("Web App URL saved to Firebase:", url);
-      return true;
-    })
-    .catch((error) => {
-      console.error("Error saving URL to Firebase:", error);
-      return false;
-    });
-}
-
-// Save quiz time to Firebase
-function saveQuizTimeToFirebase(startTime, endTime) {
-  database.ref('quizTime').set({
-    startTime: startTime,
-    endTime: endTime
-  }).then(() => {
-    document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
-    document.getElementById('host-time-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
-    document.getElementById('host-time-status').className = 'url-status error';
-  });
-}
-
-// Save questions to Firebase
-function saveQuestionsToFirebase() {
-  database.ref('questions').set(questions).then(() => {
-    document.getElementById('question-status').textContent = 'Questions saved successfully!';
-    document.getElementById('question-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
-    document.getElementById('question-status').className = 'url-status error';
-  });
-}
-
-// Load questions from localStorage
-var savedQuestions = localStorage.getItem('quizQuestions');
-if (savedQuestions) {
-questions = JSON.parse(savedQuestions);
-}
-
-// Load host time settings into the form
-function loadHostTimeSettings() {
-var quizDate = new Date(quizStartTime);
-document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
-
-var startTime = new Date(quizStartTime);
-var hours = startTime.getHours();
-var ampm = hours >= 12 ? 'PM' : 'AM';
-hours = hours % 12;
-hours = hours ? hours : 12; // Convert 0 to 12
-
-document.getElementById('host-start-hour').value = hours;
-document.getElementById('host-start-minute').value = startTime.getMinutes();
-document.getElementById('host-start-ampm').value = ampm;
-
-// Calculate duration in minutes
-var duration = Math.round((quizEndTime - quizStartTime) / 60000);
-document.getElementById('host-quiz-duration').value = duration;
-
-// Display questions
-displayQuestions();
-}
-
-// Verify admin code
-function verifyAdmin() {
-var code = document.getElementById('admin-code').value;
-var status = document.getElementById('admin-status');
-
-if (code === adminCode) {
-document.getElementById('admin-features').style.display = 'block';
-status.textContent = 'Admin access granted!';
-status.className = 'url-status success';
-} else {
-status.textContent = 'Invalid admin code. Please try again.';
-status.className = 'url-status error';
-}
-}
-
-// Save quiz time configuration from host tab
-function saveHostQuizTime() {
-var date = document.getElementById('host-quiz-date').value;
-var hour = parseInt(document.getElementById('host-start-hour').value);
-var minute = parseInt(document.getElementById('host-start-minute').value);
-var ampm = document.getElementById('host-start-ampm').value;
-var duration = document.getElementById('host-quiz-duration').value;
-
-if (!date || isNaN(hour) || isNaN(minute) || !duration) {
-document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
-document.getElementById('host-time-status').className = 'url-status error';
-return;
-}
-
-// Convert to 24-hour format
-if (ampm === 'PM' && hour < 12) {
-hour += 12;
-} else if (ampm === 'AM' && hour === 12) {
-hour = 0;
-}
-
-var startDate = new Date(date);
-startDate.setHours(hour, minute, 0, 0);
-
-var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
-
-quizStartTime = startDate.getTime();
-quizEndTime = endDate.getTime();
-
-// Save to Firebase instead of localStorage
-saveQuizTimeToFirebase(quizStartTime, quizEndTime);
-updateQuizTimeInfo();
-
-// Clear status after 3 seconds
-setTimeout(() => {
-document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
-document.getElementById('host-time-status').className = 'url-status';
-}, 3000);
-}
-
-// Add a new question
-function addQuestion() {
-var questionText = document.getElementById('question-text').value;
-var answer1 = document.getElementById('answer-1').value;
-var answer2 = document.getElementById('answer-2').value;
-var answer3 = document.getElementById('answer-3').value;
-var answer4 = document.getElementById('answer-4').value;
-
-if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
-document.getElementById('question-status').textContent = 'Please fill in all fields';
-document.getElementById('question-status').className = 'url-status error';
-return;
-}
-
-// Get the selected correct answer
-var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
-var answers = [answer1, answer2, answer3, answer4];
-var correctAnswer = answers[correctAnswerIndex];
-
-var newQuestion = {
-question: questionText,
-answers: answers,
-correct: correctAnswer
-};
-
-questions.push(newQuestion);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
-
-document.getElementById('question-status').textContent = 'Question added successfully!';
-document.getElementById('question-status').className = 'url-status success';
-
-// Clear form
-document.getElementById('question-text').value = '';
-document.getElementById('answer-1').value = '';
-document.getElementById('answer-2').value = '';
-document.getElementById('answer-3').value = '';
-document.getElementById('answer-4').value = '';
-document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
-
-// Clear status after 3 seconds
-setTimeout(() => {
-document.getElementById('question-status').textContent = 'Add a new question to the quiz';
-document.getElementById('question-status').className = 'url-status';
-}, 3000);
-}
-
-// Display all questions
-function displayQuestions() {
-var container = document.getElementById('questions-container');
-container.innerHTML = '';
-
-if (questions.length === 0) {
-container.innerHTML = '<p>No questions added yet.</p>';
-return;
-}
-
-questions.forEach((q, index) => {
-var questionItem = document.createElement('div');
-questionItem.className = 'question-item';
-
-// Find the index of the correct answer
-var correctIndex = q.answers.indexOf(q.correct);
-
-questionItem.innerHTML = `
-<strong>Q${index + 1}:</strong> ${q.question}
-<div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
-<div class="admin-controls">
-<button class="admin-btn edit" onclick="editQuestion(${index})">Edit</button>
-<button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
-</div>
-`;
-container.appendChild(questionItem);
-});
-}
-
-// Edit a question
-function editQuestion(index) {
-var q = questions[index];
-
-document.getElementById('question-text').value = q.question;
-document.getElementById('answer-1').value = q.answers[0];
-document.getElementById('answer-2').value = q.answers[1];
-document.getElementById('answer-3').value = q.answers[2];
-document.getElementById('answer-4').value = q.answers[3];
-
-// Find and select the correct answer
-var correctIndex = q.answers.indexOf(q.correct);
-document.querySelector(`input[name="correct-answer"][value="${correctIndex}"]`).checked = true;
-
-// Remove the question being edited
-questions.splice(index, 1);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
-
-document.getElementById('question-status').textContent = 'Editing question. Update the fields and click "Add Question" to save changes.';
-document.getElementById('question-status').className = 'url-status';
-}
-
-// Delete a question
-function deleteQuestion(index) {
-if (confirm('Are you sure you want to delete this question?')) {
-questions.splice(index, 1);
-// Save to Firebase instead of localStorage
-saveQuestionsToFirebase();
-}
-}
-
-// Update quiz time info display
-function updateQuizTimeInfo() {
-var start = new Date(quizStartTime);
-var end = new Date(quizEndTime);
-
-var options = {
-weekday: 'long',
-year: 'numeric',
-month: 'long',
-day: 'numeric',
-hour: '2-digit',
-minute: '2-digit'
-};
-
-var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
-end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
-
-document.getElementById('quiz-time-range').textContent = timeRange;
-
-// Update quiz status
-var now = new Date().getTime();
-var quizTimer = document.getElementById('quiz-timer');
-var quizStatus = document.getElementById('quiz-status-text');
-
-if (now < quizStartTime) {
-// Quiz hasn't started yet
-var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
-var hours = Math.floor(timeUntilStart / 3600);
-var minutes = Math.floor((timeUntilStart % 3600) / 60);
-var seconds = timeUntilStart % 60;
-
-quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
-quizStatus.textContent = 'Not started';
-quizStatus.style.color = '#ff9800';
-quizActive = false;
-} else if (now >= quizStartTime && now <= quizEndTime) {
-// Quiz is active
-var timeLeft = Math.floor((quizEndTime - now) / 1000);
-var minutes = Math.floor(timeLeft / 60);
-var seconds = timeLeft % 60;
-
-quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
-quizStatus.textContent = 'Active';
-quizStatus.style.color = '#4caf50';
-quizActive = true;
-} else {
-// Quiz has ended
-quizTimer.textContent = 'Quiz ended';
-quizStatus.textContent = 'Ended';
-quizStatus.style.color = '#f44336';
-quizActive = false;
-}
-}
-
-// Update quiz timer every second
-setInterval(updateQuizTimeInfo, 1000);
-updateQuizTimeInfo();
-
-// Get saved web app URL from local storage initially
-webAppUrl = localStorage.getItem('webAppUrl') || '';
-document.getElementById('webAppUrl').value = webAppUrl;
-
-// Hide setup tab if URL is already configured
+// Initialize the application
+function initApp() {
+// Set web app URL if available
 if (webAppUrl) {
-document.getElementById('setup-tab').style.display = 'none';
+document.getElementById('webAppUrl').value = webAppUrl;
+document.getElementById('urlStatus').textContent = 'Web App URL loaded from storage';
+document.getElementById('urlStatus').className = 'url-status success';
 }
 
-// Save web app URL to Firebase and local storage
+// Set up join button
+document.getElementById("joinBtn").onclick = function() {
+playerName = document.getElementById("name").value;
+if (playerName.trim() !== "") {
+// Remove the welcome message by hiding the input elements
+document.getElementById("name").style.display = "none";
+document.getElementById("joinBtn").style.display = "none";
+
+// Show first question
+showPlayerQuestion();
+} else {
+alert("Please enter your name to join the game.");
+}
+};
+
+// Update quiz time info
+updateQuizTimeInfo();
+}
+
+// Save web app URL to local storage
 function saveWebAppUrl() {
 var url = document.getElementById('webAppUrl').value;
 var urlStatus = document.getElementById('urlStatus');
 
 if (url) {
-// Save to Firebase first
-saveWebAppUrlToFirebase(url).then((success) => {
-  if (success) {
-    // Also save to local storage as backup
-    localStorage.setItem('webAppUrl', url);
-    webAppUrl = url;
-    
-    urlStatus.textContent = 'URL saved successfully! Setup complete.';
-    urlStatus.className = 'url-status success';
+// Basic validation for Google Apps Script URL
+if (!url.includes('https://script.google.com/')) {
+urlStatus.textContent = 'URL should be a Google Apps Script URL';
+urlStatus.className = 'url-status error';
+return;
+}
 
-    // Hide setup form and show completion message
-    document.getElementById('setup-form').style.display = 'none';
-    document.getElementById('setup-complete-message').style.display = 'block';
+localStorage.setItem('webAppUrl', url);
+webAppUrl = url;
 
-    // Hide setup tab
-    document.getElementById('setup-tab').style.display = 'none';
-  } else {
-    urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
-    urlStatus.className = 'url-status error';
-  }
-});
+urlStatus.textContent = 'URL saved successfully! Setup complete.';
+urlStatus.className = 'url-status success';
+
+// Hide setup form and show completion message
+document.getElementById('setup-form').style.display = 'none';
+document.getElementById('setup-complete-message').style.display = 'block';
 } else {
 urlStatus.textContent = 'Please enter a valid URL';
 urlStatus.className = 'url-status error';
@@ -1261,91 +708,118 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
- // Use the webAppUrl from the variable (which is synced from Firebase)
- if (!webAppUrl) {
-   console.error("Web app URL not configured");
-   alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-   switchTab('setup');
-   return;
- }
- // Prepare data to send
- var data = {
-   player: playerName,
-   question: question,
-   answer: selectedAnswer,
-   correct: correctAnswer,
-   responseTime: responseTime,
-   status: status
- };
- // Send data to Google Apps Script web app
- fetch(webAppUrl, {
-   method: "POST",
-   headers: {
-     "Content-Type": "application/json"
-   },
-   body: JSON.stringify(data)
- })
- .then(response => {
-   if (!response.ok) {
-     throw new Error('Network response was not ok');
-   }
-   return response.json();
- })
- .then(data => {
-   console.log("Data sent to Google Sheets successfully:", data);
- })
- .catch(error => {
-   console.error("Error sending data to Google Sheets:", error);
-   // Fallback: Store data locally if Google Sheets fails
-   storeDataLocally(playerName, question, selectedAnswer, correctAnswer, responseTime, status);
- });
+// Use the webAppUrl from the variable
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return false;
 }
-// Fallback function to store data locally if Google Sheets fails
-function storeDataLocally(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
- // Get existing data or initialize empty array
- var storedData = JSON.parse(localStorage.getItem('pendingSheetsData') || '[]');
- // Add new data
- storedData.push({
-   player: playerName,
-   question: question,
-   answer: selectedAnswer,
-   correct: correctAnswer,
-   responseTime: responseTime,
-   status: status,
-   timestamp: new Date().toISOString()
- });
- // Save back to localStorage
- localStorage.setItem('pendingSheetsData', JSON.stringify(storedData));
- console.log("Data stored locally due to Google Sheets error. Total pending:", storedData.length);
+
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
+
+console.log("Sending data to Google Sheets:", data);
+
+// Send data to Google Apps Script web app
+// Using a proxy approach to avoid CORS issues
+return fetch('https://corsproxy.io/?' + encodeURIComponent(webAppUrl), {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(response => {
+if (!response.ok) {
+throw new Error('Network response was not ok');
 }
-// Function to retry sending pending data
-function retryPendingSheetsData() {
- var pendingData = JSON.parse(localStorage.getItem('pendingSheetsData') || '[]');
- if (pendingData.length === 0) return;
- console.log("Attempting to send", pendingData.length, "pending records to Google Sheets");
- // Try to send each pending item
- pendingData.forEach((data, index) => {
-   fetch(webAppUrl, {
-     method: "POST",
-     headers: {
-       "Content-Type": "application/json"
-     },
-     body: JSON.stringify(data)
-   })
-   .then(response => {
-     if (response.ok) {
-       // Remove successfully sent item from pending data
-       pendingData.splice(index, 1);
-       localStorage.setItem('pendingSheetsData', JSON.stringify(pendingData));
-       console.log("Pending data sent successfully");
-     }
-   })
-   .catch(error => {
-     console.error("Failed to send pending data:", error);
-   });
- });
+return response.json();
+})
+.then(data => {
+console.log("Data sent to Google Sheets successfully:", data);
+return true;
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+
+// Fallback: Try direct connection (might work in some environments)
+return fetch(webAppUrl, {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data),
+mode: 'no-cors'
+})
+.then(() => {
+console.log("Data sent with no-cors mode (response not readable)");
+return true;
+})
+.catch(fallbackError => {
+console.error("Fallback also failed:", fallbackError);
+alert("Failed to send data to Google Sheets. Check console for details.");
+return false;
+});
+});
+}
+
+// Test Google Sheets connection
+function testGoogleSheetsConnection() {
+var statusElement = document.getElementById('testConnectionStatus');
+statusElement.textContent = "Testing connection...";
+statusElement.className = 'url-status';
+
+if (!webAppUrl) {
+statusElement.textContent = 'Web App URL not configured';
+statusElement.className = 'url-status error';
+return;
+}
+
+// Test with a GET request (doGet function in Apps Script)
+fetch('https://corsproxy.io/?' + encodeURIComponent(webAppUrl))
+.then(response => response.json())
+.then(data => {
+statusElement.textContent = 'Connection successful: ' + data.message;
+statusElement.className = 'url-status success';
+})
+.catch(error => {
+statusElement.textContent = 'Connection failed: ' + error.message;
+statusElement.className = 'url-status error';
+console.error("Connection test error:", error);
+});
+}
+
+// Send sample data to Google Sheets
+function sendSampleData() {
+var statusElement = document.getElementById('sampleDataStatus');
+statusElement.textContent = "Sending sample data...";
+statusElement.className = 'url-status';
+
+sendToGoogleSheet(
+"Test Player",
+"Sample question for testing",
+"Sample answer",
+"Correct answer",
+5.2,
+"Test"
+).then(success => {
+if (success) {
+statusElement.textContent = 'Sample data sent successfully!';
+statusElement.className = 'url-status success';
+} else {
+statusElement.textContent = 'Failed to send sample data';
+statusElement.className = 'url-status error';
+}
+});
 }
 
 // Countdown timer function
@@ -1375,7 +849,7 @@ currentIndex++;
 if (currentIndex < questions.length) {
 showPlayerQuestion();
 } else {
-document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
+document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3><p>Thank you for playing. Your answers have been recorded.</p>";
 document.getElementById('player-answers').innerHTML = "";
 document.getElementById('countdown').textContent = "";
 }
@@ -1397,12 +871,6 @@ var btn = document.createElement("button");
 btn.className = "answer-btn";
 btn.innerText = a;
 btn.onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
-}
-
 var selected = a;
 var correct = q.correct;
 var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
@@ -1423,10 +891,10 @@ button.classList.add('incorrect');
 });
 
 // Send to Google Sheets with response time
-sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
+sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, selected === correct ? "Correct" : "Incorrect");
 
-// Move to next question after 5 seconds
-setTimeout(moveToNextQuestion, 5000);
+// Move to next question after 3 seconds
+setTimeout(moveToNextQuestion, 3000);
 };
 answersDiv.appendChild(btn);
 });
@@ -1435,45 +903,16 @@ answersDiv.appendChild(btn);
 startCountdown();
 }
 
-// Initialize the application
-document.getElementById("joinBtn").onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
+// Update quiz time info display
+function updateQuizTimeInfo() {
+document.getElementById('quiz-time-range').textContent = "Anytime";
+document.getElementById('quiz-status-text').textContent = "Ready to play";
+document.getElementById('quiz-status-text').style.color = '#4caf50';
+document.getElementById('quiz-timer').textContent = "Quiz: Ready";
 }
 
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-// Remove the welcome message by hiding the input elements
-document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
-
-// Show first question
-showPlayerQuestion();
-} else {
-alert("Please enter your name to join the game.");
-}
-};
-
-// Initial setup - show player tab by default
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
-document.getElementById('player').classList.add('active');
-
-// Check if web app URL is configured
-if (!webAppUrl) {
-console.log("Web app URL not configured. Please set it up in the Setup tab.");
-// Show setup tab if no URL is configured
-document.getElementById('setup-tab').style.display = 'flex';
-}
-
-// Initialize the quiz time display
-updateQuizTimeInfo();
-
-// Load data from Firebase when the page loads
-loadDataFromFirebase();
+// Initialize the application when page loads
+window.onload = initApp;
 </script>
 </body>
 </html>
