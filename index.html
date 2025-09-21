@@ -1261,10 +1261,6 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
     // Use the webAppUrl from the variable (which is synced from Firebase)
     if (!webAppUrl) {
@@ -1286,7 +1282,7 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
 
     console.log("Sending data to Google Sheets:", data);
 
-    // Use XMLHttpRequest instead of fetch for better compatibility
+    // Use a simple approach that works with both JSON and form data
     var xhr = new XMLHttpRequest();
     xhr.open('POST', webAppUrl, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
@@ -1298,18 +1294,62 @@ function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, 
             } else {
                 console.error("Error sending data to Google Sheets:", xhr.status, xhr.statusText);
                 
-                // Try an alternative approach using a form submission
-                tryAlternativeMethod(data);
+                // Try sending as form data instead
+                sendAsFormData(data);
             }
         }
     };
     
     xhr.onerror = function() {
         console.error("Request failed");
-        tryAlternativeMethod(data);
+        sendAsFormData(data);
     };
     
-    xhr.send(JSON.stringify(data));
+    try {
+        xhr.send(JSON.stringify(data));
+    } catch (error) {
+        console.error("Error sending JSON:", error);
+        sendAsFormData(data);
+    }
+}
+
+// Alternative method using form data if JSON fails
+function sendAsFormData(data) {
+    console.log("Trying to send as form data");
+    
+    var formData = new FormData();
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            formData.append(key, data[key]);
+        }
+    }
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', webAppUrl, true);
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                console.log("Form data sent successfully:", xhr.responseText);
+            } else {
+                console.error("Form data also failed:", xhr.status, xhr.statusText);
+                storeDataForLater(data);
+            }
+        }
+    };
+    
+    xhr.send(formData);
+}
+
+// Store data in localStorage to send later if online
+function storeDataForLater(data) {
+    var pendingData = JSON.parse(localStorage.getItem('pendingQuizData') || '[]');
+    pendingData.push({
+        data: data,
+        timestamp: new Date().getTime()
+    });
+    localStorage.setItem('pendingQuizData', JSON.stringify(pendingData));
+    console.log("Data stored locally for later submission");
 }
 
 // Alternative method using a form if the direct POST fails
@@ -1527,6 +1567,7 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
 
 
