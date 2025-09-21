@@ -598,7 +598,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzWNcQtHne9jQDBUysmWc-aHxygcCLu0VCm_YvY-PaG3jSQlkGOTbZlP7iJBxTuege0zw/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -1039,45 +1039,40 @@ urlStatus.className = 'url-status error';
 
 // Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-   console.log("Attempting to send data to Google Sheets...");
-   var webAppUrl = localStorage.getItem('webAppUrl');
-   if (!webAppUrl) {
-       console.error("Web app URL not configured");
-       alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-       switchTab('setup');
-       return;
-   }
-   // Prepare data to send
-   var data = {
-       player: playerName,
-       question: question,
-       answer: selectedAnswer,
-       correct: correctAnswer,
-       responseTime: responseTime,
-       status: status
-   };
-   console.log("Sending data:", data);
-   // Use fetch API to send data
-   fetch(webAppUrl, {
-       method: "POST",
-       headers: {
-           "Content-Type": "application/json"
-       },
-       body: JSON.stringify(data)
-   })
-   .then(response => {
-       if (!response.ok) {
-           throw new Error('Network response was not ok');
-       }
-       return response.json();
-   })
-   .then(result => {
-       console.log("Success:", result);
-   })
-   .catch(error => {
-       console.error("Error sending data to Google Sheets:", error);
-       alert("Error sending data to Google Sheets. Please check your Apps Script setup.");
-   });
+var webAppUrl = localStorage.getItem('webAppUrl');
+
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return;
+}
+
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
+
+// Send data to Google Apps Script web app
+fetch(webAppUrl, {
+method: "POST",
+mode: "no-cors",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(() => {
+console.log("Data sent to Google Sheets successfully");
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+});
 }
 
 // Countdown timer function
@@ -1206,6 +1201,3 @@ updateQuizTimeInfo();
 </script>
 </body>
 </html>
-
-
-
