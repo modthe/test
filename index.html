@@ -615,7 +615,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbyVKJqX0NkqEIwvoun4CmZxcRaKEho9hfDw4t8F8C1inXy9ktc5zFIOA338-qJ__Ngm/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbxzQGhKnY3KCqQscTs2twns5TQ_Yl1yv8kK1s1IS3WIHscYvnUMKIiDJvVwTRp74Ze5vA/exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -1261,23 +1261,31 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-function sendToGoogleSheet(data) {
-  var formData = new URLSearchParams();
-  formData.append("name", data.name);
-  formData.append("question", data.question);
-  formData.append("playerAnswer", data.playerAnswer);
-  formData.append("correctAnswer", data.correctAnswer);
-  formData.append("responseTime", data.responseTime);
-  formData.append("status", data.status);
+function sendToGoogleSheet(playerName, question, playerAnswer, correctAnswer, responseTime, status) {
+    var scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_URL"; // Replace with your URL
 
-  fetch("https://script.google.com/macros/s/AKfycbyVKJqX0NkqEIwvoun4CmZxcRaKEho9hfDw4t8F8C1inXy9ktc5zFIOA338-qJ__Ngm/exec", {
-    method: "POST",
-    mode: "no-cors",  // important
-    body: formData
-  })
-  .then(() => console.log("Answer sent!"))
-  .catch(err => console.log("Error sending answer:", err));
+    var data = {
+        name: playerName,
+        question: question,
+        playerAnswer: playerAnswer,
+        correctAnswer: correctAnswer,
+        responseTime: responseTime,
+        status: status,
+        timestamp: new Date().toLocaleString()
+    };
+
+    fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.text())
+    .then(result => console.log("Answer saved:", result))
+    .catch(err => console.error("Error saving answer:", err));
 }
+
 
 
 // Countdown timer function
@@ -1408,7 +1416,7 @@ updateQuizTimeInfo();
 loadDataFromFirebase();
 // Function to send answers to Google Sheets
 function saveAnswerToSheet(playerName, question, correctAnswer, playerAnswer) {
-    var scriptURL = "https://script.google.com/macros/s/AKfycbyVKJqX0NkqEIwvoun4CmZxcRaKEho9hfDw4t8F8C1inXy9ktc5zFIOA338-qJ__Ngm/exec"; // replace with your script URL
+    var scriptURL = "https://script.google.com/macros/s/AKfycbxzQGhKnY3KCqQscTs2twns5TQ_Yl1yv8kK1s1IS3WIHscYvnUMKIiDJvVwTRp74Ze5vA/exec"; // replace with your script URL
 
     var data = {
         name: playerName,
@@ -1436,7 +1444,3 @@ function saveAnswerToSheet(playerName, question, correctAnswer, playerAnswer) {
 </script>
 </body>
 </html>
-
-
-
-
