@@ -1261,40 +1261,71 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
+// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-// Use the webAppUrl from the variable (which is synced from Firebase)
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-switchTab('setup');
-return;
-}
+    // Use the webAppUrl from the variable (which is synced from Firebase)
+    if (!webAppUrl) {
+        console.error("Web app URL not configured");
+        alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+        switchTab('setup');
+        return;
+    }
 
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer,
-responseTime: responseTime,
-status: status
-};
+    // Prepare data to send
+    var data = {
+        player: playerName,
+        question: question,
+        answer: selectedAnswer,
+        correct: correctAnswer,
+        responseTime: responseTime,
+        status: status
+    };
 
-// Send data to Google Apps Script web app
-fetch(webAppUrl, {
-method: "POST",
-mode: "no-cors",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
+    console.log("Sending data to Google Sheets:", data);
+
+    // Send data to Google Apps Script web app
+    // Use a proxy to avoid CORS issues if needed
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    
+    fetch(proxyUrl + webAppUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(text => {
+        try {
+            const result = JSON.parse(text);
+            console.log("Data sent to Google Sheets successfully:", result);
+        } catch (e) {
+            console.log("Data sent to Google Sheets successfully (non-JSON response):", text);
+        }
+    })
+    .catch(error => {
+        console.error("Error sending data to Google Sheets:", error);
+        // Try without proxy if proxy fails
+        fetch(webAppUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            console.log("Data sent to Google Sheets using no-cors mode");
+        })
+        .catch(error2 => {
+            console.error("Error with no-cors mode too:", error2);
+        });
+    });
 }
 
 // Countdown timer function
@@ -1426,3 +1457,4 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
