@@ -1261,41 +1261,24 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-// Use the webAppUrl from the variable (which is synced from Firebase)
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-switchTab('setup');
-return;
-}
+function sendToGoogleSheet(data) {
+  var formData = new URLSearchParams();
+  formData.append("name", data.name);
+  formData.append("question", data.question);
+  formData.append("playerAnswer", data.playerAnswer);
+  formData.append("correctAnswer", data.correctAnswer);
+  formData.append("responseTime", data.responseTime);
+  formData.append("status", data.status);
 
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer,
-responseTime: responseTime,
-status: status
-};
-
-// Send data to Google Apps Script web app
-fetch(scriptURL, {
+  fetch("https://script.google.com/macros/s/AKfycbyVKJqX0NkqEIwvoun4CmZxcRaKEho9hfDw4t8F8C1inXy9ktc5zFIOA338-qJ__Ngm/exec", {
     method: "POST",
-    mode: "cors",
-    body: JSON.stringify(data),
-    headers: {
-        "Content-Type": "application/json"
-    }
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
+    mode: "no-cors",  // important
+    body: formData
+  })
+  .then(() => console.log("Answer sent!"))
+  .catch(err => console.log("Error sending answer:", err));
 }
+
 
 // Countdown timer function
 function startCountdown() {
@@ -1453,6 +1436,7 @@ function saveAnswerToSheet(playerName, question, correctAnswer, playerAnswer) {
 </script>
 </body>
 </html>
+
 
 
 
