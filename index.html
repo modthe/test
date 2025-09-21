@@ -1289,8 +1289,6 @@ fetch(webAppUrl, {
   body: JSON.stringify(data)
 })
 .then(response => response.json())
-.then(res => console.log("Data sent successfully:", res))
-.catch(error => console.error("Error sending data to Google Sheets:", error));
 .then(() => {
 console.log("Data sent to Google Sheets successfully");
 })
@@ -1428,4 +1426,5 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
+
 
