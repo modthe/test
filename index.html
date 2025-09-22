@@ -744,7 +744,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Initialize Firebase with error handling
+let app;
+try {
+    app = firebase.initializeApp(firebaseConfig);
+} catch (error) {
+    // If app already exists, use that instance
+    if (error.code === 'app/duplicate-app') {
+        app = firebase.app();
+    } else {
+        console.error('Firebase initialization error:', error);
+    }
+}
 const database = firebase.database();
 
 // Tab switching functionality
@@ -808,7 +819,15 @@ quizEndTime = parseInt(quizEndTime);
 }
 
 // Load data from Firebase
+// Load data from Firebase
 function loadDataFromFirebase() {
+  // Check if Firebase is properly initialized
+  if (!firebase.apps.length) {
+    console.error("Firebase not initialized");
+    setTimeout(loadDataFromFirebase, 1000); // Retry after 1 second
+    return;
+  }
+
   // Listen for quiz time changes
   database.ref('quizTime').on('value', (snapshot) => {
     const data = snapshot.val();
@@ -824,6 +843,9 @@ function loadDataFromFirebase() {
     console.error("Firebase read failed:", error);
     document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
     document.getElementById('firebase-init-status').className = 'url-status error';
+    
+    // Retry after 2 seconds if there's an error
+    setTimeout(loadDataFromFirebase, 2000);
   });
 
   // Listen for question changes
@@ -845,6 +867,9 @@ function loadDataFromFirebase() {
     console.error("Firebase read failed:", error);
     document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
     document.getElementById('firebase-init-status').className = 'url-status error';
+    
+    // Retry after 2 seconds if there's an error
+    setTimeout(loadDataFromFirebase, 2000);
   });
 
   // NEW: Listen for web app URL changes
@@ -866,6 +891,8 @@ function loadDataFromFirebase() {
     }
   }, (error) => {
     console.error("Firebase URL read failed:", error);
+    // Retry after 2 seconds if there's an error
+    setTimeout(loadDataFromFirebase, 2000);
   });
 }
 
@@ -1406,23 +1433,37 @@ alert("Please enter your name to join the game.");
 };
 
 // Initial setup - show player tab by default
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup - show player tab by default
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById('player').classList.add('active');
+
+    // Check if web app URL is configured
+    if (!webAppUrl) {
+        console.log("Web app URL not configured. Please set it up in the Setup tab.");
+        // Show setup tab if no URL is configured
+        document.getElementById('setup-tab').style.display = 'flex';
+    }
+
+    // Initialize the quiz time display
+    updateQuizTimeInfo();
+
+    // Load data from Firebase when the page loads with retry mechanism
+    function initializeApp() {
+        try {
+            loadDataFromFirebase();
+        } catch (error) {
+            console.error("Initialization failed, retrying...", error);
+            setTimeout(initializeApp, 2000);
+        }
+    }
+    
+    initializeApp();
 });
-document.getElementById('player').classList.add('active');
-
-// Check if web app URL is configured
-if (!webAppUrl) {
-console.log("Web app URL not configured. Please set it up in the Setup tab.");
-// Show setup tab if no URL is configured
-document.getElementById('setup-tab').style.display = 'flex';
-}
-
-// Initialize the quiz time display
-updateQuizTimeInfo();
-
-// Load data from Firebase when the page loads
-loadDataFromFirebase();
 </script>
 </body>
 </html>
+
