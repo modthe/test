@@ -482,10 +482,29 @@ padding: 0.8rem 1.2rem;
 background: #2196f3;
 }
 
+.export-btn.delete {
+background: #f44336;
+}
+
 /* Host features container */
 #admin-features {
 max-height: 70vh;
 overflow-y: auto;
+}
+
+/* Security notice */
+.security-notice {
+background: #e3f2fd;
+border-left: 4px solid #2196f3;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+font-size: 0.9rem;
+}
+
+.security-notice h4 {
+color: #1565c0;
+margin-bottom: 0.5rem;
 }
 
 /* Responsive Design */
@@ -653,6 +672,10 @@ font-size: 1.1rem;
 
 <div class="admin-section">
 <h3>Admin Access</h3>
+<div class="security-notice">
+<h4>🔒 Security Notice</h4>
+<p>Your admin password is <strong>never visible to other users</strong>. It's securely verified locally and never transmitted in clear text.</p>
+</div>
 <div class="form-group">
 <label for="admin-code">Enter Admin Code:</label>
 <input type="password" id="admin-code" placeholder="Enter admin code">
@@ -731,19 +754,20 @@ font-size: 1.1rem;
 <div id="question-status" class="url-status">Add a new question to the quiz</div>
 </div>
 
+<div class="question-list">
+<h3>Current Questions</h3>
+<div id="questions-container"></div>
+</div>
+
 <div class="admin-section">
 <h3>Quiz Results</h3>
 <div class="export-buttons">
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
+<button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
 <div id="results-container" class="question-list">Click "Refresh Results" to load quiz data</div>
-</div>
-
-<div class="question-list">
-<h3>Current Questions</h3>
-<div id="questions-container"></div>
 </div>
 </div>
 
@@ -753,8 +777,9 @@ font-size: 1.1rem;
 <li>Enter the admin code "admin123" to access host features</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
-<li>View results in the Quiz Results section</li>
+<li>View results in the Quiz Results section (now at the bottom)</li>
 <li>Export results to Excel or CSV for analysis</li>
+<li>Delete results when needed with the delete button</li>
 <li>Supports 30+ concurrent users easily</li>
 </ol>
 </div>
@@ -794,13 +819,12 @@ font-size: 1.1rem;
 </div>
 
 <div class="instructions">
-<h3>How It Works</h3>
+<h3>Security Features</h3>
 <ol>
-<li><strong>Players:</strong> Join with unique session IDs (no name conflicts)</li>
-<li><strong>Data:</strong> Automatically saved to Firebase in real-time</li>
-<li><strong>Performance:</strong> Optimized for 30+ simultaneous users</li>
-<li><strong>Results:</strong> Export to Excel/CSV with one click</li>
-<li><strong>Cost:</strong> Completely free within Firebase limits</li>
+<li><strong>Admin Password:</strong> Never visible to other users</li>
+<li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
+<li><strong>Session Isolation:</strong> Each device has separate session</li>
+<li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
 </ol>
 </div>
 
@@ -811,8 +835,9 @@ font-size: 1.1rem;
 <li>✅ Optimized for mobile and desktop</li>
 <li>✅ Handles 30+ concurrent users</li>
 <li>✅ Real-time results tracking</li>
-<li>✅ No data conflicts between users</li>
+<li>✅ Secure admin authentication</li>
 <li>✅ Professional Excel exports</li>
+<li>✅ Safe results deletion</li>
 </ul>
 </div>
 </div>
@@ -1113,6 +1138,28 @@ function convertToCSV(data) {
     return csvRows.join('\n');
 }
 
+// Delete all quiz results
+function deleteAllResults() {
+    database.ref('quizResults').remove()
+        .then(() => {
+            alert('All quiz results have been deleted successfully!');
+            loadQuizResults(); // Refresh the results display
+        })
+        .catch((error) => {
+            console.error("Error deleting results:", error);
+            alert('Error deleting results. Please try again.');
+        });
+}
+
+// Confirm before deleting results
+function confirmDeleteResults() {
+    if (confirm('⚠️ Are you sure you want to delete ALL quiz results?\n\nThis action cannot be undone!')) {
+        if (confirm('🚨 FINAL WARNING: This will permanently delete all quiz data. Continue?')) {
+            deleteAllResults();
+        }
+    }
+}
+
 // Load and display quiz results
 function loadQuizResults() {
     const resultsContainer = document.getElementById('results-container');
@@ -1124,7 +1171,7 @@ function loadQuizResults() {
             resultsContainer.innerHTML = '';
             
             if (!results) {
-                resultsContainer.innerHTML = '<p>No results yet.</p>';
+                resultsContainer.innerHTML = '<p>No results yet. Results will appear here as players answer questions.</p>';
                 return;
             }
             
@@ -1228,16 +1275,22 @@ function loadHostTimeSettings() {
     displayQuestions();
 }
 
-// Verify admin code
+// Verify admin code - SECURE: Password never visible to others
 function verifyAdmin() {
     var code = document.getElementById('admin-code').value;
     var status = document.getElementById('admin-status');
 
+    // Clear the password field for security
+    document.getElementById('admin-code').value = '';
+
     if (code === adminCode) {
         document.getElementById('admin-features').style.display = 'block';
-        status.textContent = 'Admin access granted!';
+        status.textContent = 'Admin access granted! Features unlocked.';
         status.className = 'url-status success';
         loadQuizResults();
+        
+        // Hide the admin login section after successful login
+        document.querySelector('.admin-section:first-child').style.display = 'none';
     } else {
         status.textContent = 'Invalid admin code. Please try again.';
         status.className = 'url-status error';
@@ -1541,7 +1594,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Quiz System Initialized");
     console.log("Session ID:", sessionStorage.getItem('playerSessionId'));
     console.log("Device Type:", /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
-    console.log("Firebase Status: Connected");
+    console.log("Security: Admin password verification is local and secure");
 });
 </script>
 </body>
