@@ -7,6 +7,8 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<!-- Excel Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * {
 margin: 0;
@@ -401,6 +403,92 @@ border-radius: 4px;
 color: #c62828;
 }
 
+/* Results Styles */
+.stats-container {
+background: #f5f5f5;
+padding: 1rem;
+border-radius: 8px;
+margin-bottom: 1rem;
+}
+
+.stats-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 1rem;
+margin-top: 1rem;
+}
+
+.stat-card {
+background: white;
+padding: 1rem;
+border-radius: 8px;
+text-align: center;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+display: block;
+font-size: 2rem;
+font-weight: bold;
+color: #6e8efb;
+}
+
+.stat-label {
+font-size: 0.9rem;
+color: #666;
+}
+
+.results-table {
+margin-top: 1rem;
+border: 1px solid #ddd;
+border-radius: 5px;
+overflow: hidden;
+}
+
+.result-header, .result-row {
+display: grid;
+grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 2fr;
+gap: 1px;
+padding: 0.5rem;
+}
+
+.result-header {
+background: #6e8efb;
+color: white;
+font-weight: bold;
+}
+
+.result-row {
+background: #f9f9f9;
+border-bottom: 1px solid #eee;
+}
+
+.result-row.correct {
+background: #e8f5e9;
+}
+
+.result-row.incorrect {
+background: #ffebee;
+}
+
+.result-row:last-child {
+border-bottom: none;
+}
+
+.export-buttons {
+display: flex;
+gap: 10px;
+margin: 1rem 0;
+}
+
+.export-btn {
+background: #4caf50;
+}
+
+.export-btn.csv {
+background: #2196f3;
+}
+
 @media (max-width: 768px) {
 .tabs {
 flex-direction: column;
@@ -438,6 +526,15 @@ margin-bottom: 5px;
 .time-input-group {
 flex-direction: column;
 align-items: flex-start;
+}
+
+.result-header, .result-row {
+grid-template-columns: 1fr;
+font-size: 0.8rem;
+}
+
+.stats-grid {
+grid-template-columns: 1fr;
 }
 }
 </style>
@@ -570,6 +667,16 @@ align-items: flex-start;
 <div id="question-status" class="url-status">Add a new question to the quiz</div>
 </div>
 
+<div class="admin-section">
+<h3>Quiz Results</h3>
+<div class="export-buttons">
+<button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
+<button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
+<button onclick="loadQuizResults()">🔄 Refresh Results</button>
+</div>
+<div id="results-container" class="question-list">Click "Refresh Results" to load quiz data</div>
+</div>
+
 <div class="question-list">
 <h3>Current Questions</h3>
 <div id="questions-container"></div>
@@ -583,100 +690,33 @@ align-items: flex-start;
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
 <li>Select which answer is correct using the radio buttons</li>
-<li>Click "Next Question" to proceed through the quiz</li>
-<li>Players will see questions on their screen</li>
-<li>Answers and response times will be logged to Google Sheets</li>
+<li>View results in the Quiz Results section</li>
+<li>Export results to Excel or CSV for analysis</li>
+<li>Players will see questions on their screen automatically</li>
 </ol>
 </div>
 </div>
 
 <!-- Setup Tab -->
 <div id="setup" class="tab-content">
-<h2>Google Sheets Setup</h2>
+<h2>Firebase Setup</h2>
 
-<div id="setup-complete-message" class="setup-complete" style="display: none;">
-<h3>✅ Setup Complete!</h3>
-<p>Your Google Sheets integration is configured. You can now use the Player and Host tabs.</p>
+<div class="setup-complete">
+<h3>✅ Firebase Setup Complete!</h3>
+<p>Your quiz app is using Firebase for data storage. All results are saved automatically.</p>
+<p>Hosts can view and export results from the Host tab after entering the admin code.</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
-<div id="setup-form">
-<div class="sheet-config">
-<h3>How to Configure Google Sheets Integration</h3>
-<p>To connect your quiz app to Google Sheets, you need to create a Google Apps Script web app:</p>
+<div class="instructions">
+<h3>How It Works</h3>
 <ol>
-<li>Create a new Google Sheet</li>
-<li>Click on "Extensions" > "Apps Script"</li>
-<li>Replace the default code with the provided script</li>
-<li>Deploy as a web app with "Execute as me" and "Anyone" access</li>
-<li>Copy the web app URL and paste it in the field below</li>
+<li>Players join the quiz and answer questions</li>
+<li>All data (answers, response times, scores) are saved to Firebase</li>
+<li>Hosts can view real-time results in the Host tab</li>
+<li>Export results to Excel or CSV with one click</li>
+<li>No additional configuration needed</li>
 </ol>
-</div>
-
-<div class="card">
-<h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbymbcDXitTQEYORDY_TNYOXnGHUqadI-PrBrQo1b-zVJRdVuC02BwhJKXMOAWIN7Jk5bQ/exec">
-<button onclick="saveWebAppUrl()">Save URL</button>
-<div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
-</div>
-
-<div class="code-block">
-<p>// Google Apps Script code for your Google Sheet</p>
-<pre>
-function doPost(e) {
-  // 1. ACQUIRE A LOCK to prevent concurrent access
-  const lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(30000); // Wait up to 30 seconds to get the lock
-
-    // 2. GET THE SPECIFIC SHEET BY NAME
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-    // If the sheet doesn't exist, create it and add headers
-    if (!sheet) {
-      // Handle error: Sheet not found
-      return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setStatusCode(500);
-    }
-
-    // 3. Add headers if sheet is empty (now safe inside the lock)
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
-    }
-
-    // 4. PARSE the incoming data
-    const data = JSON.parse(e.postData.contents);
-
-    // 5. APPEND THE NEW ROW
-    sheet.appendRow([
-      new Date(),
-      data.player,
-      data.question,
-      data.answer,
-      data.correct,
-      data.responseTime,
-      data.status
-    ]);
-
-    // 6. RETURN SUCCESS
-    return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    // Log the error for you to see
-    console.error("Failed to process request:", error);
-    // Return an error message to the client
-    return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setStatusCode(500);
-
-  } finally {
-    // 7. ALWAYS RELEASE THE LOCK
-    lock.releaseLock();
-  }
-}
-</pre>
-</div>
 </div>
 </div>
 
@@ -748,7 +788,6 @@ let app;
 try {
     app = firebase.initializeApp(firebaseConfig);
 } catch (error) {
-    // If app already exists, use that instance
     if (error.code === 'app/duplicate-app') {
         app = firebase.app();
     } else {
@@ -759,23 +798,17 @@ const database = firebase.database();
 
 // Tab switching functionality
 function switchTab(tabName) {
-    // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-
-    // Show selected tab content
     document.getElementById(tabName).classList.add('active');
 
-    // Update active tab
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
     });
 
-    // Activate the clicked tab
     event.target.classList.add('active');
 
-    // If switching to host tab, load the saved time settings
     if (tabName === 'host') {
         loadHostTimeSettings();
     }
@@ -789,42 +822,14 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "admin123"; // Default admin code
-var webAppUrl = "https://script.google.com/macros/s/AKfycbymbcDXitTQEYORDY_TNYOXnGHUqadI-PrBrQo1b-zVJRdVuC02BwhJKXMOAWIN7Jk5bQ/exec"; // Will be loaded from Firebase
+var adminCode = "admin123";
+var webAppUrl = "";
 
-// Function to ensure webAppUrl is loaded
-// Function to ensure webAppUrl is loaded
-function ensureWebAppUrlLoaded() {
-    // First check if we have a valid URL in localStorage
-    if (webAppUrl && webAppUrl !== "" && webAppUrl !== "https://script.google.com/macros/s/...") {
-        console.log("WebApp URL already loaded:", webAppUrl);
-        return;
-    }
-    
-    // Try to get from Firebase
-    const urlRef = database.ref('webAppUrl');
-    urlRef.once('value').then((snapshot) => {
-        const url = snapshot.val();
-        if (url && url !== "" && url !== "https://script.google.com/macros/s/...") {
-            webAppUrl = url;
-            localStorage.setItem('webAppUrl', url);
-            console.log("WebApp URL loaded from Firebase:", url);
-        } else {
-            console.log("WebApp URL is empty in Firebase");
-            // Show setup tab if URL is not configured
-            document.getElementById('setup-tab').style.display = 'flex';
-        }
-    }).catch(error => {
-        console.error("Error loading webAppUrl from Firebase:", error);
-    });
-}
-
-// Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
+// Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
 var quizEndTime = localStorage.getItem('quizEndTime');
 
 if (!quizStartTime) {
-    // Set default to tomorrow at 12:00 PM
     var tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(12, 0, 0, 0);
@@ -835,7 +840,6 @@ if (!quizStartTime) {
 }
 
 if (!quizEndTime) {
-    // Set default to tomorrow at 12:30 PM
     var endTime = new Date(quizStartTime);
     endTime.setMinutes(endTime.getMinutes() + 30);
     quizEndTime = endTime.getTime();
@@ -846,14 +850,11 @@ if (!quizEndTime) {
 
 // Load data from Firebase
 function loadDataFromFirebase() {
-    // Check if Firebase is properly initialized
     if (!firebase.apps.length) {
-        console.error("Firebase not initialized");
-        setTimeout(loadDataFromFirebase, 1000); // Retry after 1 second
+        setTimeout(loadDataFromFirebase, 1000);
         return;
     }
 
-    // Listen for quiz time changes
     database.ref('quizTime').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -862,62 +863,21 @@ function loadDataFromFirebase() {
             localStorage.setItem('quizStartTime', quizStartTime);
             localStorage.setItem('quizEndTime', quizEndTime);
             updateQuizTimeInfo();
-            console.log("Quiz time updated from Firebase");
         }
-    }, (error) => {
-        console.error("Firebase read failed:", error);
-        document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-        document.getElementById('firebase-init-status').className = 'url-status error';
-        
-        // Retry after 2 seconds if there's an error
-        setTimeout(loadDataFromFirebase, 2000);
     });
 
-    // Listen for question changes
     database.ref('questions').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
             questions = Object.values(data);
             localStorage.setItem('quizQuestions', JSON.stringify(questions));
             displayQuestions();
-            console.log("Questions updated from Firebase");
             
-            // If we're on the player tab and a question is active, update it
             if (document.getElementById('player').classList.contains('active') && 
                 document.getElementById('player-question').innerHTML !== "") {
                 showPlayerQuestion();
             }
         }
-    }, (error) => {
-        console.error("Firebase read failed:", error);
-        document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-        document.getElementById('firebase-init-status').className = 'url-status error';
-        
-        // Retry after 2 seconds if there's an error
-        setTimeout(loadDataFromFirebase, 2000);
-    });
-
-    // Listen for web app URL changes
-    database.ref('webAppUrl').on('value', (snapshot) => {
-        const url = snapshot.val();
-        if (url) {
-            webAppUrl = url;
-            localStorage.setItem('webAppUrl', url);
-            document.getElementById('webAppUrl').value = url;
-            
-            // Hide setup tab if URL is configured
-            if (url) {
-                document.getElementById('setup-tab').style.display = 'none';
-                document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
-                document.getElementById('urlStatus').className = 'url-status success';
-            }
-            
-            console.log("Web App URL updated from Firebase:", url);
-        }
-    }, (error) => {
-        console.error("Firebase URL read failed:", error);
-        // Retry after 2 seconds if there's an error
-        setTimeout(loadDataFromFirebase, 2000);
     });
 }
 
@@ -927,10 +887,8 @@ function initializeFirebaseData() {
     statusElement.textContent = "Initializing Firebase data...";
     statusElement.className = 'url-status';
     
-    // Initialize with default values if they don't exist
     database.ref('quizTime').once('value').then((snapshot) => {
         if (!snapshot.exists()) {
-            // Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
             var tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(12, 0, 0, 0);
@@ -946,7 +904,6 @@ function initializeFirebaseData() {
         return database.ref('questions').once('value');
     }).then((snapshot) => {
         if (!snapshot.exists()) {
-            // Set default questions
             const defaultQuestions = [
                 {
                     question: "What is 2 + 2?",
@@ -962,37 +919,13 @@ function initializeFirebaseData() {
             return database.ref('questions').set(defaultQuestions);
         }
     }).then(() => {
-        return database.ref('webAppUrl').once('value');
-    }).then((snapshot) => {
-        if (!snapshot.exists()) {
-            // Initialize with empty URL
-            return database.ref('webAppUrl').set("");
-        }
-    }).then(() => {
         statusElement.textContent = "Firebase data initialized successfully!";
         statusElement.className = 'url-status success';
-        console.log("Firebase data initialized");
-        
-        // Reload data
         loadDataFromFirebase();
     }).catch((error) => {
         statusElement.textContent = "Error initializing Firebase: " + error.message;
         statusElement.className = 'url-status error';
-        console.error("Firebase initialization error:", error);
     });
-}
-
-// Save web app URL to Firebase
-function saveWebAppUrlToFirebase(url) {
-    return database.ref('webAppUrl').set(url)
-        .then(() => {
-            console.log("Web App URL saved to Firebase:", url);
-            return true;
-        })
-        .catch((error) => {
-            console.error("Error saving URL to Firebase:", error);
-            return false;
-        });
 }
 
 // Save quiz time to Firebase
@@ -1020,13 +953,188 @@ function saveQuestionsToFirebase() {
     });
 }
 
+// Save quiz results to Firebase
+function saveToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+    const responseId = database.ref().child('quizResults').push().key;
+    
+    const quizData = {
+        player: playerName || "Unknown Player",
+        question: question || "Unknown Question",
+        selectedAnswer: selectedAnswer || "No Answer",
+        correctAnswer: correctAnswer || "Unknown",
+        responseTime: responseTime || 0,
+        status: status || "Unknown",
+        timestamp: new Date().toISOString(),
+        questionIndex: currentIndex
+    };
+
+    database.ref('quizResults/' + responseId).set(quizData)
+        .then(() => {
+            console.log("Quiz data saved to Firebase successfully!");
+        })
+        .catch((error) => {
+            console.error("Error saving to Firebase:", error);
+        });
+}
+
+// Export functions
+function exportToExcel() {
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            if (!results) {
+                alert('No results to export.');
+                return;
+            }
+            
+            const data = Object.values(results);
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Quiz Results");
+            XLSX.writeFile(workbook, 'quiz-results.xlsx');
+            alert('Excel file downloaded successfully!');
+        })
+        .catch((error) => {
+            console.error("Error exporting to Excel:", error);
+            alert('Error exporting data.');
+        });
+}
+
+function exportToCSV() {
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            if (!results) {
+                alert('No results to export.');
+                return;
+            }
+            
+            const data = Object.values(results);
+            const csv = convertToCSV(data);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'quiz-results.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            alert('CSV file downloaded successfully!');
+        })
+        .catch((error) => {
+            console.error("Error exporting to CSV:", error);
+            alert('Error exporting data.');
+        });
+}
+
+function convertToCSV(data) {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    
+    for (const row of data) {
+        const values = headers.map(header => {
+            const value = row[header] || '';
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+        });
+        csvRows.push(values.join(','));
+    }
+    
+    return csvRows.join('\n');
+}
+
+// Load and display quiz results
+function loadQuizResults() {
+    const resultsContainer = document.getElementById('results-container');
+    resultsContainer.innerHTML = '<p>Loading results...</p>';
+    
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            resultsContainer.innerHTML = '';
+            
+            if (!results) {
+                resultsContainer.innerHTML = '<p>No results yet.</p>';
+                return;
+            }
+            
+            const resultsArray = Object.values(results);
+            const totalResponses = resultsArray.length;
+            const correctAnswers = resultsArray.filter(r => r.selectedAnswer === r.correctAnswer).length;
+            const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).toFixed(1) : 0;
+            const avgResponseTime = totalResponses > 0 ? 
+                (resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
+            
+            let resultsHTML = `
+                <div class="stats-container">
+                    <h3>Quiz Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number">${totalResponses}</span>
+                            <span class="stat-label">Total Responses</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${correctAnswers}</span>
+                            <span class="stat-label">Correct Answers</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${accuracy}%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${avgResponseTime}s</span>
+                            <span class="stat-label">Avg Response Time</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsHTML += '<div class="results-table">';
+            resultsHTML += '<div class="result-header">';
+            resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Timestamp</span>';
+            resultsHTML += '</div>';
+            
+            resultsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            resultsArray.forEach((result) => {
+                const isCorrect = result.selectedAnswer === result.correctAnswer;
+                const shortQuestion = result.question.length > 30 ? 
+                    result.question.substring(0, 30) + '...' : result.question;
+                const time = new Date(result.timestamp).toLocaleString();
+                
+                resultsHTML += `
+                    <div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
+                        <span>${result.player}</span>
+                        <span title="${result.question}">${shortQuestion}</span>
+                        <span>${result.selectedAnswer}</span>
+                        <span>${result.correctAnswer}</span>
+                        <span>${result.responseTime}s</span>
+                        <span>${result.status}</span>
+                        <span>${time}</span>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += '</div>';
+            resultsContainer.innerHTML = resultsHTML;
+        })
+        .catch((error) => {
+            console.error("Error loading results:", error);
+            resultsContainer.innerHTML = '<p>Error loading results.</p>';
+        });
+}
+
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
     questions = JSON.parse(savedQuestions);
 }
 
-// Load host time settings into the form
+// Load host time settings
 function loadHostTimeSettings() {
     var quizDate = new Date(quizStartTime);
     document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
@@ -1035,17 +1143,15 @@ function loadHostTimeSettings() {
     var hours = startTime.getHours();
     var ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // Convert 0 to 12
+    hours = hours ? hours : 12;
 
     document.getElementById('host-start-hour').value = hours;
     document.getElementById('host-start-minute').value = startTime.getMinutes();
     document.getElementById('host-start-ampm').value = ampm;
 
-    // Calculate duration in minutes
     var duration = Math.round((quizEndTime - quizStartTime) / 60000);
     document.getElementById('host-quiz-duration').value = duration;
 
-    // Display questions
     displayQuestions();
 }
 
@@ -1058,13 +1164,14 @@ function verifyAdmin() {
         document.getElementById('admin-features').style.display = 'block';
         status.textContent = 'Admin access granted!';
         status.className = 'url-status success';
+        loadQuizResults(); // Load results when admin accesses features
     } else {
         status.textContent = 'Invalid admin code. Please try again.';
         status.className = 'url-status error';
     }
 }
 
-// Save quiz time configuration from host tab
+// Save quiz time configuration
 function saveHostQuizTime() {
     var date = document.getElementById('host-quiz-date').value;
     var hour = parseInt(document.getElementById('host-start-hour').value);
@@ -1078,26 +1185,19 @@ function saveHostQuizTime() {
         return;
     }
 
-    // Convert to 24-hour format
-    if (ampm === 'PM' && hour < 12) {
-        hour += 12;
-    } else if (ampm === 'AM' && hour === 12) {
-        hour = 0;
-    }
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    else if (ampm === 'AM' && hour === 12) hour = 0;
 
     var startDate = new Date(date);
     startDate.setHours(hour, minute, 0, 0);
-
     var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
 
     quizStartTime = startDate.getTime();
     quizEndTime = endDate.getTime();
 
-    // Save to Firebase instead of localStorage
     saveQuizTimeToFirebase(quizStartTime, quizEndTime);
     updateQuizTimeInfo();
 
-    // Clear status after 3 seconds
     setTimeout(() => {
         document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
         document.getElementById('host-time-status').className = 'url-status';
@@ -1118,7 +1218,6 @@ function addQuestion() {
         return;
     }
 
-    // Get the selected correct answer
     var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
     var answers = [answer1, answer2, answer3, answer4];
     var correctAnswer = answers[correctAnswerIndex];
@@ -1130,13 +1229,11 @@ function addQuestion() {
     };
 
     questions.push(newQuestion);
-    // Save to Firebase instead of localStorage
     saveQuestionsToFirebase();
 
     document.getElementById('question-status').textContent = 'Question added successfully!';
     document.getElementById('question-status').className = 'url-status success';
 
-    // Clear form
     document.getElementById('question-text').value = '';
     document.getElementById('answer-1').value = '';
     document.getElementById('answer-2').value = '';
@@ -1144,7 +1241,6 @@ function addQuestion() {
     document.getElementById('answer-4').value = '';
     document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
 
-    // Clear status after 3 seconds
     setTimeout(() => {
         document.getElementById('question-status').textContent = 'Add a new question to the quiz';
         document.getElementById('question-status').className = 'url-status';
@@ -1164,8 +1260,6 @@ function displayQuestions() {
     questions.forEach((q, index) => {
         var questionItem = document.createElement('div');
         questionItem.className = 'question-item';
-
-        // Find the index of the correct answer
         var correctIndex = q.answers.indexOf(q.correct);
 
         questionItem.innerHTML = `
@@ -1183,22 +1277,17 @@ function displayQuestions() {
 // Edit a question
 function editQuestion(index) {
     var q = questions[index];
-
     document.getElementById('question-text').value = q.question;
     document.getElementById('answer-1').value = q.answers[0];
     document.getElementById('answer-2').value = q.answers[1];
     document.getElementById('answer-3').value = q.answers[2];
     document.getElementById('answer-4').value = q.answers[3];
 
-    // Find and select the correct answer
     var correctIndex = q.answers.indexOf(q.correct);
     document.querySelector(`input[name="correct-answer"][value="${correctIndex}"]`).checked = true;
 
-    // Remove the question being edited
     questions.splice(index, 1);
-    // Save to Firebase instead of localStorage
     saveQuestionsToFirebase();
-
     document.getElementById('question-status').textContent = 'Editing question. Update the fields and click "Add Question" to save changes.';
     document.getElementById('question-status').className = 'url-status';
 }
@@ -1207,7 +1296,6 @@ function editQuestion(index) {
 function deleteQuestion(index) {
     if (confirm('Are you sure you want to delete this question?')) {
         questions.splice(index, 1);
-        // Save to Firebase instead of localStorage
         saveQuestionsToFirebase();
     }
 }
@@ -1218,12 +1306,8 @@ function updateQuizTimeInfo() {
     var end = new Date(quizEndTime);
 
     var options = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
     };
 
     var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
@@ -1231,13 +1315,11 @@ function updateQuizTimeInfo() {
 
     document.getElementById('quiz-time-range').textContent = timeRange;
 
-    // Update quiz status
     var now = new Date().getTime();
     var quizTimer = document.getElementById('quiz-timer');
     var quizStatus = document.getElementById('quiz-status-text');
 
     if (now < quizStartTime) {
-        // Quiz hasn't started yet
         var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
         var hours = Math.floor(timeUntilStart / 3600);
         var minutes = Math.floor((timeUntilStart % 3600) / 60);
@@ -1248,7 +1330,6 @@ function updateQuizTimeInfo() {
         quizStatus.style.color = '#ff9800';
         quizActive = false;
     } else if (now >= quizStartTime && now <= quizEndTime) {
-        // Quiz is active
         var timeLeft = Math.floor((quizEndTime - now) / 1000);
         var minutes = Math.floor(timeLeft / 60);
         var seconds = timeLeft % 60;
@@ -1258,141 +1339,11 @@ function updateQuizTimeInfo() {
         quizStatus.style.color = '#4caf50';
         quizActive = true;
     } else {
-        // Quiz has ended
         quizTimer.textContent = 'Quiz ended';
         quizStatus.textContent = 'Ended';
         quizStatus.style.color = '#f44336';
         quizActive = false;
     }
-}
-
-// Update quiz timer every second
-setInterval(updateQuizTimeInfo, 1000);
-updateQuizTimeInfo();
-
-// Get saved web app URL from local storage initially
-webAppUrl = localStorage.getItem('webAppUrl') || '';
-document.getElementById('webAppUrl').value = webAppUrl;
-
-// Hide setup tab if URL is already configured
-if (webAppUrl) {
-    document.getElementById('setup-tab').style.display = 'none';
-}
-
-// Save web app URL to Firebase and local storage
-// Save web app URL to Firebase and local storage
-function saveWebAppUrl() {
-    var url = document.getElementById('webAppUrl').value.trim();
-    var urlStatus = document.getElementById('urlStatus');
-
-    if (url && url !== "" && url !== "https://script.google.com/macros/s/..." && url.includes('https://script.google.com/')) {
-        // Save to Firebase first
-        saveWebAppUrlToFirebase(url).then((success) => {
-            if (success) {
-                // Also save to local storage as backup
-                localStorage.setItem('webAppUrl', url);
-                webAppUrl = url;
-                
-                urlStatus.textContent = 'URL saved successfully! Setup complete.';
-                urlStatus.className = 'url-status success';
-
-                // Hide setup form and show completion message
-                document.getElementById('setup-form').style.display = 'none';
-                document.getElementById('setup-complete-message').style.display = 'block';
-
-                // Hide setup tab
-                document.getElementById('setup-tab').style.display = 'none';
-                
-                // Test the connection
-                testGoogleSheetsConnection();
-            } else {
-                urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
-                urlStatus.className = 'url-status error';
-            }
-        });
-    } else {
-        urlStatus.textContent = 'Please enter a valid Google Apps Script URL';
-        urlStatus.className = 'url-status error';
-    }
-}
-
-// Test Google Sheets connection
-function testGoogleSheetsConnection() {
-    if (!webAppUrl) return;
-    
-    var testData = {
-        player: "Test Player",
-        question: "Test Question",
-        answer: "Test Answer",
-        correct: "Test Correct",
-        responseTime: 0,
-        status: "Test"
-    };
-    
-    fetch(webAppUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(testData)
-    })
-    .then(response => response.text())
-    .then(result => {
-        console.log("Google Sheets connection test successful:", result);
-    })
-    .catch(error => {
-        console.error("Google Sheets connection test failed:", error);
-    });
-}
-
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
-// Function to send data to Google Sheets
-function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-    if (!webAppUrl) {
-        console.error("Web app URL not configured");
-        alert("Google Sheets integration not configured.");
-        return;
-    }
-
-    // Prepare data to send - include ALL required fields
-    var data = {
-        player: playerName || "Unknown Player",
-        question: question || "Unknown Question",
-        answer: selectedAnswer || "No Answer",
-        correct: correctAnswer || "Unknown",
-        responseTime: responseTime || 0,
-        status: status || "Unknown"
-    };
-
-    console.log("Sending to Google Sheets:", data);
-    console.log("Using URL:", webAppUrl);
-
-    // Send data to Google Apps Script web app
-    fetch(webAppUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        console.log("Response status:", response.status);
-        console.log("Response ok:", response.ok);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.text();
-    })
-    .then(result => {
-        console.log("Data sent to Google Sheets successfully:", result);
-    })
-    .catch(error => {
-        console.error("Error sending data to Google Sheets:", error);
-        console.log("Full error details:", error);
-        alert("Error sending data to Google Sheets. Please check:\n1. The Google Apps Script is deployed correctly\n2. The sheet name is 'Quiz Results'\n3. The script has the correct permissions\n\nCheck browser console for more details.");
-    });
 }
 
 // Countdown timer function
@@ -1407,13 +1358,10 @@ function startCountdown() {
 
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
-            // Record unanswered question
             var q = questions[currentIndex];
             var responseTime = (Date.now() - questionStartTime) / 1000;
-            
-            // Ensure playerName is available for timeout cases
             var currentPlayerName = playerName || "Unknown Player";
-            sendToGoogleSheet(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+            saveToFirebase(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
             moveToNextQuestion();
         }
     }, 1000);
@@ -1439,7 +1387,6 @@ function showPlayerQuestion() {
     var answersDiv = document.getElementById("player-answers");
     answersDiv.innerHTML = "<h3>Select your answer:</h3>";
 
-    // Record question start time for response timing
     questionStartTime = Date.now();
 
     q.answers.forEach(a => {
@@ -1447,7 +1394,6 @@ function showPlayerQuestion() {
         btn.className = "answer-btn";
         btn.innerText = a;
         btn.onclick = function() {
-            // Check if quiz is active
             if (!quizActive) {
                 alert("The quiz is not currently active. Please check the quiz schedule.");
                 return;
@@ -1455,13 +1401,11 @@ function showPlayerQuestion() {
 
             var selected = a;
             var correct = q.correct;
-            var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
+            var responseTime = (Date.now() - questionStartTime) / 1000;
 
-            // Clear the countdown
             clearInterval(countdownInterval);
             document.getElementById('countdown').textContent = "";
 
-            // Color the answers
             var allButtons = document.querySelectorAll('.answer-btn');
             allButtons.forEach(button => {
                 button.disabled = true;
@@ -1472,30 +1416,18 @@ function showPlayerQuestion() {
                 }
             });
 
-            // Send to Google Sheets with ALL parameters - ensure playerName is available
-            console.log("Sending answer:", {
-                player: playerName,
-                question: q.question,
-                selected: selected,
-                correct: correct,
-                responseTime: responseTime
-            });
-            
-            sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
+            saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
 
-            // Move to next question after 5 seconds
             setTimeout(moveToNextQuestion, 5000);
         };
         answersDiv.appendChild(btn);
     });
 
-    // Start countdown for this question
     startCountdown();
 }
 
 // Initialize the application
 document.getElementById("joinBtn").onclick = function() {
-    // Check if quiz is active
     if (!quizActive) {
         alert("The quiz is not currently active. Please check the quiz schedule.");
         return;
@@ -1503,44 +1435,33 @@ document.getElementById("joinBtn").onclick = function() {
 
     playerName = document.getElementById("name").value;
     if (playerName.trim() !== "") {
-        // Remove the welcome message by hiding the input elements
         document.getElementById("name").style.display = "none";
         document.getElementById("joinBtn").style.display = "none";
-
-        // Show first question
         showPlayerQuestion();
     } else {
         alert("Please enter your name to join the game.");
     }
 };
 
+// Update quiz timer every second
+setInterval(updateQuizTimeInfo, 1000);
+updateQuizTimeInfo();
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initial setup - show player tab by default
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     document.getElementById('player').classList.add('active');
 
-    // Check if web app URL is configured
-    if (!webAppUrl) {
-        console.log("Web app URL not configured. Please set it up in the Setup tab.");
-        // Show setup tab if no URL is configured
-        document.getElementById('setup-tab').style.display = 'flex';
-    }
+    document.getElementById('setup-tab').style.display = 'none';
 
-    // Initialize the quiz time display
     updateQuizTimeInfo();
 
-    // Ensure web app URL is loaded
-    ensureWebAppUrlLoaded();
-
-    // Load data from Firebase when the page loads with retry mechanism
     function initializeApp() {
         try {
             loadDataFromFirebase();
         } catch (error) {
-            console.error("Initialization failed, retrying...", error);
             setTimeout(initializeApp, 2000);
         }
     }
@@ -1550,6 +1471,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
-
-
