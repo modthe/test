@@ -792,6 +792,24 @@ var questionStartTime;
 var quizActive = false;
 var adminCode = "admin123"; // Default admin code
 var webAppUrl = ""; // Will be loaded from Firebase
+  // Function to ensure webAppUrl is loaded
+function ensureWebAppUrlLoaded() {
+    if (!webAppUrl) {
+        // Try to get from Firebase
+        const urlRef = database.ref('webAppUrl');
+        urlRef.once('value').then((snapshot) => {
+            const url = snapshot.val();
+            if (url) {
+                webAppUrl = url;
+                localStorage.setItem('webAppUrl', url);
+                console.log("WebApp URL loaded from Firebase:", url);
+            }
+        }).catch(error => {
+            console.error("Error loading webAppUrl from Firebase:", error);
+        });
+    }
+}
+  
 
 // Quiz timing configuration (default: tomorrow 12:00 PM to 12:30 PM)
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -1288,40 +1306,54 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
+// Function to send data to Google Sheets
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-// Use the webAppUrl from the variable (which is synced from Firebase)
-if (!webAppUrl) {
-console.error("Web app URL not configured");
-alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
-switchTab('setup');
-return;
-}
+    // Use the webAppUrl from the variable (which is synced from Firebase)
+    if (!webAppUrl) {
+        console.error("Web app URL not configured");
+        // Try to get URL from Firebase one more time
+        const urlRef = database.ref('webAppUrl');
+        urlRef.once('value').then((snapshot) => {
+            const url = snapshot.val();
+            if (url) {
+                webAppUrl = url;
+                localStorage.setItem('webAppUrl', url);
+                // Retry with the new URL
+                sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status);
+            } else {
+                console.error("Web app URL still not available");
+            }
+        });
+        return;
+    }
 
-// Prepare data to send
-var data = {
-player: playerName,
-question: question,
-answer: selectedAnswer,
-correct: correctAnswer,
-responseTime: responseTime,
-status: status
-};
+    // Prepare data to send - include ALL required fields
+    var data = {
+        player: playerName || "Unknown Player",
+        question: question || "Unknown Question",
+        answer: selectedAnswer || "No Answer",
+        correct: correctAnswer || "Unknown",
+        responseTime: responseTime || 0,
+        status: status || "Unknown"
+    };
 
-// Send data to Google Apps Script web app
-fetch(webAppUrl, {
-method: "POST",
-mode: "no-cors",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify(data)
-})
-.then(() => {
-console.log("Data sent to Google Sheets successfully");
-})
-.catch(error => {
-console.error("Error sending data to Google Sheets:", error);
-});
+    console.log("Sending to Google Sheets:", data);
+
+    // Send data to Google Apps Script web app
+    fetch(webAppUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(() => {
+        console.log("Data sent to Google Sheets successfully");
+    })
+    .catch(error => {
+        console.error("Error sending data to Google Sheets:", error);
+    });
 }
 
 // Countdown timer function
@@ -1335,12 +1367,15 @@ timeLeft--;
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 if (timeLeft <= 0) {
-clearInterval(countdownInterval);
-// Record unanswered question
-var q = questions[currentIndex];
-var responseTime = (Date.now() - questionStartTime) / 1000;
-sendToGoogleSheet(playerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
-moveToNextQuestion();
+    clearInterval(countdownInterval);
+    // Record unanswered question
+    var q = questions[currentIndex];
+    var responseTime = (Date.now() - questionStartTime) / 1000;
+    
+    // Ensure playerName is available for timeout cases
+    var currentPlayerName = playerName || "Unknown Player";
+    sendToGoogleSheet(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+    moveToNextQuestion();
 }
 }, 1000);
 }
@@ -1373,36 +1408,44 @@ var btn = document.createElement("button");
 btn.className = "answer-btn";
 btn.innerText = a;
 btn.onclick = function() {
-// Check if quiz is active
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
-}
+    // Check if quiz is active
+    if (!quizActive) {
+        alert("The quiz is not currently active. Please check the quiz schedule.");
+        return;
+    }
 
-var selected = a;
-var correct = q.correct;
-var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
+    var selected = a;
+    var correct = q.correct;
+    var responseTime = (Date.now() - questionStartTime) / 1000; // Response time in seconds
 
-// Clear the countdown
-clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
+    // Clear the countdown
+    clearInterval(countdownInterval);
+    document.getElementById('countdown').textContent = "";
 
-// Color the answers
-var allButtons = document.querySelectorAll('.answer-btn');
-allButtons.forEach(button => {
-button.disabled = true;
-if (button.innerText === correct) {
-button.classList.add('correct');
-} else if (button.innerText === selected && selected !== correct) {
-button.classList.add('incorrect');
-}
-});
+    // Color the answers
+    var allButtons = document.querySelectorAll('.answer-btn');
+    allButtons.forEach(button => {
+        button.disabled = true;
+        if (button.innerText === correct) {
+            button.classList.add('correct');
+        } else if (button.innerText === selected && selected !== correct) {
+            button.classList.add('incorrect');
+        }
+    });
 
-// Send to Google Sheets with response time
-sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
+    // Send to Google Sheets with ALL parameters - ensure playerName is available
+    console.log("Sending answer:", {
+        player: playerName,
+        question: q.question,
+        selected: selected,
+        correct: correct,
+        responseTime: responseTime
+    });
+    
+    sendToGoogleSheet(playerName, q.question, selected, correct, responseTime, "Answered");
 
-// Move to next question after 5 seconds
-setTimeout(moveToNextQuestion, 5000);
+    // Move to next question after 5 seconds
+    setTimeout(moveToNextQuestion, 5000);
 };
 answersDiv.appendChild(btn);
 });
@@ -1449,21 +1492,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize the quiz time display
-    updateQuizTimeInfo();
+updateQuizTimeInfo();
 
-    // Load data from Firebase when the page loads with retry mechanism
-    function initializeApp() {
-        try {
-            loadDataFromFirebase();
-        } catch (error) {
-            console.error("Initialization failed, retrying...", error);
-            setTimeout(initializeApp, 2000);
-        }
+// Ensure web app URL is loaded
+ensureWebAppUrlLoaded();
+
+// Load data from Firebase when the page loads with retry mechanism
+function initializeApp() {
+    try {
+        loadDataFromFirebase();
+    } catch (error) {
+        console.error("Initialization failed, retrying...", error);
+        setTimeout(initializeApp, 2000);
     }
-    
-    initializeApp();
+}
+
+initializeApp();
 });
 </script>
 </body>
 </html>
+
 
