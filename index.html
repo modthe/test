@@ -615,7 +615,7 @@ align-items: flex-start;
 
 <div class="card">
 <h3>Web App URL Configuration</h3>
-<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfycbzSKt3cVSfgRCp-KWn9M9OHwlulnVO-b3ttsjp8EREdZGs757K0X-vsvRddi94K0ERe/exec">
+<input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
 <button onclick="saveWebAppUrl()">Save URL</button>
 <div id="urlStatus" class="url-status">Please enter your Google Apps Script URL</div>
 </div>
@@ -624,30 +624,27 @@ align-items: flex-start;
 <p>// Google Apps Script code for your Google Sheet</p>
 <pre>
 function doPost(e) {
-// 1. ACQUIRE A LOCK to prevent concurrent access
-const lock = LockService.getScriptLock();
 try {
-lock.waitLock(30000); // Wait up to 30 seconds to get the lock
-
-// 2. GET THE SPECIFIC SHEET BY NAME
+// Get the active spreadsheet and sheet
 const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Quiz Results");
-// If the sheet doesn't exist, create it and add headers
+
+// If the sheet doesn't exist, create it
 if (!sheet) {
-// Handle error: Sheet not found
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Sheet 'Quiz Results' not found"}))
-.setMimeType(ContentService.MimeType.JSON)
-.setStatusCode(500);
+const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Quiz Results");
+newSheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
+return ContentService.createTextOutput(JSON.stringify({result: "Success", message: "Sheet created"}))
+.setMimeType(ContentService.MimeType.JSON);
 }
 
-// 3. Add headers if sheet is empty (now safe inside the lock)
+// Parse the incoming data
+const data = JSON.parse(e.postData.contents);
+
+// Add headers if sheet is empty
 if (sheet.getLastRow() === 0) {
 sheet.appendRow(["Timestamp", "Player", "Question", "Selected Answer", "Correct Answer", "Response Time (seconds)", "Status"]);
 }
 
-// 4. PARSE the incoming data
-const data = JSON.parse(e.postData.contents);
-
-// 5. APPEND THE NEW ROW
+// Append the new row
 sheet.appendRow([
 new Date(),
 data.player,
@@ -658,22 +655,21 @@ data.responseTime,
 data.status
 ]);
 
-// 6. RETURN SUCCESS
+// Return success
 return ContentService.createTextOutput(JSON.stringify({result: "Success"}))
 .setMimeType(ContentService.MimeType.JSON);
 
 } catch (error) {
-// Log the error for you to see
-console.error("Failed to process request:", error);
-// Return an error message to the client
-return ContentService.createTextOutput(JSON.stringify({result: "Error", message: "Internal server error. Please try again."}))
+// Return error message
+return ContentService.createTextOutput(JSON.stringify({result: "Error", message: error.toString()}))
 .setMimeType(ContentService.MimeType.JSON)
 .setStatusCode(500);
-
-} finally {
-// 7. ALWAYS RELEASE THE LOCK
-lock.releaseLock();
 }
+}
+
+function doGet() {
+return ContentService.createTextOutput("Quiz Game Web App is running")
+.setMimeType(ContentService.MimeType.TEXT);
 }
 </pre>
 </div>
@@ -694,10 +690,10 @@ lock.releaseLock();
 <p>Your Firebase Realtime Database rules must allow read and write access:</p>
 <div class="code-block">
 {
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
+"rules": {
+".read": true,
+".write": true
+}
 }
 </div>
 <p>Go to Firebase Console → Realtime Database → Rules and update them.</p>
@@ -708,14 +704,14 @@ lock.releaseLock();
 <p>Your Firebase config should look like this (with your actual values):</p>
 <div class="code-block">
 const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
+apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_PROJECT.firebaseapp.com",
+databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+projectId: "YOUR_PROJECT_ID",
+storageBucket: "YOUR_PROJECT.firebasestorage.app",
+messagingSenderId: "YOUR_SENDER_ID",
+appId: "YOUR_APP_ID",
+measurementId: "YOUR_MEASUREMENT_ID"
 };
 </div>
 </div>
@@ -733,14 +729,14 @@ const firebaseConfig = {
 <script>
 // Firebase configuration - Replace with your own config
 const firebaseConfig = {
-  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-  authDomain: "thequizfs.firebaseapp.com",
-  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-  projectId: "thequizfs",
-  storageBucket: "thequizfs.firebasestorage.app",
-  messagingSenderId: "16144411406",
-  appId: "1:16144411406:web:d83affb2013dea665e055f",
-  measurementId: "G-NXX4GQZ4NF"
+apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
+authDomain: "thequizfs.firebaseapp.com",
+databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
+projectId: "thequizfs",
+storageBucket: "thequizfs.firebasestorage.app",
+messagingSenderId: "16144411406",
+appId: "1:16144411406:web:d83affb2013dea665e055f",
+measurementId: "G-NXX4GQZ4NF"
 };
 
 // Initialize Firebase
@@ -809,163 +805,163 @@ quizEndTime = parseInt(quizEndTime);
 
 // Load data from Firebase
 function loadDataFromFirebase() {
-  // Listen for quiz time changes
-  database.ref('quizTime').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      quizStartTime = data.startTime;
-      quizEndTime = data.endTime;
-      localStorage.setItem('quizStartTime', quizStartTime);
-      localStorage.setItem('quizEndTime', quizEndTime);
-      updateQuizTimeInfo();
-      console.log("Quiz time updated from Firebase");
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
+// Listen for quiz time changes
+database.ref('quizTime').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+quizStartTime = data.startTime;
+quizEndTime = data.endTime;
+localStorage.setItem('quizStartTime', quizStartTime);
+localStorage.setItem('quizEndTime', quizEndTime);
+updateQuizTimeInfo();
+console.log("Quiz time updated from Firebase");
+}
+}, (error) => {
+console.error("Firebase read failed:", error);
+document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
+document.getElementById('firebase-init-status').className = 'url-status error';
+});
 
-  // Listen for question changes
-  database.ref('questions').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      questions = Object.values(data);
-      localStorage.setItem('quizQuestions', JSON.stringify(questions));
-      displayQuestions();
-      console.log("Questions updated from Firebase");
-      
-      // If we're on the player tab and a question is active, update it
-      if (document.getElementById('player').classList.contains('active') && 
-          document.getElementById('player-question').innerHTML !== "") {
-        showPlayerQuestion();
-      }
-    }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
-    document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
-    document.getElementById('firebase-init-status').className = 'url-status error';
-  });
+// Listen for question changes
+database.ref('questions').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+questions = Object.values(data);
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+displayQuestions();
+console.log("Questions updated from Firebase");
 
-  // NEW: Listen for web app URL changes
-  database.ref('webAppUrl').on('value', (snapshot) => {
-    const url = snapshot.val();
-    if (url) {
-      webAppUrl = url;
-      localStorage.setItem('webAppUrl', url);
-      document.getElementById('webAppUrl').value = url;
-      
-      // Hide setup tab if URL is configured
-      if (url) {
-        document.getElementById('setup-tab').style.display = 'none';
-        document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
-        document.getElementById('urlStatus').className = 'url-status success';
-      }
-      
-      console.log("Web App URL updated from Firebase:", url);
-    }
-  }, (error) => {
-    console.error("Firebase URL read failed:", error);
-  });
+// If we're on the player tab and a question is active, update it
+if (document.getElementById('player').classList.contains('active') &&
+document.getElementById('player-question').innerHTML !== "") {
+showPlayerQuestion();
+}
+}
+}, (error) => {
+console.error("Firebase read failed:", error);
+document.getElementById('firebase-init-status').textContent = "Error reading from Firebase: " + error.message;
+document.getElementById('firebase-init-status').className = 'url-status error';
+});
+
+// Listen for web app URL changes
+database.ref('webAppUrl').on('value', (snapshot) => {
+const url = snapshot.val();
+if (url) {
+webAppUrl = url;
+localStorage.setItem('webAppUrl', url);
+document.getElementById('webAppUrl').value = url;
+
+// Hide setup tab if URL is configured
+if (url) {
+document.getElementById('setup-tab').style.display = 'none';
+document.getElementById('urlStatus').textContent = 'Web App URL loaded from Firebase';
+document.getElementById('urlStatus').className = 'url-status success';
+}
+
+console.log("Web App URL updated from Firebase:", url);
+}
+}, (error) => {
+console.error("Firebase URL read failed:", error);
+});
 }
 
 // Initialize Firebase data structure
 function initializeFirebaseData() {
-  const statusElement = document.getElementById('firebase-init-status');
-  statusElement.textContent = "Initializing Firebase data...";
-  statusElement.className = 'url-status';
-  
-  // Initialize with default values if they don't exist
-  database.ref('quizTime').once('value').then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
-      var tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(12, 0, 0, 0);
-      var startTime = tomorrow.getTime();
-      var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-      
-      return database.ref('quizTime').set({
-        startTime: startTime,
-        endTime: endTime
-      });
-    }
-  }).then(() => {
-    return database.ref('questions').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Set default questions
-      const defaultQuestions = [
-        {
-          question: "What is 2 + 2?",
-          answers: ["3", "4", "5", "6"],
-          correct: "4"
-        },
-        {
-          question: "Capital of France?",
-          answers: ["London", "Paris", "Berlin", "Rome"],
-          correct: "Paris"
-        }
-      ];
-      return database.ref('questions').set(defaultQuestions);
-    }
-  }).then(() => {
-    return database.ref('webAppUrl').once('value');
-  }).then((snapshot) => {
-    if (!snapshot.exists()) {
-      // Initialize with empty URL
-      return database.ref('webAppUrl').set("");
-    }
-  }).then(() => {
-    statusElement.textContent = "Firebase data initialized successfully!";
-    statusElement.className = 'url-status success';
-    console.log("Firebase data initialized");
-    
-    // Reload data
-    loadDataFromFirebase();
-  }).catch((error) => {
-    statusElement.textContent = "Error initializing Firebase: " + error.message;
-    statusElement.className = 'url-status error';
-    console.error("Firebase initialization error:", error);
-  });
+const statusElement = document.getElementById('firebase-init-status');
+statusElement.textContent = "Initializing Firebase data...";
+statusElement.className = 'url-status';
+
+// Initialize with default values if they don't exist
+database.ref('quizTime').once('value').then((snapshot) => {
+if (!snapshot.exists()) {
+// Set default quiz time (tomorrow 12:00 PM to 12:30 PM)
+var tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+tomorrow.setHours(12, 0, 0, 0);
+var startTime = tomorrow.getTime();
+var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
+
+return database.ref('quizTime').set({
+startTime: startTime,
+endTime: endTime
+});
+}
+}).then(() => {
+return database.ref('questions').once('value');
+}).then((snapshot) => {
+if (!snapshot.exists()) {
+// Set default questions
+const defaultQuestions = [
+{
+question: "What is 2 + 2?",
+answers: ["3", "4", "5", "6"],
+correct: "4"
+},
+{
+question: "Capital of France?",
+answers: ["London", "Paris", "Berlin", "Rome"],
+correct: "Paris"
+}
+];
+return database.ref('questions').set(defaultQuestions);
+}
+}).then(() => {
+return database.ref('webAppUrl').once('value');
+}).then((snapshot) => {
+if (!snapshot.exists()) {
+// Initialize with empty URL
+return database.ref('webAppUrl').set("");
+}
+}).then(() => {
+statusElement.textContent = "Firebase data initialized successfully!";
+statusElement.className = 'url-status success';
+console.log("Firebase data initialized");
+
+// Reload data
+loadDataFromFirebase();
+}).catch((error) => {
+statusElement.textContent = "Error initializing Firebase: " + error.message;
+statusElement.className = 'url-status error';
+console.error("Firebase initialization error:", error);
+});
 }
 
 // Save web app URL to Firebase
 function saveWebAppUrlToFirebase(url) {
-  return database.ref('webAppUrl').set(url)
-    .then(() => {
-      console.log("Web App URL saved to Firebase:", url);
-      return true;
-    })
-    .catch((error) => {
-      console.error("Error saving URL to Firebase:", error);
-      return false;
-    });
+return database.ref('webAppUrl').set(url)
+.then(() => {
+console.log("Web App URL saved to Firebase:", url);
+return true;
+})
+.catch((error) => {
+console.error("Error saving URL to Firebase:", error);
+return false;
+});
 }
 
 // Save quiz time to Firebase
 function saveQuizTimeToFirebase(startTime, endTime) {
-  database.ref('quizTime').set({
-    startTime: startTime,
-    endTime: endTime
-  }).then(() => {
-    document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
-    document.getElementById('host-time-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
-    document.getElementById('host-time-status').className = 'url-status error';
-  });
+database.ref('quizTime').set({
+startTime: startTime,
+endTime: endTime
+}).then(() => {
+document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
+document.getElementById('host-time-status').className = 'url-status success';
+}).catch((error) => {
+document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
+document.getElementById('host-time-status').className = 'url-status error';
+});
 }
 
 // Save questions to Firebase
 function saveQuestionsToFirebase() {
-  database.ref('questions').set(questions).then(() => {
-    document.getElementById('question-status').textContent = 'Questions saved successfully!';
-    document.getElementById('question-status').className = 'url-status success';
-  }).catch((error) => {
-    document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
-    document.getElementById('question-status').className = 'url-status error';
-  });
+database.ref('questions').set(questions).then(() => {
+document.getElementById('question-status').textContent = 'Questions saved successfully!';
+document.getElementById('question-status').className = 'url-status success';
+}).catch((error) => {
+document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
+document.getElementById('question-status').className = 'url-status error';
+});
 }
 
 // Load questions from localStorage
@@ -1235,24 +1231,24 @@ var urlStatus = document.getElementById('urlStatus');
 if (url) {
 // Save to Firebase first
 saveWebAppUrlToFirebase(url).then((success) => {
-  if (success) {
-    // Also save to local storage as backup
-    localStorage.setItem('webAppUrl', url);
-    webAppUrl = url;
-    
-    urlStatus.textContent = 'URL saved successfully! Setup complete.';
-    urlStatus.className = 'url-status success';
+if (success) {
+// Also save to local storage as backup
+localStorage.setItem('webAppUrl', url);
+webAppUrl = url;
 
-    // Hide setup form and show completion message
-    document.getElementById('setup-form').style.display = 'none';
-    document.getElementById('setup-complete-message').style.display = 'block';
+urlStatus.textContent = 'URL saved successfully! Setup complete.';
+urlStatus.className = 'url-status success';
 
-    // Hide setup tab
-    document.getElementById('setup-tab').style.display = 'none';
-  } else {
-    urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
-    urlStatus.className = 'url-status error';
-  }
+// Hide setup form and show completion message
+document.getElementById('setup-form').style.display = 'none';
+document.getElementById('setup-complete-message').style.display = 'block';
+
+// Hide setup tab
+document.getElementById('setup-tab').style.display = 'none';
+} else {
+urlStatus.textContent = 'Error saving URL to Firebase. Please try again.';
+urlStatus.className = 'url-status error';
+}
 });
 } else {
 urlStatus.textContent = 'Please enter a valid URL';
@@ -1261,38 +1257,41 @@ urlStatus.className = 'url-status error';
 }
 
 // Function to send data to Google Sheets
-// ✅ Replace your sendToGoogleSheet function with this
 function sendToGoogleSheet(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-  if (!webAppUrl) {
-    console.error("❌ Web app URL not configured");
-    return;
-  }
-
-  var data = {
-    playerName: playerName,
-    question: question,
-    selectedAnswer: selectedAnswer,
-    correctAnswer: correctAnswer,
-    responseTime: responseTime,
-    status: status
-  };
-
-  fetch(webAppUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.text())
-  .then(result => {
-    console.log("✅ Data sent to Google Sheet:", result);
-  })
-  .catch(error => {
-    console.error("❌ Error sending to Google Sheet:", error);
-  });
+// Use the webAppUrl from the variable (which is synced from Firebase)
+if (!webAppUrl) {
+console.error("Web app URL not configured");
+alert("Google Sheets integration not configured. Please set up the web app URL in the Setup tab.");
+switchTab('setup');
+return;
 }
 
+// Prepare data to send
+var data = {
+player: playerName,
+question: question,
+answer: selectedAnswer,
+correct: correctAnswer,
+responseTime: responseTime,
+status: status
+};
+
+// Send data to Google Apps Script web app
+fetch(webAppUrl, {
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(result => {
+console.log("Data sent to Google Sheets successfully:", result);
+})
+.catch(error => {
+console.error("Error sending data to Google Sheets:", error);
+});
+}
 
 // Countdown timer function
 function startCountdown() {
@@ -1423,6 +1422,3 @@ loadDataFromFirebase();
 </script>
 </body>
 </html>
-
-
-
