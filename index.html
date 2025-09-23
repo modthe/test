@@ -1390,61 +1390,35 @@ function displayQuestions() {
             <strong>Q${index + 1}:</strong> ${q.question}
             <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
             <div class="admin-controls">
-                <button class="admin-btn edit" onclick="editQuestion(${index})">Edit</button>
+                <button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
                 <button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
             </div>
         `;
         container.appendChild(questionItem);
     });
 }
-
-// Edit a question
-// Edit a question
-
 // Edit a question - PROPER VERSION
-
-function editQuestion(index) {
-
-    var q = questions[index];
-
-    // Populate the form with current question data
-
-    document.getElementById('question-text').value = q.question;
-
-    document.getElementById('answer-1').value = q.answers[0];
-
-    document.getElementById('answer-2').value = q.answers[1];
-
-    document.getElementById('answer-3').value = q.answers[2];
-
-    document.getElementById('answer-4').value = q.answers[3];
-
-    // Set the correct answer radio button
-
-    var correctIndex = q.answers.indexOf(q.correct);
-
-    document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
-
-        radio.checked = (i === correctIndex);
-
-    });
-
-    // Remove the original question
-
-    questions.splice(index, 1);
-
-    saveQuestionsToFirebase();
-
-    // Show editing message
-
-    document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
-
-    document.getElementById('question-status').className = 'url-status success';
-
-    // Scroll to the form for better UX
-
-    document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
-
+function editExistingQuestion(index) {
+   var q = questions[index];
+   // Populate the form with current question data
+   document.getElementById('question-text').value = q.question;
+   document.getElementById('answer-1').value = q.answers[0];
+   document.getElementById('answer-2').value = q.answers[1];
+   document.getElementById('answer-3').value = q.answers[2];
+   document.getElementById('answer-4').value = q.answers[3];
+   // Set the correct answer radio button
+   var correctIndex = q.answers.indexOf(q.correct);
+   document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
+       radio.checked = (i === correctIndex);
+   });
+   // Remove the original question
+   questions.splice(index, 1);
+   saveQuestionsToFirebase();
+   // Show editing message
+   document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
+   document.getElementById('question-status').className = 'url-status success';
+   // Scroll to the form for better UX
+   document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
 }
  
 // Delete a question
@@ -1687,6 +1661,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
