@@ -176,33 +176,84 @@ cursor: not-allowed;
 transform: none;
 }
 
+/* Enhanced answer button styles for grid layout */
+.answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 1.5rem 0;
+}
+
 .answer-btn {
-display: block;
-width: 100%;
-text-align: left;
-margin: 0.5rem 0;
-padding: 1rem;
-background: #f8f9fa;
-color: #333;
-border: 1px solid #ddd;
-transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    color: #333;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: 500;
+    min-height: 100px;
+    word-wrap: break-word;
+    hyphens: auto;
+    cursor: pointer;
 }
 
 .answer-btn:hover {
-background: #e9ecef;
-transform: translateX(5px);
+    background: #e9ecef;
+    transform: translateY(-3px);
+    border-color: #6e8efb;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .answer-btn.correct {
-background-color: #4caf50;
-color: white;
-border-color: #4caf50;
+    background-color: #4caf50 !important;
+    color: white !important;
+    border-color: #4caf50 !important;
+    opacity: 1 !important;
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 .answer-btn.incorrect {
-background-color: #f44336;
-color: white;
-border-color: #f44336;
+    background-color: #f44336 !important;
+    color: white !important;
+    border-color: #f44336 !important;
+    opacity: 1 !important;
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+.answer-btn:disabled {
+    opacity: 1 !important;
+    pointer-events: none;
+}
+
+/* Force color visibility with higher specificity */
+#player-answers .answer-btn.correct,
+#player-answers .answer-btn.incorrect {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .answers-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .answer-btn {
+        padding: 1.2rem;
+        min-height: 80px;
+        font-size: 1rem;
+    }
 }
 
 .instructions {
@@ -689,11 +740,6 @@ grid-template-columns: 1fr;
 flex-direction: column;
 }
 
-.answer-btn {
-padding: 0.8rem;
-font-size: 0.9rem;
-}
-
 .result-stats {
 grid-template-columns: 1fr;
 }
@@ -953,6 +999,8 @@ font-size: 1.1rem;
 <li>✅ Session progress saving</li>
 <li>✅ Enhanced answer feedback</li>
 <li>✅ 5-second countdown between questions</li>
+<li>✅ Reliable answer colors (no gray buttons)</li>
+<li>✅ Grid layout for answers (2x2)</li>
 </ul>
 </div>
 </div>
@@ -1745,7 +1793,7 @@ function downloadPlayerResults() {
     window.URL.revokeObjectURL(url);
 }
 
-// Player view functions - show only visible questions
+// Enhanced player view functions with grid layout
 function showPlayerQuestion() {
     // Filter out hidden questions
     var visibleQuestions = questions.filter(q => !q.hidden);
@@ -1760,13 +1808,17 @@ function showPlayerQuestion() {
 
     var answersDiv = document.getElementById("player-answers");
     answersDiv.innerHTML = "<h3>Select your answer:</h3>";
-
+    
+    // Create grid container
+    var gridContainer = document.createElement("div");
+    gridContainer.className = "answers-grid";
+    
     questionStartTime = Date.now();
 
     q.answers.forEach(a => {
         var btn = document.createElement("button");
         btn.className = "answer-btn";
-        btn.innerText = a;
+        btn.innerHTML = a;
         btn.onclick = function() {
             if (!quizActive) {
                 alert("The quiz is not currently active. Please check the quiz schedule.");
@@ -1779,19 +1831,26 @@ function showPlayerQuestion() {
 
             clearInterval(countdownInterval);
             
-            startNextQuestionCountdown();
-
+            // Immediately disable all buttons to prevent multiple clicks
             var allButtons = document.querySelectorAll('.answer-btn');
             allButtons.forEach(button => {
                 button.disabled = true;
-                button.style.opacity = "1";
-                if (button.innerText === correct) {
+                button.style.pointerEvents = 'none';
+            });
+
+            // ENHANCED COLOR LOGIC - More reliable with immediate feedback
+            allButtons.forEach(button => {
+                // Remove any existing classes first
+                button.classList.remove('correct', 'incorrect');
+                
+                if (button.innerHTML === correct) {
+                    // Correct answer - always show green immediately
                     button.classList.add('correct');
-                    button.classList.remove('incorrect');
-                } else if (button.innerText === selected && selected !== correct) {
+                } else if (button.innerHTML === selected) {
+                    // User's wrong selection - show red immediately
                     button.classList.add('incorrect');
-                    button.classList.remove('correct');
                 } else {
+                    // Other options - gray out
                     button.style.opacity = "0.6";
                     button.style.background = "#f0f0f0";
                 }
@@ -1808,11 +1867,15 @@ function showPlayerQuestion() {
             playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
             saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
-            saveQuizProgress(); // Save progress after each answer
-        };
-        answersDiv.appendChild(btn);
-    });
+            saveQuizProgress();
 
+            // Start countdown for next question
+            startNextQuestionCountdown();
+        };
+        gridContainer.appendChild(btn);
+    });
+    
+    answersDiv.appendChild(gridContainer);
     startCountdown();
 }
 
@@ -1935,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeApp();
     
-    console.log("Enhanced Quiz System with Anti-Refresh Protection Initialized");
+    console.log("Quiz System with Grid Answer Layout Initialized");
 });
 </script>
 </body>
