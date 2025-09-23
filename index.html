@@ -600,6 +600,20 @@ background: #45a049;
 transform: translateY(-2px);
 }
 
+.session-warning {
+background: #fff3cd;
+border-left: 4px solid #ffc107;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+text-align: center;
+}
+
+.session-warning h3 {
+color: #856404;
+margin-bottom: 0.5rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -760,6 +774,7 @@ font-size: 1.1rem;
 <li>Your answers and response time will be recorded</li>
 <li>Each device has separate session - names won't conflict</li>
 <li>View your results and download them at the end</li>
+<li><strong>Note:</strong> You can only complete the quiz once per session</li>
 </ol>
 </div>
 </div>
@@ -879,6 +894,7 @@ font-size: 1.1rem;
 <li>View results in the Quiz Results section</li>
 <li>Export results to Excel or CSV for analysis</li>
 <li>Supports 30+ concurrent users easily</li>
+<li>Prevents users from restarting quiz by refreshing</li>
 </ol>
 </div>
 </div>
@@ -923,6 +939,7 @@ font-size: 1.1rem;
 <li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
+<li><strong>Anti-Cheat:</strong> Prevents quiz restart by refreshing</li>
 </ol>
 </div>
 
@@ -932,9 +949,10 @@ font-size: 1.1rem;
 <li>✅ Show/Hide questions control</li>
 <li>✅ Player results with statistics</li>
 <li>✅ Results download for players</li>
+<li>✅ Anti-refresh protection</li>
+<li>✅ Session progress saving</li>
 <li>✅ Enhanced answer feedback</li>
 <li>✅ 5-second countdown between questions</li>
-<li>✅ Improved button styling</li>
 </ul>
 </div>
 </div>
@@ -1032,7 +1050,7 @@ if (!quizEndTime) {
     quizEndTime = parseInt(quizEndTime);
 }
 
-// Load data from Firebase - FIXED VERSION
+// Load data from Firebase
 function loadDataFromFirebase() {
     if (!firebase.apps.length) {
         setTimeout(loadDataFromFirebase, 1000);
@@ -1052,11 +1070,10 @@ function loadDataFromFirebase() {
 
     database.ref('questions').on('value', (snapshot) => {
         const data = snapshot.val();
-        // FIX: Handle empty questions array properly
         if (data) {
             questions = Object.values(data);
         } else {
-            questions = []; // Explicitly set to empty array if no data
+            questions = [];
         }
         
         localStorage.setItem('quizQuestions', JSON.stringify(questions));
@@ -1065,61 +1082,6 @@ function loadDataFromFirebase() {
         if (document.getElementById('player').classList.contains('active') && 
             document.getElementById('player-question').innerHTML !== "") {
             showPlayerQuestion();
-        }
-    });
-}
-
-// Initialize Firebase data structure
-function initializeFirebaseData() {
-    const statusElement = document.getElementById('firebase-init-status');
-    if (statusElement) {
-        statusElement.textContent = "Initializing Firebase data...";
-        statusElement.className = 'url-status';
-    }
-    
-    database.ref('quizTime').once('value').then((snapshot) => {
-        if (!snapshot.exists()) {
-            var tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(12, 0, 0, 0);
-            var startTime = tomorrow.getTime();
-            var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-            
-            return database.ref('quizTime').set({
-                startTime: startTime,
-                endTime: endTime
-            });
-        }
-    }).then(() => {
-        return database.ref('questions').once('value');
-    }).then((snapshot) => {
-        if (!snapshot.exists()) {
-            const defaultQuestions = [
-                {
-                    question: "What is 2 + 2?",
-                    answers: ["3", "4", "5", "6"],
-                    correct: "4",
-                    hidden: false
-                },
-                {
-                    question: "Capital of France?",
-                    answers: ["London", "Paris", "Berlin", "Rome"],
-                    correct: "Paris",
-                    hidden: false
-                }
-            ];
-            return database.ref('questions').set(defaultQuestions);
-        }
-    }).then(() => {
-        if (statusElement) {
-            statusElement.textContent = "Firebase data initialized successfully!";
-            statusElement.className = 'url-status success';
-        }
-        loadDataFromFirebase();
-    }).catch((error) => {
-        if (statusElement) {
-            statusElement.textContent = "Error initializing Firebase: " + error.message;
-            statusElement.className = 'url-status error';
         }
     });
 }
@@ -1149,7 +1111,7 @@ function saveQuestionsToFirebase() {
     });
 }
 
-// Save quiz results to Firebase with session management
+// Save quiz results to Firebase
 function saveToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
     const responseId = database.ref().child('quizResults').push().key;
     
@@ -1357,12 +1319,12 @@ function loadQuizResults() {
         });
 }
 
-// Load questions from localStorage - but Firebase will override this
+// Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
     questions = JSON.parse(savedQuestions);
 } else {
-    questions = []; // Start with empty array
+    questions = [];
 }
 
 // Load host time settings
@@ -1386,7 +1348,7 @@ function loadHostTimeSettings() {
     displayQuestions();
 }
 
-// Verify admin code - SECURE: Password never visible to others
+// Verify admin code
 function verifyAdmin() {
     var code = document.getElementById('admin-code').value;
     var status = document.getElementById('admin-status');
@@ -1461,7 +1423,7 @@ function addQuestion() {
         question: questionText,
         answers: answers,
         correct: correctAnswer,
-        hidden: false // Default to visible
+        hidden: false
     };
 
     questions.push(newQuestion);
@@ -1550,7 +1512,7 @@ function toggleQuestionVisibility(index) {
     displayQuestions();
 }
 
-// Delete a question - ALLOWS deleting even the last question
+// Delete a question
 function deleteQuestion(index) {
     if (confirm('Are you sure you want to delete this question?')) {
         questions.splice(index, 1);
@@ -1605,6 +1567,48 @@ function updateQuizTimeInfo() {
     }
 }
 
+// Save quiz progress to sessionStorage
+function saveQuizProgress() {
+    var progress = {
+        currentIndex: currentIndex,
+        playerResults: playerResults,
+        timestamp: Date.now()
+    };
+    sessionStorage.setItem('quizProgress', JSON.stringify(progress));
+}
+
+// Resume quiz from saved progress
+function resumeQuiz() {
+    playerName = sessionStorage.getItem('playerName');
+    var savedProgress = sessionStorage.getItem('quizProgress');
+    
+    if (savedProgress) {
+        var progress = JSON.parse(savedProgress);
+        currentIndex = progress.currentIndex || 0;
+        playerResults = progress.playerResults || {
+            correct: 0,
+            incorrect: 0,
+            total: 0,
+            responseTimes: [],
+            accuracy: 0
+        };
+    }
+    
+    document.getElementById("name").style.display = "none";
+    document.getElementById("joinBtn").style.display = "none";
+    document.getElementById('player-question').innerHTML = "";
+    showPlayerQuestion();
+}
+
+// Reset quiz session
+function resetQuizSession() {
+    sessionStorage.removeItem('quizCompleted');
+    sessionStorage.removeItem('quizStarted');
+    sessionStorage.removeItem('quizProgress');
+    sessionStorage.removeItem('playerName');
+    location.reload();
+}
+
 // Countdown timer function
 function startCountdown() {
     timeLeft = 15;
@@ -1628,12 +1632,13 @@ function startCountdown() {
             playerResults.responseTimes.push(responseTime);
             playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
             
+            saveQuizProgress();
             moveToNextQuestion();
         }
     }, 1000);
 }
 
-// ENHANCEMENT 2: 5-second countdown before next question
+// 5-second countdown before next question
 function startNextQuestionCountdown() {
     var countdownTime = 5;
     document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
@@ -1658,6 +1663,7 @@ function moveToNextQuestion() {
     var visibleQuestions = questions.filter(q => !q.hidden);
     
     if (currentIndex < visibleQuestions.length) {
+        saveQuizProgress();
         showPlayerQuestion();
     } else {
         showPlayerResults();
@@ -1666,6 +1672,11 @@ function moveToNextQuestion() {
 
 // Show player results at the end of quiz
 function showPlayerResults() {
+    // Mark quiz as completed
+    sessionStorage.setItem('quizCompleted', 'true');
+    sessionStorage.removeItem('quizProgress');
+    sessionStorage.removeItem('quizStarted');
+    
     var avgResponseTime = playerResults.responseTimes.length > 0 
         ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
         : 0;
@@ -1698,7 +1709,14 @@ function showPlayerResults() {
                 📥 Download My Results
             </button>
             
-            <p><small>You can close this window or refresh to play again.</small></p>
+            <div class="session-warning">
+                <h3>⚠️ Quiz Completed</h3>
+                <p>You have successfully completed this quiz.</p>
+                <p>To start a new attempt, refresh the page completely (Ctrl+F5).</p>
+                <button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
+                    Start New Attempt
+                </button>
+            </div>
         </div>
     `;
     
@@ -1790,6 +1808,7 @@ function showPlayerQuestion() {
             playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
             saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
+            saveQuizProgress(); // Save progress after each answer
         };
         answersDiv.appendChild(btn);
     });
@@ -1804,8 +1823,25 @@ document.getElementById("joinBtn").onclick = function() {
         return;
     }
 
+    // Check if user already completed quiz in this session
+    if (sessionStorage.getItem('quizCompleted') === 'true') {
+        alert("You have already completed this quiz. Refresh the page to start a new session.");
+        return;
+    }
+
+    // Check if user already started quiz
+    if (sessionStorage.getItem('quizStarted') === 'true' && !sessionStorage.getItem('quizCompleted')) {
+        if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
+            return;
+        }
+    }
+
     playerName = document.getElementById("name").value;
     if (playerName.trim() !== "") {
+        // Mark quiz as started
+        sessionStorage.setItem('quizStarted', 'true');
+        sessionStorage.setItem('playerName', playerName);
+        
         // Reset results when starting new quiz
         playerResults = {
             correct: 0,
@@ -1814,8 +1850,16 @@ document.getElementById("joinBtn").onclick = function() {
             responseTimes: [],
             accuracy: 0
         };
-        currentIndex = 0;
         
+        // Restore progress if exists
+        var savedProgress = sessionStorage.getItem('quizProgress');
+        if (savedProgress) {
+            var progress = JSON.parse(savedProgress);
+            currentIndex = progress.currentIndex || 0;
+            playerResults = progress.playerResults || playerResults;
+        }
+        
+        currentIndex = 0;
         document.getElementById("name").style.display = "none";
         document.getElementById("joinBtn").style.display = "none";
         showPlayerQuestion();
@@ -1828,12 +1872,58 @@ document.getElementById("joinBtn").onclick = function() {
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
+// Prevent accidental page refresh
+window.addEventListener('beforeunload', function (e) {
+    if (sessionStorage.getItem('quizStarted') === 'true' && sessionStorage.getItem('quizCompleted') !== 'true') {
+        e.preventDefault();
+        e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
+        return 'You have an ongoing quiz. Are you sure you want to leave?';
+    }
+});
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     document.getElementById('player').classList.add('active');
+
+    // Check if user already completed quiz
+    if (sessionStorage.getItem('quizCompleted') === 'true') {
+        var playerName = sessionStorage.getItem('playerName') || 'Player';
+        document.getElementById('player-question').innerHTML = `
+            <div class="player-results">
+                <h2>Quiz Already Completed</h2>
+                <p>Hello ${playerName}, you have already completed this quiz.</p>
+                <p>Refresh the page completely (Ctrl+F5) to start a new attempt.</p>
+                <button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
+                    Start New Attempt
+                </button>
+            </div>
+        `;
+        document.getElementById("name").style.display = "none";
+        document.getElementById("joinBtn").style.display = "none";
+    }
+    
+    // Check if user has progress to resume
+    else if (sessionStorage.getItem('quizStarted') === 'true') {
+        var savedName = sessionStorage.getItem('playerName');
+        if (savedName) {
+            document.getElementById('name').value = savedName;
+            document.getElementById('player-question').innerHTML = `
+                <div style="text-align: center; padding: 1rem;">
+                    <p>Welcome back, ${savedName}!</p>
+                    <p>You have an ongoing quiz session.</p>
+                    <button onclick="resumeQuiz()" style="background: #4caf50; margin: 10px;">
+                        Resume Quiz
+                    </button>
+                    <button onclick="resetQuizSession()" style="background: #f44336; margin: 10px;">
+                        Start Fresh
+                    </button>
+                </div>
+            `;
+        }
+    }
 
     function initializeApp() {
         try {
@@ -1845,8 +1935,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeApp();
     
-    console.log("Enhanced Quiz System Initialized");
-    console.log("New Features: Show/Hide questions + Player results");
+    console.log("Enhanced Quiz System with Anti-Refresh Protection Initialized");
 });
 </script>
 </body>
