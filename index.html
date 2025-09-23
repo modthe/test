@@ -633,7 +633,7 @@ font-size: 1.1rem;
 <div class="tabs">
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" onclick="switchTab('firebase-help')">Help</div>
+<div class="tab" onclick="switchTab('firebase-help')">About</div>
 </div>
 
 <div class="content">
@@ -774,7 +774,7 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Host Instructions</h3>
 <ol>
-<li>Enter the admin code "admin123" to access host features</li>
+<li>Enter the admin code to access host features</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
 <li>View results in the Quiz Results section (now at the bottom)</li>
@@ -791,7 +791,7 @@ font-size: 1.1rem;
 
 <div class="setup-complete">
 <h3>✅ System Ready!</h3>
-<p>Your quiz app is optimized for production use with Firebase.</p>
+<p>Kahoot app is optimized for production use with Firebase.</p>
 <p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
@@ -821,7 +821,7 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Security Features</h3>
 <ol>
-<li><strong>Admin Password:</strong> Never visible to other users</li>
+<li><strong>Admin Control:</strong> Kahoot Full Control</li>
 <li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
@@ -833,11 +833,9 @@ font-size: 1.1rem;
 <ul>
 <li>✅ Separate sessions for each device</li>
 <li>✅ Optimized for mobile and desktop</li>
-<li>✅ Handles 30+ concurrent users</li>
 <li>✅ Real-time results tracking</li>
 <li>✅ Secure admin authentication</li>
-<li>✅ Professional Excel exports</li>
-<li>✅ Safe results deletion</li>
+<li>✅ Excel exports</li>
 </ul>
 </div>
 </div>
@@ -901,7 +899,7 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "admin123";
+var adminCode = "adminHafsa";
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -1640,3 +1638,4 @@ console.log("Security: Admin password verification is local and secure");
 </script>
 </body>
 </html>
+
