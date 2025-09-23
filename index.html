@@ -1554,21 +1554,6 @@ function startCountdown() {
         }
     }, 1000);
 }
-function startNextQuestionCountdown() {
-   var countdownTime = 5;
-   document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-   document.getElementById('countdown').style.color = "#6e8efb";
-   document.getElementById('countdown').style.fontWeight = "bold";
-   var countdownInterval = setInterval(function() {
-       countdownTime--;
-       document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-       if (countdownTime <= 0) {
-           clearInterval(countdownInterval);
-           document.getElementById('countdown').textContent = "";
-           moveToNextQuestion();
-       }
-   }, 1000);
-}
 
 // Move to next question automatically
 function moveToNextQuestion() {
@@ -1663,6 +1648,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
