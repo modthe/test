@@ -1554,6 +1554,21 @@ function startCountdown() {
         }
     }, 1000);
 }
+function startNextQuestionCountdown() {
+   var countdownTime = 5;
+   document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
+   document.getElementById('countdown').style.color = "#6e8efb";
+   document.getElementById('countdown').style.fontWeight = "bold";
+   var countdownInterval = setInterval(function() {
+       countdownTime--;
+       document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
+       if (countdownTime <= 0) {
+           clearInterval(countdownInterval);
+           document.getElementById('countdown').textContent = "";
+           moveToNextQuestion();
+       }
+   }, 1000);
+}
 
 // Move to next question automatically
 function moveToNextQuestion() {
@@ -1568,51 +1583,38 @@ function moveToNextQuestion() {
 }
 
 // Player view functions
-function showPlayerQuestion() {
-    var q = questions[currentIndex];
-    document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
-
-    var answersDiv = document.getElementById("player-answers");
-    answersDiv.innerHTML = "<h3>Select your answer:</h3>";
-
-    questionStartTime = Date.now();
-
-    q.answers.forEach(a => {
-        var btn = document.createElement("button");
-        btn.className = "answer-btn";
-        btn.innerText = a;
-        btn.onclick = function() {
-            if (!quizActive) {
-                alert("The quiz is not currently active. Please check the quiz schedule.");
-                return;
-            }
-
-            var selected = a;
-            var correct = q.correct;
-            var responseTime = (Date.now() - questionStartTime) / 1000;
-
-            clearInterval(countdownInterval);
-            document.getElementById('countdown').textContent = "";
-
-            var allButtons = document.querySelectorAll('.answer-btn');
-            allButtons.forEach(button => {
-                button.disabled = true;
-                if (button.innerText === correct) {
-                    button.classList.add('correct');
-                } else if (button.innerText === selected && selected !== correct) {
-                    button.classList.add('incorrect');
-                }
-            });
-
-            saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
-
-            setTimeout(moveToNextQuestion, 5000);
-        };
-        answersDiv.appendChild(btn);
-    });
-
-    startCountdown();
-}
+btn.onclick = function() {
+   if (!quizActive) {
+       alert("The quiz is not currently active. Please check the quiz schedule.");
+       return;
+   }
+   var selected = a;
+   var correct = q.correct;
+   var responseTime = (Date.now() - questionStartTime) / 1000;
+   clearInterval(countdownInterval);
+   // ENHANCEMENT 2: Start 5-second countdown
+   startNextQuestionCountdown();
+   var allButtons = document.querySelectorAll('.answer-btn');
+   allButtons.forEach(button => {
+       button.disabled = true;
+       // ENHANCEMENT 1: Always show colors clearly
+       button.style.opacity = "1"; // Ensure full visibility
+       if (button.innerText === correct) {
+           button.classList.add('correct');
+           button.classList.remove('incorrect');
+       } else if (button.innerText === selected && selected !== correct) {
+           button.classList.add('incorrect');
+           button.classList.remove('correct');
+       } else {
+           // Gray out incorrect options that weren't selected
+           button.style.opacity = "0.6";
+           button.style.background = "#f0f0f0";
+       }
+   });
+   saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
+   // ENHANCEMENT 2: Wait for 5-second countdown instead of fixed timeout
+   // setTimeout(moveToNextQuestion, 5000); // Remove this line
+};
 
 // Initialize the application
 document.getElementById("joinBtn").onclick = function() {
@@ -1661,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
