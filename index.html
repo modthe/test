@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kahoot FS</title>
+<title>Quiz Game with Admin Features</title>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -340,6 +340,10 @@ font-size: 0.8rem;
 background: #ff9800;
 }
 
+.admin-btn.toggle {
+background: #9c27b0;
+}
+
 .admin-btn.delete {
 background: #f44336;
 }
@@ -507,6 +511,95 @@ color: #1565c0;
 margin-bottom: 0.5rem;
 }
 
+/* Show/Hide question styles */
+.question-toggle {
+background: #ff9800;
+padding: 0.3rem 0.8rem;
+font-size: 0.8rem;
+margin-left: 10px;
+}
+
+.question-toggle.hidden {
+background: #f44336;
+}
+
+.question-item.hidden {
+opacity: 0.6;
+background: #f5f5f5;
+border-left: 4px solid #ff9800;
+}
+
+.status-badge {
+display: inline-block;
+padding: 0.2rem 0.5rem;
+border-radius: 12px;
+font-size: 0.7rem;
+font-weight: bold;
+margin-left: 10px;
+}
+
+.status-visible {
+background: #4caf50;
+color: white;
+}
+
+.status-hidden {
+background: #f44336;
+color: white;
+}
+
+/* Player results styles */
+.player-results {
+text-align: center;
+padding: 2rem;
+background: #f8f9fa;
+border-radius: 10px;
+margin: 1rem 0;
+}
+
+.result-stats {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 1rem;
+margin: 2rem 0;
+}
+
+.result-stat {
+background: white;
+padding: 1.5rem;
+border-radius: 8px;
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.result-number {
+font-size: 2.5rem;
+font-weight: bold;
+display: block;
+}
+
+.result-correct { color: #4caf50; }
+.result-incorrect { color: #f44336; }
+.result-accuracy { color: #2196f3; }
+.result-time { color: #ff9800; }
+
+.result-label {
+font-size: 0.9rem;
+color: #666;
+margin-top: 0.5rem;
+}
+
+.download-btn {
+background: #4caf50;
+padding: 1rem 2rem;
+font-size: 1.1rem;
+margin: 1rem;
+}
+
+.download-btn:hover {
+background: #45a049;
+transform: translateY(-2px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -586,6 +679,10 @@ flex-direction: column;
 padding: 0.8rem;
 font-size: 0.9rem;
 }
+
+.result-stats {
+grid-template-columns: 1fr;
+}
 }
 
 @media (min-width: 1200px) {
@@ -625,7 +722,7 @@ font-size: 1.1rem;
 <body>
 <div class="container">
 <header>
-<h1>Kahoot FS</h1>
+<h1>Quiz Game with Admin Features</h1>
 <p class="subtitle">Answer questions within the time limit</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
@@ -633,7 +730,7 @@ font-size: 1.1rem;
 <div class="tabs">
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" onclick="switchTab('firebase-help')">About</div>
+<div class="tab" onclick="switchTab('firebase-help')">Help</div>
 </div>
 
 <div class="content">
@@ -662,6 +759,7 @@ font-size: 1.1rem;
 <li>Select your answer when questions appear</li>
 <li>Your answers and response time will be recorded</li>
 <li>Each device has separate session - names won't conflict</li>
+<li>View your results and download them at the end</li>
 </ol>
 </div>
 </div>
@@ -774,12 +872,12 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Host Instructions</h3>
 <ol>
-<li>Enter the admin code to access host features</li>
+<li>Enter the admin code "admin123" to access host features</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
-<li>View results in the Quiz Results section (now at the bottom)</li>
+<li>Use Show/Hide buttons to control which questions are active</li>
+<li>View results in the Quiz Results section</li>
 <li>Export results to Excel or CSV for analysis</li>
-<li>Delete results when needed with the delete button</li>
 <li>Supports 30+ concurrent users easily</li>
 </ol>
 </div>
@@ -787,17 +885,17 @@ font-size: 1.1rem;
 
 <!-- Firebase Help Tab -->
 <div id="firebase-help" class="tab-content">
-<h2>Kahoot FS Information</h2>
+<h2>System Information</h2>
 
 <div class="setup-complete">
-<h3>✅ Kahoot FS Quiz ✅</h3>
-<p>Kahoot FS app is optimized for production use with Firebase.</p>
+<h3>✅ System Ready!</h3>
+<p>Your quiz app is optimized for production use with Firebase.</p>
 <p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
 <div class="admin-section">
-<h3>Kahoot FS Capacity</h3>
+<h3>System Capacity</h3>
 <div class="stats-grid">
 <div class="stat-card">
 <span class="stat-number">100</span>
@@ -819,9 +917,9 @@ font-size: 1.1rem;
 </div>
 
 <div class="instructions">
-<h3>Kahoot FS Security Features</h3>
+<h3>Security Features</h3>
 <ol>
-<li><strong>Admin Control:</strong> Kahoot Full Control</li>
+<li><strong>Admin Password:</strong> Never visible to other users</li>
 <li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
@@ -829,13 +927,14 @@ font-size: 1.1rem;
 </div>
 
 <div class="card">
-<h3>Technical Details</h3>
+<h3>New Features</h3>
 <ul>
-<li>✅ Separate sessions for each device</li>
-<li>✅ Optimized for mobile and desktop</li>
-<li>✅ Real-time results tracking</li>
-<li>✅ Secure admin authentication</li>
-<li>✅ Excel exports</li>
+<li>✅ Show/Hide questions control</li>
+<li>✅ Player results with statistics</li>
+<li>✅ Results download for players</li>
+<li>✅ Enhanced answer feedback</li>
+<li>✅ 5-second countdown between questions</li>
+<li>✅ Improved button styling</li>
 </ul>
 </div>
 </div>
@@ -845,50 +944,50 @@ font-size: 1.1rem;
 <script>
 // Firebase configuration
 const firebaseConfig = {
-apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
-authDomain: "thequizfs.firebaseapp.com",
-databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
-projectId: "thequizfs",
-storageBucket: "thequizfs.firebasestorage.app",
-messagingSenderId: "16144411406",
-appId: "1:16144411406:web:d83affb2013dea665e055f",
-measurementId: "G-NXX4GQZ4NF"
+  apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
+  authDomain: "thequizfs.firebaseapp.com",
+  databaseURL: "https://thequizfs-default-rtdb.firebaseio.com",
+  projectId: "thequizfs",
+  storageBucket: "thequizfs.firebasestorage.app",
+  messagingSenderId: "16144411406",
+  appId: "1:16144411406:web:d83affb2013dea665e055f",
+  measurementId: "G-NXX4GQZ4NF"
 };
 
 // Initialize Firebase with error handling
 let app;
 try {
-app = firebase.initializeApp(firebaseConfig);
+    app = firebase.initializeApp(firebaseConfig);
 } catch (error) {
-if (error.code === 'app/duplicate-app') {
-app = firebase.app();
-} else {
-console.error('Firebase initialization error:', error);
-}
+    if (error.code === 'app/duplicate-app') {
+        app = firebase.app();
+    } else {
+        console.error('Firebase initialization error:', error);
+    }
 }
 const database = firebase.database();
 
 // Session management - unique for each device
 if (!sessionStorage.getItem('playerSessionId')) {
-sessionStorage.setItem('playerSessionId', 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9));
+    sessionStorage.setItem('playerSessionId', 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9));
 }
 
 // Tab switching functionality
 function switchTab(tabName) {
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
-document.getElementById(tabName).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(tabName).classList.add('active');
 
-document.querySelectorAll('.tab').forEach(tab => {
-tab.classList.remove('active');
-});
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
 
-event.target.classList.add('active');
+    event.target.classList.add('active');
 
-if (tabName === 'host') {
-loadHostTimeSettings();
-}
+    if (tabName === 'host') {
+        loadHostTimeSettings();
+    }
 }
 
 // Initialize variables
@@ -899,715 +998,830 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "adminHafsa";
+var adminCode = "admin123";
+
+// Player results tracking
+var playerResults = {
+    correct: 0,
+    incorrect: 0,
+    total: 0,
+    responseTimes: [],
+    accuracy: 0
+};
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
 var quizEndTime = localStorage.getItem('quizEndTime');
 
 if (!quizStartTime) {
-var tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(12, 0, 0, 0);
-quizStartTime = tomorrow.getTime();
-localStorage.setItem('quizStartTime', quizStartTime);
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(12, 0, 0, 0);
+    quizStartTime = tomorrow.getTime();
+    localStorage.setItem('quizStartTime', quizStartTime);
 } else {
-quizStartTime = parseInt(quizStartTime);
+    quizStartTime = parseInt(quizStartTime);
 }
 
 if (!quizEndTime) {
-var endTime = new Date(quizStartTime);
-endTime.setMinutes(endTime.getMinutes() + 30);
-quizEndTime = endTime.getTime();
-localStorage.setItem('quizEndTime', quizEndTime);
+    var endTime = new Date(quizStartTime);
+    endTime.setMinutes(endTime.getMinutes() + 30);
+    quizEndTime = endTime.getTime();
+    localStorage.setItem('quizEndTime', quizEndTime);
 } else {
-quizEndTime = parseInt(quizEndTime);
+    quizEndTime = parseInt(quizEndTime);
 }
 
-// Load data from Firebase
+// Load data from Firebase - FIXED VERSION
 function loadDataFromFirebase() {
-   if (!firebase.apps.length) {
-       setTimeout(loadDataFromFirebase, 1000);
-       return;
-   }
-   database.ref('quizTime').on('value', (snapshot) => {
-       const data = snapshot.val();
-       if (data) {
-           quizStartTime = data.startTime;
-           quizEndTime = data.endTime;
-           localStorage.setItem('quizStartTime', quizStartTime);
-           localStorage.setItem('quizEndTime', quizEndTime);
-           updateQuizTimeInfo();
-       }
-   });
-   database.ref('questions').on('value', (snapshot) => {
-       const data = snapshot.val();
-       // FIX: Handle empty questions array properly
-       if (data) {
-           questions = Object.values(data);
-       } else {
-           questions = []; // Explicitly set to empty array if no data
-       }
-       localStorage.setItem('quizQuestions', JSON.stringify(questions));
-       displayQuestions();
-       if (document.getElementById('player').classList.contains('active') &&
-           document.getElementById('player-question').innerHTML !== "") {
-           showPlayerQuestion();
-       }
-   });
+    if (!firebase.apps.length) {
+        setTimeout(loadDataFromFirebase, 1000);
+        return;
+    }
+
+    database.ref('quizTime').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            quizStartTime = data.startTime;
+            quizEndTime = data.endTime;
+            localStorage.setItem('quizStartTime', quizStartTime);
+            localStorage.setItem('quizEndTime', quizEndTime);
+            updateQuizTimeInfo();
+        }
+    });
+
+    database.ref('questions').on('value', (snapshot) => {
+        const data = snapshot.val();
+        // FIX: Handle empty questions array properly
+        if (data) {
+            questions = Object.values(data);
+        } else {
+            questions = []; // Explicitly set to empty array if no data
+        }
+        
+        localStorage.setItem('quizQuestions', JSON.stringify(questions));
+        displayQuestions();
+        
+        if (document.getElementById('player').classList.contains('active') && 
+            document.getElementById('player-question').innerHTML !== "") {
+            showPlayerQuestion();
+        }
+    });
 }
 
 // Initialize Firebase data structure
 function initializeFirebaseData() {
-const statusElement = document.getElementById('firebase-init-status');
-if (statusElement) {
-statusElement.textContent = "Initializing Firebase data...";
-statusElement.className = 'url-status';
-}
-
-database.ref('quizTime').once('value').then((snapshot) => {
-if (!snapshot.exists()) {
-var tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(12, 0, 0, 0);
-var startTime = tomorrow.getTime();
-var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-
-return database.ref('quizTime').set({
-startTime: startTime,
-endTime: endTime
-});
-}
-}).then(() => {
-return database.ref('questions').once('value');
-}).then((snapshot) => {
-if (!snapshot.exists()) {
-const defaultQuestions = [
-{
-question: "What is 2 + 2?",
-answers: ["3", "4", "5", "6"],
-correct: "4"
-},
-{
-question: "Capital of France?",
-answers: ["London", "Paris", "Berlin", "Rome"],
-correct: "Paris"
-}
-];
-return database.ref('questions').set(defaultQuestions);
-}
-}).then(() => {
-if (statusElement) {
-statusElement.textContent = "Firebase data initialized successfully!";
-statusElement.className = 'url-status success';
-}
-loadDataFromFirebase();
-}).catch((error) => {
-if (statusElement) {
-statusElement.textContent = "Error initializing Firebase: " + error.message;
-statusElement.className = 'url-status error';
-}
-});
+    const statusElement = document.getElementById('firebase-init-status');
+    if (statusElement) {
+        statusElement.textContent = "Initializing Firebase data...";
+        statusElement.className = 'url-status';
+    }
+    
+    database.ref('quizTime').once('value').then((snapshot) => {
+        if (!snapshot.exists()) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(12, 0, 0, 0);
+            var startTime = tomorrow.getTime();
+            var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
+            
+            return database.ref('quizTime').set({
+                startTime: startTime,
+                endTime: endTime
+            });
+        }
+    }).then(() => {
+        return database.ref('questions').once('value');
+    }).then((snapshot) => {
+        if (!snapshot.exists()) {
+            const defaultQuestions = [
+                {
+                    question: "What is 2 + 2?",
+                    answers: ["3", "4", "5", "6"],
+                    correct: "4",
+                    hidden: false
+                },
+                {
+                    question: "Capital of France?",
+                    answers: ["London", "Paris", "Berlin", "Rome"],
+                    correct: "Paris",
+                    hidden: false
+                }
+            ];
+            return database.ref('questions').set(defaultQuestions);
+        }
+    }).then(() => {
+        if (statusElement) {
+            statusElement.textContent = "Firebase data initialized successfully!";
+            statusElement.className = 'url-status success';
+        }
+        loadDataFromFirebase();
+    }).catch((error) => {
+        if (statusElement) {
+            statusElement.textContent = "Error initializing Firebase: " + error.message;
+            statusElement.className = 'url-status error';
+        }
+    });
 }
 
 // Save quiz time to Firebase
 function saveQuizTimeToFirebase(startTime, endTime) {
-database.ref('quizTime').set({
-startTime: startTime,
-endTime: endTime
-}).then(() => {
-document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
-document.getElementById('host-time-status').className = 'url-status success';
-}).catch((error) => {
-document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
-document.getElementById('host-time-status').className = 'url-status error';
-});
+    database.ref('quizTime').set({
+        startTime: startTime,
+        endTime: endTime
+    }).then(() => {
+        document.getElementById('host-time-status').textContent = 'Quiz time saved successfully!';
+        document.getElementById('host-time-status').className = 'url-status success';
+    }).catch((error) => {
+        document.getElementById('host-time-status').textContent = 'Error saving quiz time: ' + error.message;
+        document.getElementById('host-time-status').className = 'url-status error';
+    });
 }
 
 // Save questions to Firebase
 function saveQuestionsToFirebase() {
-database.ref('questions').set(questions).then(() => {
-document.getElementById('question-status').textContent = 'Questions saved successfully!';
-document.getElementById('question-status').className = 'url-status success';
-}).catch((error) => {
-document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
-document.getElementById('question-status').className = 'url-status error';
-});
+    database.ref('questions').set(questions).then(() => {
+        document.getElementById('question-status').textContent = 'Questions saved successfully!';
+        document.getElementById('question-status').className = 'url-status success';
+    }).catch((error) => {
+        document.getElementById('question-status').textContent = 'Error saving questions: ' + error.message;
+        document.getElementById('question-status').className = 'url-status error';
+    });
 }
 
 // Save quiz results to Firebase with session management
 function saveToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
-const responseId = database.ref().child('quizResults').push().key;
+    const responseId = database.ref().child('quizResults').push().key;
+    
+    const quizData = {
+        player: playerName || "Unknown Player",
+        question: question || "Unknown Question",
+        selectedAnswer: selectedAnswer || "No Answer",
+        correctAnswer: correctAnswer || "Unknown",
+        responseTime: responseTime || 0,
+        status: status || "Unknown",
+        timestamp: new Date().toISOString(),
+        questionIndex: currentIndex,
+        sessionId: sessionStorage.getItem('playerSessionId'),
+        deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+    };
 
-const quizData = {
-player: playerName || "Unknown Player",
-question: question || "Unknown Question",
-selectedAnswer: selectedAnswer || "No Answer",
-correctAnswer: correctAnswer || "Unknown",
-responseTime: responseTime || 0,
-status: status || "Unknown",
-timestamp: new Date().toISOString(),
-questionIndex: currentIndex,
-sessionId: sessionStorage.getItem('playerSessionId'),
-deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
-};
-
-// Efficient save with error handling
-database.ref('quizResults/' + responseId).set(quizData)
-.then(() => {
-console.log("Data saved successfully for session:", quizData.sessionId);
-})
-.catch((error) => {
-console.error("Save error, retrying:", error);
-// Simple retry logic
-setTimeout(() => {
-database.ref('quizResults/' + responseId).set(quizData);
-}, 500);
-});
+    database.ref('quizResults/' + responseId).set(quizData)
+        .then(() => {
+            console.log("Data saved successfully for session:", quizData.sessionId);
+        })
+        .catch((error) => {
+            console.error("Save error, retrying:", error);
+            setTimeout(() => {
+                database.ref('quizResults/' + responseId).set(quizData);
+            }, 500);
+        });
 }
 
 // Export functions
 function exportToExcel() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('No results to export.');
-return;
-}
-
-const data = Object.values(results);
-const worksheet = XLSX.utils.json_to_sheet(data);
-const workbook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(workbook, worksheet, "Quiz Results");
-XLSX.writeFile(workbook, 'quiz-results.xlsx');
-alert('Excel file downloaded successfully!');
-})
-.catch((error) => {
-console.error("Error exporting to Excel:", error);
-alert('Error exporting data.');
-});
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            if (!results) {
+                alert('No results to export.');
+                return;
+            }
+            
+            const data = Object.values(results);
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Quiz Results");
+            XLSX.writeFile(workbook, 'quiz-results.xlsx');
+            alert('Excel file downloaded successfully!');
+        })
+        .catch((error) => {
+            console.error("Error exporting to Excel:", error);
+            alert('Error exporting data.');
+        });
 }
 
 function exportToCSV() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('No results to export.');
-return;
-}
-
-const data = Object.values(results);
-const csv = convertToCSV(data);
-const blob = new Blob([csv], { type: 'text/csv' });
-const url = window.URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = 'quiz-results.csv';
-a.click();
-window.URL.revokeObjectURL(url);
-alert('CSV file downloaded successfully!');
-})
-.catch((error) => {
-console.error("Error exporting to CSV:", error);
-alert('Error exporting data.');
-});
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            if (!results) {
+                alert('No results to export.');
+                return;
+            }
+            
+            const data = Object.values(results);
+            const csv = convertToCSV(data);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'quiz-results.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            alert('CSV file downloaded successfully!');
+        })
+        .catch((error) => {
+            console.error("Error exporting to CSV:", error);
+            alert('Error exporting data.');
+        });
 }
 
 function convertToCSV(data) {
-if (data.length === 0) return '';
-
-const headers = Object.keys(data[0]);
-const csvRows = [];
-csvRows.push(headers.join(','));
-
-for (const row of data) {
-const values = headers.map(header => {
-const value = row[header] || '';
-if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-return `"${value.replace(/"/g, '""')}"`;
-}
-return value;
-});
-csvRows.push(values.join(','));
-}
-
-return csvRows.join('\n');
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    
+    for (const row of data) {
+        const values = headers.map(header => {
+            const value = row[header] || '';
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+        });
+        csvRows.push(values.join(','));
+    }
+    
+    return csvRows.join('\n');
 }
 
 // Delete all quiz results
 function deleteAllResults() {
-database.ref('quizResults').remove()
-.then(() => {
-alert('All quiz results have been deleted successfully!');
-loadQuizResults(); // Refresh the results display
-})
-.catch((error) => {
-console.error("Error deleting results:", error);
-alert('Error deleting results. Please try again.');
-});
+    database.ref('quizResults').remove()
+        .then(() => {
+            alert('All quiz results have been deleted successfully!');
+            loadQuizResults();
+        })
+        .catch((error) => {
+            console.error("Error deleting results:", error);
+            alert('Error deleting results. Please try again.');
+        });
 }
 
 // Confirm before deleting results
 function confirmDeleteResults() {
-if (confirm('⚠️ Are you sure you want to delete ALL quiz results?\n\nThis action cannot be undone!')) {
-if (confirm('🚨 FINAL WARNING: This will permanently delete all quiz data. Continue?')) {
-deleteAllResults();
-}
-}
+    if (confirm('⚠️ Are you sure you want to delete ALL quiz results?\n\nThis action cannot be undone!')) {
+        if (confirm('🚨 FINAL WARNING: This will permanently delete all quiz data. Continue?')) {
+            deleteAllResults();
+        }
+    }
 }
 
 // Load and display quiz results
 function loadQuizResults() {
-const resultsContainer = document.getElementById('results-container');
-resultsContainer.innerHTML = '<p>Loading results...</p>';
-
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-resultsContainer.innerHTML = '';
-
-if (!results) {
-resultsContainer.innerHTML = '<p>No results yet. Results will appear here as players answer questions.</p>';
-return;
+    const resultsContainer = document.getElementById('results-container');
+    resultsContainer.innerHTML = '<p>Loading results...</p>';
+    
+    database.ref('quizResults').once('value')
+        .then((snapshot) => {
+            const results = snapshot.val();
+            resultsContainer.innerHTML = '';
+            
+            if (!results) {
+                resultsContainer.innerHTML = '<p>No results yet. Results will appear here as players answer questions.</p>';
+                return;
+            }
+            
+            const resultsArray = Object.values(results);
+            const totalResponses = resultsArray.length;
+            const correctAnswers = resultsArray.filter(r => r.selectedAnswer === r.correctAnswer).length;
+            const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).toFixed(1) : 0;
+            const avgResponseTime = totalResponses > 0 ? 
+                (resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
+            
+            const uniqueSessions = new Set(resultsArray.map(r => r.sessionId));
+            const uniquePlayers = uniqueSessions.size;
+            
+            let resultsHTML = `
+                <div class="stats-container">
+                    <h3>Quiz Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number">${uniquePlayers}</span>
+                            <span class="stat-label">Unique Players</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${totalResponses}</span>
+                            <span class="stat-label">Total Responses</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${correctAnswers}</span>
+                            <span class="stat-label">Correct Answers</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${accuracy}%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number">${avgResponseTime}s</span>
+                            <span class="stat-label">Avg Response Time</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsHTML += '<div class="results-table">';
+            resultsHTML += '<div class="result-header">';
+            resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Device</span>';
+            resultsHTML += '</div>';
+            
+            resultsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            resultsArray.forEach((result) => {
+                const isCorrect = result.selectedAnswer === result.correctAnswer;
+                const shortQuestion = result.question.length > 30 ? 
+                    result.question.substring(0, 30) + '...' : result.question;
+                
+                resultsHTML += `
+                    <div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
+                        <span>${result.player}</span>
+                        <span title="${result.question}">${shortQuestion}</span>
+                        <span>${result.selectedAnswer}</span>
+                        <span>${result.correctAnswer}</span>
+                        <span>${result.responseTime}s</span>
+                        <span>${result.status}</span>
+                        <span>${result.deviceType}</span>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += '</div>';
+            resultsContainer.innerHTML = resultsHTML;
+        })
+        .catch((error) => {
+            console.error("Error loading results:", error);
+            resultsContainer.innerHTML = '<p>Error loading results.</p>';
+        });
 }
 
-const resultsArray = Object.values(results);
-const totalResponses = resultsArray.length;
-const correctAnswers = resultsArray.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).toFixed(1) : 0;
-const avgResponseTime = totalResponses > 0 ?
-(resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
-
-// Count unique players by session ID
-const uniqueSessions = new Set(resultsArray.map(r => r.sessionId));
-const uniquePlayers = uniqueSessions.size;
-
-let resultsHTML = `
-<div class="stats-container">
-<h3>Quiz Statistics</h3>
-<div class="stats-grid">
-<div class="stat-card">
-<span class="stat-number">${uniquePlayers}</span>
-<span class="stat-label">Unique Players</span>
-</div>
-<div class="stat-card">
-<span class="stat-number">${totalResponses}</span>
-<span class="stat-label">Total Responses</span>
-</div>
-<div class="stat-card">
-<span class="stat-number">${correctAnswers}</span>
-<span class="stat-label">Correct Answers</span>
-</div>
-<div class="stat-card">
-<span class="stat-number">${accuracy}%</span>
-<span class="stat-label">Accuracy</span>
-</div>
-<div class="stat-card">
-<span class="stat-number">${avgResponseTime}s</span>
-<span class="stat-label">Avg Response Time</span>
-</div>
-</div>
-</div>
-`;
-
-resultsHTML += '<div class="results-table">';
-resultsHTML += '<div class="result-header">';
-resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Device</span>';
-resultsHTML += '</div>';
-
-resultsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-resultsArray.forEach((result) => {
-const isCorrect = result.selectedAnswer === result.correctAnswer;
-const shortQuestion = result.question.length > 30 ?
-result.question.substring(0, 30) + '...' : result.question;
-
-resultsHTML += `
-<div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
-<span>${result.player}</span>
-<span title="${result.question}">${shortQuestion}</span>
-<span>${result.selectedAnswer}</span>
-<span>${result.correctAnswer}</span>
-<span>${result.responseTime}s</span>
-<span>${result.status}</span>
-<span>${result.deviceType}</span>
-</div>
-`;
-});
-
-resultsHTML += '</div>';
-resultsContainer.innerHTML = resultsHTML;
-})
-.catch((error) => {
-console.error("Error loading results:", error);
-resultsContainer.innerHTML = '<p>Error loading results.</p>';
-});
-}
-
-// Load questions from localStorage
+// Load questions from localStorage - but Firebase will override this
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
-   questions = JSON.parse(savedQuestions);
+    questions = JSON.parse(savedQuestions);
 } else {
-   questions = []; // Start with empty array
+    questions = []; // Start with empty array
 }
 
 // Load host time settings
 function loadHostTimeSettings() {
-var quizDate = new Date(quizStartTime);
-document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
+    var quizDate = new Date(quizStartTime);
+    document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
 
-var startTime = new Date(quizStartTime);
-var hours = startTime.getHours();
-var ampm = hours >= 12 ? 'PM' : 'AM';
-hours = hours % 12;
-hours = hours ? hours : 12;
+    var startTime = new Date(quizStartTime);
+    var hours = startTime.getHours();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
 
-document.getElementById('host-start-hour').value = hours;
-document.getElementById('host-start-minute').value = startTime.getMinutes();
-document.getElementById('host-start-ampm').value = ampm;
+    document.getElementById('host-start-hour').value = hours;
+    document.getElementById('host-start-minute').value = startTime.getMinutes();
+    document.getElementById('host-start-ampm').value = ampm;
 
-var duration = Math.round((quizEndTime - quizStartTime) / 60000);
-document.getElementById('host-quiz-duration').value = duration;
+    var duration = Math.round((quizEndTime - quizStartTime) / 60000);
+    document.getElementById('host-quiz-duration').value = duration;
 
-displayQuestions();
+    displayQuestions();
 }
 
 // Verify admin code - SECURE: Password never visible to others
 function verifyAdmin() {
-var code = document.getElementById('admin-code').value;
-var status = document.getElementById('admin-status');
+    var code = document.getElementById('admin-code').value;
+    var status = document.getElementById('admin-status');
 
-// Clear the password field for security
-document.getElementById('admin-code').value = '';
+    document.getElementById('admin-code').value = '';
 
-if (code === adminCode) {
-document.getElementById('admin-features').style.display = 'block';
-status.textContent = 'Admin access granted! Features unlocked.';
-status.className = 'url-status success';
-loadQuizResults();
-
-// Hide the admin login section after successful login
-document.querySelector('.admin-section:first-child').style.display = 'none';
-} else {
-status.textContent = 'Invalid admin code. Please try again.';
-status.className = 'url-status error';
-}
+    if (code === adminCode) {
+        document.getElementById('admin-features').style.display = 'block';
+        status.textContent = 'Admin access granted! Features unlocked.';
+        status.className = 'url-status success';
+        loadQuizResults();
+        
+        document.querySelector('.admin-section:first-child').style.display = 'none';
+    } else {
+        status.textContent = 'Invalid admin code. Please try again.';
+        status.className = 'url-status error';
+    }
 }
 
 // Save quiz time configuration
 function saveHostQuizTime() {
-var date = document.getElementById('host-quiz-date').value;
-var hour = parseInt(document.getElementById('host-start-hour').value);
-var minute = parseInt(document.getElementById('host-start-minute').value);
-var ampm = document.getElementById('host-start-ampm').value;
-var duration = document.getElementById('host-quiz-duration').value;
+    var date = document.getElementById('host-quiz-date').value;
+    var hour = parseInt(document.getElementById('host-start-hour').value);
+    var minute = parseInt(document.getElementById('host-start-minute').value);
+    var ampm = document.getElementById('host-start-ampm').value;
+    var duration = document.getElementById('host-quiz-duration').value;
 
-if (!date || isNaN(hour) || isNaN(minute) || !duration) {
-document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
-document.getElementById('host-time-status').className = 'url-status error';
-return;
-}
+    if (!date || isNaN(hour) || isNaN(minute) || !duration) {
+        document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
+        document.getElementById('host-time-status').className = 'url-status error';
+        return;
+    }
 
-if (ampm === 'PM' && hour < 12) hour += 12;
-else if (ampm === 'AM' && hour === 12) hour = 0;
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    else if (ampm === 'AM' && hour === 12) hour = 0;
 
-var startDate = new Date(date);
-startDate.setHours(hour, minute, 0, 0);
-var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
+    var startDate = new Date(date);
+    startDate.setHours(hour, minute, 0, 0);
+    var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
 
-quizStartTime = startDate.getTime();
-quizEndTime = endDate.getTime();
+    quizStartTime = startDate.getTime();
+    quizEndTime = endDate.getTime();
 
-saveQuizTimeToFirebase(quizStartTime, quizEndTime);
-updateQuizTimeInfo();
+    saveQuizTimeToFirebase(quizStartTime, quizEndTime);
+    updateQuizTimeInfo();
 
-setTimeout(() => {
-document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
-document.getElementById('host-time-status').className = 'url-status';
-}, 3000);
+    setTimeout(() => {
+        document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
+        document.getElementById('host-time-status').className = 'url-status';
+    }, 3000);
 }
 
 // Add a new question
 function addQuestion() {
-var questionText = document.getElementById('question-text').value;
-var answer1 = document.getElementById('answer-1').value;
-var answer2 = document.getElementById('answer-2').value;
-var answer3 = document.getElementById('answer-3').value;
-var answer4 = document.getElementById('answer-4').value;
+    var questionText = document.getElementById('question-text').value;
+    var answer1 = document.getElementById('answer-1').value;
+    var answer2 = document.getElementById('answer-2').value;
+    var answer3 = document.getElementById('answer-3').value;
+    var answer4 = document.getElementById('answer-4').value;
 
-if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
-document.getElementById('question-status').textContent = 'Please fill in all fields';
-document.getElementById('question-status').className = 'url-status error';
-return;
+    if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
+        document.getElementById('question-status').textContent = 'Please fill in all fields';
+        document.getElementById('question-status').className = 'url-status error';
+        return;
+    }
+
+    var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
+    var answers = [answer1, answer2, answer3, answer4];
+    var correctAnswer = answers[correctAnswerIndex];
+
+    var newQuestion = {
+        question: questionText,
+        answers: answers,
+        correct: correctAnswer,
+        hidden: false // Default to visible
+    };
+
+    questions.push(newQuestion);
+    saveQuestionsToFirebase();
+
+    document.getElementById('question-status').textContent = 'Question added successfully!';
+    document.getElementById('question-status').className = 'url-status success';
+
+    document.getElementById('question-text').value = '';
+    document.getElementById('answer-1').value = '';
+    document.getElementById('answer-2').value = '';
+    document.getElementById('answer-3').value = '';
+    document.getElementById('answer-4').value = '';
+    document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
+
+    setTimeout(() => {
+        document.getElementById('question-status').textContent = 'Add a new question to the quiz';
+        document.getElementById('question-status').className = 'url-status';
+    }, 3000);
 }
 
-var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
-var answers = [answer1, answer2, answer3, answer4];
-var correctAnswer = answers[correctAnswerIndex];
-
-var newQuestion = {
-question: questionText,
-answers: answers,
-correct: correctAnswer
-};
-
-questions.push(newQuestion);
-saveQuestionsToFirebase();
-
-document.getElementById('question-status').textContent = 'Question added successfully!';
-document.getElementById('question-status').className = 'url-status success';
-
-document.getElementById('question-text').value = '';
-document.getElementById('answer-1').value = '';
-document.getElementById('answer-2').value = '';
-document.getElementById('answer-3').value = '';
-document.getElementById('answer-4').value = '';
-document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
-
-setTimeout(() => {
-document.getElementById('question-status').textContent = 'Add a new question to the quiz';
-document.getElementById('question-status').className = 'url-status';
-}, 3000);
-}
-
-// Display all questions
+// Display all questions with show/hide toggle
 function displayQuestions() {
-var container = document.getElementById('questions-container');
-container.innerHTML = '';
+    var container = document.getElementById('questions-container');
+    container.innerHTML = '';
 
-if (questions.length === 0) {
-container.innerHTML = '<p>No questions added yet.</p>';
-return;
-}
+    if (questions.length === 0) {
+        container.innerHTML = '<p>No questions added yet.</p>';
+        return;
+    }
 
-questions.forEach((q, index) => {
-var questionItem = document.createElement('div');
-questionItem.className = 'question-item';
-var correctIndex = q.answers.indexOf(q.correct);
+    questions.forEach((q, index) => {
+        var questionItem = document.createElement('div');
+        questionItem.className = 'question-item';
+        if (q.hidden) {
+            questionItem.classList.add('hidden');
+        }
+        
+        var correctIndex = q.answers.indexOf(q.correct);
+        var status = q.hidden ? 'hidden' : 'visible';
 
-questionItem.innerHTML = `
-<strong>Q${index + 1}:</strong> ${q.question}
-<div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
-<div class="admin-controls">
-<button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
-<button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
-</div>
-`;
-container.appendChild(questionItem);
-});
+        questionItem.innerHTML = `
+            <strong>Q${index + 1}:</strong> ${q.question}
+            <span class="status-badge status-${status}">${status.toUpperCase()}</span>
+            <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
+            <div class="admin-controls">
+                <button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
+                <button class="admin-btn toggle" onclick="toggleQuestionVisibility(${index})">
+                    ${q.hidden ? 'Show' : 'Hide'}
+                </button>
+                <button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
+            </div>
+        `;
+        container.appendChild(questionItem);
+    });
 }
 
 // Edit a question
 function editExistingQuestion(index) {
-var q = questions[index];
+    var q = questions[index];
+    
+    document.getElementById('question-text').value = q.question;
+    document.getElementById('answer-1').value = q.answers[0];
+    document.getElementById('answer-2').value = q.answers[1];
+    document.getElementById('answer-3').value = q.answers[2];
+    document.getElementById('answer-4').value = q.answers[3];
 
-// Populate the form with current question data
-document.getElementById('question-text').value = q.question;
-document.getElementById('answer-1').value = q.answers[0];
-document.getElementById('answer-2').value = q.answers[1];
-document.getElementById('answer-3').value = q.answers[2];
-document.getElementById('answer-4').value = q.answers[3];
+    var correctIndex = q.answers.indexOf(q.correct);
+    document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
+        radio.checked = (i === correctIndex);
+    });
 
-// Set the correct answer radio button
-var correctIndex = q.answers.indexOf(q.correct);
-document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
-radio.checked = (i === correctIndex);
-});
+    questions.splice(index, 1);
+    saveQuestionsToFirebase();
+    
+    document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
+    document.getElementById('question-status').className = 'url-status success';
+    
+    document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
+}
 
-// Remove the original question
-questions.splice(index, 1);
-saveQuestionsToFirebase();
-
-// Show editing message
-document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
-document.getElementById('question-status').className = 'url-status success';
-
-// Scroll to the form for better UX
-document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
+// Toggle question visibility
+function toggleQuestionVisibility(index) {
+    questions[index].hidden = !questions[index].hidden;
+    saveQuestionsToFirebase();
+    displayQuestions();
 }
 
 // Delete a question - ALLOWS deleting even the last question
 function deleteQuestion(index) {
-if (confirm('Are you sure you want to delete this question?')) {
-questions.splice(index, 1);
-saveQuestionsToFirebase();
-
-// Refresh the display
-displayQuestions();
-}
+    if (confirm('Are you sure you want to delete this question?')) {
+        questions.splice(index, 1);
+        saveQuestionsToFirebase();
+        displayQuestions();
+    }
 }
 
 // Update quiz time info display
 function updateQuizTimeInfo() {
-var start = new Date(quizStartTime);
-var end = new Date(quizEndTime);
+    var start = new Date(quizStartTime);
+    var end = new Date(quizEndTime);
 
-var options = {
-weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-hour: '2-digit', minute: '2-digit'
-};
+    var options = {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    };
 
-var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
-end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+    var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
+        end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 
-document.getElementById('quiz-time-range').textContent = timeRange;
+    document.getElementById('quiz-time-range').textContent = timeRange;
 
-var now = new Date().getTime();
-var quizTimer = document.getElementById('quiz-timer');
-var quizStatus = document.getElementById('quiz-status-text');
+    var now = new Date().getTime();
+    var quizTimer = document.getElementById('quiz-timer');
+    var quizStatus = document.getElementById('quiz-status-text');
 
-if (now < quizStartTime) {
-var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
-var hours = Math.floor(timeUntilStart / 3600);
-var minutes = Math.floor((timeUntilStart % 3600) / 60);
-var seconds = timeUntilStart % 60;
+    if (now < quizStartTime) {
+        var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
+        var hours = Math.floor(timeUntilStart / 3600);
+        var minutes = Math.floor((timeUntilStart % 3600) / 60);
+        var seconds = timeUntilStart % 60;
 
-quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
-quizStatus.textContent = 'Not started';
-quizStatus.style.color = '#ff9800';
-quizActive = false;
-} else if (now >= quizStartTime && now <= quizEndTime) {
-var timeLeft = Math.floor((quizEndTime - now) / 1000);
-var minutes = Math.floor(timeLeft / 60);
-var seconds = timeLeft % 60;
+        quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+        quizStatus.textContent = 'Not started';
+        quizStatus.style.color = '#ff9800';
+        quizActive = false;
+    } else if (now >= quizStartTime && now <= quizEndTime) {
+        var timeLeft = Math.floor((quizEndTime - now) / 1000);
+        var minutes = Math.floor(timeLeft / 60);
+        var seconds = timeLeft % 60;
 
-quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
-quizStatus.textContent = 'Active';
-quizStatus.style.color = '#4caf50';
-quizActive = true;
-} else {
-quizTimer.textContent = 'Quiz ended';
-quizStatus.textContent = 'Ended';
-quizStatus.style.color = '#f44336';
-quizActive = false;
-}
+        quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
+        quizStatus.textContent = 'Active';
+        quizStatus.style.color = '#4caf50';
+        quizActive = true;
+    } else {
+        quizTimer.textContent = 'Quiz ended';
+        quizStatus.textContent = 'Ended';
+        quizStatus.style.color = '#f44336';
+        quizActive = false;
+    }
 }
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 15;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+    timeLeft = 15;
+    document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
-clearInterval(countdownInterval);
-countdownInterval = setInterval(() => {
-timeLeft--;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
+    clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
-if (timeLeft <= 0) {
-clearInterval(countdownInterval);
-var q = questions[currentIndex];
-var responseTime = (Date.now() - questionStartTime) / 1000;
-var currentPlayerName = playerName || "Unknown Player";
-saveToFirebase(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
-moveToNextQuestion();
-}
-}, 1000);
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            var visibleQuestions = questions.filter(q => !q.hidden);
+            var q = visibleQuestions[currentIndex];
+            var responseTime = (Date.now() - questionStartTime) / 1000;
+            var currentPlayerName = playerName || "Unknown Player";
+            saveToFirebase(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+            
+            playerResults.incorrect++;
+            playerResults.total++;
+            playerResults.responseTimes.push(responseTime);
+            playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
+            
+            moveToNextQuestion();
+        }
+    }, 1000);
 }
 
 // ENHANCEMENT 2: 5-second countdown before next question
 function startNextQuestionCountdown() {
-var countdownTime = 5;
-document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-document.getElementById('countdown').style.color = "#6e8efb";
-document.getElementById('countdown').style.fontWeight = "bold";
+    var countdownTime = 5;
+    document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
+    document.getElementById('countdown').style.color = "#6e8efb";
+    document.getElementById('countdown').style.fontWeight = "bold";
 
-var countdownInterval = setInterval(function() {
-countdownTime--;
-document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-
-if (countdownTime <= 0) {
-clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
-moveToNextQuestion();
-}
-}, 1000);
+    var countdownInterval = setInterval(function() {
+        countdownTime--;
+        document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
+        
+        if (countdownTime <= 0) {
+            clearInterval(countdownInterval);
+            document.getElementById('countdown').textContent = "";
+            moveToNextQuestion();
+        }
+    }, 1000);
 }
 
 // Move to next question automatically
 function moveToNextQuestion() {
-currentIndex++;
-if (currentIndex < questions.length) {
-showPlayerQuestion();
-} else {
-document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
-document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').textContent = "";
-}
+    currentIndex++;
+    var visibleQuestions = questions.filter(q => !q.hidden);
+    
+    if (currentIndex < visibleQuestions.length) {
+        showPlayerQuestion();
+    } else {
+        showPlayerResults();
+    }
 }
 
-// Player view functions
+// Show player results at the end of quiz
+function showPlayerResults() {
+    var avgResponseTime = playerResults.responseTimes.length > 0 
+        ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+        : 0;
+
+    document.getElementById('player-question').innerHTML = `
+        <div class="player-results">
+            <h2>🎉 Quiz Completed! 🎉</h2>
+            <p>Thank you for participating, ${playerName}!</p>
+            
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="result-number result-correct">${playerResults.correct}</span>
+                    <span class="result-label">Correct Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-incorrect">${playerResults.incorrect}</span>
+                    <span class="result-label">Incorrect Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
+                    <span class="result-label">Accuracy</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-time">${avgResponseTime}s</span>
+                    <span class="result-label">Avg Response Time</span>
+                </div>
+            </div>
+            
+            <button class="download-btn" onclick="downloadPlayerResults()">
+                📥 Download My Results
+            </button>
+            
+            <p><small>You can close this window or refresh to play again.</small></p>
+        </div>
+    `;
+    
+    document.getElementById('player-answers').innerHTML = "";
+    document.getElementById('countdown').textContent = "";
+}
+
+// Download player results as CSV
+function downloadPlayerResults() {
+    var avgResponseTime = playerResults.responseTimes.length > 0 
+        ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+        : 0;
+    
+    var csvData = [
+        ['Player Name', 'Correct Answers', 'Incorrect Answers', 'Total Questions', 'Accuracy', 'Average Response Time'],
+        [playerName, playerResults.correct, playerResults.incorrect, playerResults.total, playerResults.accuracy.toFixed(1) + '%', avgResponseTime + 's']
+    ];
+    
+    var csv = csvData.map(row => row.join(',')).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = `quiz-results-${playerName}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Player view functions - show only visible questions
 function showPlayerQuestion() {
-var q = questions[currentIndex];
-document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+    // Filter out hidden questions
+    var visibleQuestions = questions.filter(q => !q.hidden);
+    
+    if (currentIndex >= visibleQuestions.length) {
+        showPlayerResults();
+        return;
+    }
 
-var answersDiv = document.getElementById("player-answers");
-answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+    var q = visibleQuestions[currentIndex];
+    document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
 
-questionStartTime = Date.now();
+    var answersDiv = document.getElementById("player-answers");
+    answersDiv.innerHTML = "<h3>Select your answer:</h3>";
 
-q.answers.forEach(a => {
-var btn = document.createElement("button");
-btn.className = "answer-btn";
-btn.innerText = a;
-btn.onclick = function() {
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
-}
+    questionStartTime = Date.now();
 
-var selected = a;
-var correct = q.correct;
-var responseTime = (Date.now() - questionStartTime) / 1000;
+    q.answers.forEach(a => {
+        var btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.innerText = a;
+        btn.onclick = function() {
+            if (!quizActive) {
+                alert("The quiz is not currently active. Please check the quiz schedule.");
+                return;
+            }
 
-clearInterval(countdownInterval);
+            var selected = a;
+            var correct = q.correct;
+            var responseTime = (Date.now() - questionStartTime) / 1000;
 
-// ENHANCEMENT 2: Start 5-second countdown
-startNextQuestionCountdown();
+            clearInterval(countdownInterval);
+            
+            startNextQuestionCountdown();
 
-var allButtons = document.querySelectorAll('.answer-btn');
-allButtons.forEach(button => {
-button.disabled = true;
-// ENHANCEMENT 1: Always show colors clearly
-button.style.opacity = "1"; // Ensure full visibility
-if (button.innerText === correct) {
-button.classList.add('correct');
-button.classList.remove('incorrect');
-} else if (button.innerText === selected && selected !== correct) {
-button.classList.add('incorrect');
-button.classList.remove('correct');
-} else {
-// Gray out incorrect options that weren't selected
-button.style.opacity = "0.6";
-button.style.background = "#f0f0f0";
-}
-});
+            var allButtons = document.querySelectorAll('.answer-btn');
+            allButtons.forEach(button => {
+                button.disabled = true;
+                button.style.opacity = "1";
+                if (button.innerText === correct) {
+                    button.classList.add('correct');
+                    button.classList.remove('incorrect');
+                } else if (button.innerText === selected && selected !== correct) {
+                    button.classList.add('incorrect');
+                    button.classList.remove('correct');
+                } else {
+                    button.style.opacity = "0.6";
+                    button.style.background = "#f0f0f0";
+                }
+            });
 
-saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
-};
-answersDiv.appendChild(btn);
-});
+            // TRACK RESULTS
+            if (selected === correct) {
+                playerResults.correct++;
+            } else {
+                playerResults.incorrect++;
+            }
+            playerResults.total++;
+            playerResults.responseTimes.push(responseTime);
+            playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
-startCountdown();
+            saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
+        };
+        answersDiv.appendChild(btn);
+    });
+
+    startCountdown();
 }
 
 // Initialize the application
 document.getElementById("joinBtn").onclick = function() {
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
-return;
-}
+    if (!quizActive) {
+        alert("The quiz is not currently active. Please check the quiz schedule.");
+        return;
+    }
 
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
-showPlayerQuestion();
-} else {
-alert("Please enter your name to join the game.");
-}
+    playerName = document.getElementById("name").value;
+    if (playerName.trim() !== "") {
+        // Reset results when starting new quiz
+        playerResults = {
+            correct: 0,
+            incorrect: 0,
+            total: 0,
+            responseTimes: [],
+            accuracy: 0
+        };
+        currentIndex = 0;
+        
+        document.getElementById("name").style.display = "none";
+        document.getElementById("joinBtn").style.display = "none";
+        showPlayerQuestion();
+    } else {
+        alert("Please enter your name to join the game.");
+    }
 };
 
 // Update quiz timer every second
@@ -1616,35 +1830,24 @@ updateQuizTimeInfo();
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-document.querySelectorAll('.tab-content').forEach(tab => {
-tab.classList.remove('active');
-});
-document.getElementById('player').classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById('player').classList.add('active');
 
-function initializeApp() {
-try {
-loadDataFromFirebase();
-} catch (error) {
-setTimeout(initializeApp, 2000);
-}
-}
-
-initializeApp();
-
-// Show system info
-console.log("Quiz System Initialized");
-console.log("Session ID:", sessionStorage.getItem('playerSessionId'));
-console.log("Device Type:", /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
-console.log("Security: Admin password verification is local and secure");
+    function initializeApp() {
+        try {
+            loadDataFromFirebase();
+        } catch (error) {
+            setTimeout(initializeApp, 2000);
+        }
+    }
+    
+    initializeApp();
+    
+    console.log("Enhanced Quiz System Initialized");
+    console.log("New Features: Show/Hide questions + Player results");
 });
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
