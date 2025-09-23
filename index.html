@@ -1418,10 +1418,23 @@ function editQuestion(index) {
 
 // Delete a question
 function deleteQuestion(index) {
-    if (confirm('Are you sure you want to delete this question?')) {
-        questions.splice(index, 1);
-        saveQuestionsToFirebase();
-    }
+   if (questions.length <= 1) {
+       alert('⚠️ Keep your last question! You can edit it to change the content, but this app needs at least one question to function.');
+       return;
+   }
+   if (confirm('Are you sure you want to delete this question?')) {
+       questions.splice(index, 1);
+       saveQuestionsToFirebase();
+       renderQuestions();
+   }
+}
+function editQuestion(index) {
+   const newText = prompt('Edit your question:', questions[index].text);
+   if (newText !== null && newText.trim() !== '') {
+       questions[index].text = newText.trim();
+       saveQuestionsToFirebase();
+       renderQuestions();
+   }
 }
 
 // Update quiz time info display
@@ -1597,6 +1610,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
