@@ -926,35 +926,35 @@ quizEndTime = parseInt(quizEndTime);
 
 // Load data from Firebase
 function loadDataFromFirebase() {
-if (!firebase.apps.length) {
-setTimeout(loadDataFromFirebase, 1000);
-return;
-}
-
-database.ref('quizTime').on('value', (snapshot) => {
-const data = snapshot.val();
-if (data) {
-quizStartTime = data.startTime;
-quizEndTime = data.endTime;
-localStorage.setItem('quizStartTime', quizStartTime);
-localStorage.setItem('quizEndTime', quizEndTime);
-updateQuizTimeInfo();
-}
-});
-
-database.ref('questions').on('value', (snapshot) => {
-const data = snapshot.val();
-if (data) {
-questions = Object.values(data);
-localStorage.setItem('quizQuestions', JSON.stringify(questions));
-displayQuestions();
-
-if (document.getElementById('player').classList.contains('active') &&
-document.getElementById('player-question').innerHTML !== "") {
-showPlayerQuestion();
-}
-}
-});
+   if (!firebase.apps.length) {
+       setTimeout(loadDataFromFirebase, 1000);
+       return;
+   }
+   database.ref('quizTime').on('value', (snapshot) => {
+       const data = snapshot.val();
+       if (data) {
+           quizStartTime = data.startTime;
+           quizEndTime = data.endTime;
+           localStorage.setItem('quizStartTime', quizStartTime);
+           localStorage.setItem('quizEndTime', quizEndTime);
+           updateQuizTimeInfo();
+       }
+   });
+   database.ref('questions').on('value', (snapshot) => {
+       const data = snapshot.val();
+       // FIX: Handle empty questions array properly
+       if (data) {
+           questions = Object.values(data);
+       } else {
+           questions = []; // Explicitly set to empty array if no data
+       }
+       localStorage.setItem('quizQuestions', JSON.stringify(questions));
+       displayQuestions();
+       if (document.getElementById('player').classList.contains('active') &&
+           document.getElementById('player-question').innerHTML !== "") {
+           showPlayerQuestion();
+       }
+   });
 }
 
 // Initialize Firebase data structure
@@ -1249,7 +1249,9 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
-questions = JSON.parse(savedQuestions);
+   questions = JSON.parse(savedQuestions);
+} else {
+   questions = []; // Start with empty array
 }
 
 // Load host time settings
@@ -1638,4 +1640,5 @@ console.log("Security: Admin password verification is local and secure");
 </script>
 </body>
 </html>
+
 
