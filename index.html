@@ -1942,16 +1942,9 @@ document.addEventListener('DOMContentLoaded', function() {
        tab.classList.remove('active');
    });
    document.getElementById('player').classList.add('active');
-   // Show loading state initially
-   document.getElementById('player-question').innerHTML = `
-<div style="text-align: center; padding: 2rem;">
-<div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
-<h3>Loading Quiz...</h3>
-<p>Please wait while we check your quiz status</p>
-</div>
-   `;
-   function checkQuizStatus() {
-       // Only show completed message if user actually completed quiz
+   // Wait for Firebase to load before showing quiz status
+   function checkQuizStatusAfterLoad() {
+       // Check if user already completed quiz (after Firebase loads)
        if (sessionStorage.getItem('quizCompleted') === 'true') {
            var playerName = sessionStorage.getItem('playerName') || 'Player';
            document.getElementById('player-question').innerHTML = `
@@ -1967,39 +1960,31 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
            `;
            document.getElementById("name").style.display = "none";
+           // Disable the join button instead of hiding it
            document.getElementById("joinBtn").disabled = true;
            document.getElementById("joinBtn").style.background = "#ccc";
            document.getElementById("joinBtn").textContent = "Quiz Completed";
            document.getElementById("joinBtn").style.cursor = "not-allowed";
-       } else {
-           // User hasn't completed quiz - show normal interface
-           document.getElementById('player-question').innerHTML = '';
-           document.getElementById("name").style.display = "block";
-           document.getElementById("joinBtn").style.display = "inline-block";
-           document.getElementById("joinBtn").disabled = false;
-           document.getElementById("joinBtn").style.background = "";
-           document.getElementById("joinBtn").textContent = "Join Game";
-           document.getElementById("joinBtn").style.cursor = "pointer";
        }
    }
+   // Wait a bit for Firebase to initialize before checking status
+   setTimeout(checkQuizStatusAfterLoad, 1000); // 1 second delay
    function initializeApp() {
        try {
            loadDataFromFirebase();
-           // Check status after Firebase loads
-           setTimeout(checkQuizStatus, 1500);
+           // Check status again after Firebase fully loads
+           setTimeout(checkQuizStatusAfterLoad, 2000);
        } catch (error) {
            setTimeout(initializeApp, 2000);
        }
    }
-   // Delay the initial check to avoid flash
-   setTimeout(function() {
-       initializeApp();
-   }, 500);
-   console.log("Quiz System Initialized");
+   initializeApp();
+   console.log("Quiz System with Grid Answer Layout Initialized");
 });
 </script>
 </body>
 </html>
+
 
 
 
