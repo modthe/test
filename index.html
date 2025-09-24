@@ -1734,11 +1734,7 @@ document.getElementById('player-question').innerHTML = `
 
 <div class="session-warning">
 <h3>⚠️ Quiz Completed</h3>
-<p>You have successfully completed this quiz.</p>
-<p>To start a new attempt, refresh the page completely (Ctrl+F5).</p>
-<button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
-Start New Attempt
-</button>
+<p>You have completed this quiz.</p>
 </div>
 </div>
 `;
@@ -1928,10 +1924,6 @@ document.getElementById('player-question').innerHTML = `
 <div class="player-results">
 <h2>Quiz Already Completed</h2>
 <p>Hello ${playerName}, you have already completed this quiz.</p>
-<p>Refresh the page completely (Ctrl+F5) to start a new attempt.</p>
-<button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
-Start New Attempt
-</button>
 </div>
 `;
 document.getElementById("name").style.display = "none";
@@ -1973,3 +1965,4 @@ console.log("Enhanced Quiz System with Reliable Answer Colors Initialized");
 </script>
 </body>
 </html>
+
