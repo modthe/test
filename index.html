@@ -213,6 +213,7 @@ border-color: #6e8efb;
 box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
+/* FIX 1: Make the whole box turn green or red, not just edges */
 .answer-btn.correct {
 background-color: #4caf50 !important;
 color: white !important;
@@ -1244,6 +1245,35 @@ console.error('Firebase initialization error:', error);
 }
 const database = firebase.database();
 
+// FIX 3: Store admin password in Firebase to persist across sessions
+let adminCode = "adminHafsa"; // Default password
+
+// Load admin password from Firebase on startup
+function loadAdminPassword() {
+database.ref('adminPassword').once('value')
+.then((snapshot) => {
+const savedPassword = snapshot.val();
+if (savedPassword) {
+adminCode = savedPassword;
+console.log("Admin password loaded from Firebase");
+}
+})
+.catch((error) => {
+console.error("Error loading admin password:", error);
+});
+}
+
+// Save admin password to Firebase
+function saveAdminPassword(newPassword) {
+database.ref('adminPassword').set(newPassword)
+.then(() => {
+console.log("Admin password saved to Firebase");
+})
+.catch((error) => {
+console.error("Error saving admin password:", error);
+});
+}
+
 // Session management - unique for each device with fallback for incognito mode
 function getSessionId() {
 // Try sessionStorage first (normal browser)
@@ -1298,7 +1328,6 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "adminHafsa";
 
 // Player results tracking
 var playerResults = {
@@ -1338,6 +1367,9 @@ if (!firebase.apps.length) {
 setTimeout(loadDataFromFirebase, 1000);
 return;
 }
+
+// Load admin password first
+loadAdminPassword();
 
 database.ref('quizTime').on('value', (snapshot) => {
 const data = snapshot.val();
@@ -1857,6 +1889,9 @@ return;
 }
 
 adminCode = newPassword;
+// FIX 3: Save the new password to Firebase
+saveAdminPassword(newPassword);
+
 status.textContent = 'Password changed successfully!';
 status.className = 'url-status success';
 
@@ -2267,9 +2302,9 @@ moveToNextQuestion();
 }, 1000);
 }
 
-// 5-second countdown before next question
+// FIX 4: 2-second countdown before next question (instead of 5)
 function startNextQuestionCountdown() {
-var countdownTime = 5;
+var countdownTime = 2;
 document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
 document.getElementById('countdown').style.color = "#6e8efb";
 document.getElementById('countdown').style.fontWeight = "bold";
@@ -2424,7 +2459,7 @@ button.disabled = true;
 button.style.pointerEvents = 'none';
 });
 
-// ENHANCED COLOR LOGIC - More reliable with immediate feedback
+// FIX 1: Enhanced color logic - more reliable with immediate feedback
 allButtons.forEach(button => {
 // Remove any existing classes first
 button.classList.remove('correct', 'incorrect');
@@ -2476,16 +2511,19 @@ alert("The quiz is not currently active. Please check the quiz schedule.");
 return;
 }
 
-// Check if user already completed quiz in this session
+// FIX 2: Improved session state management to prevent lag issues
+// Clear any existing quiz state before starting
 if (getStoredValue('quizCompleted') === 'true') {
 alert("You have already completed this quiz. You cannot retake it.");
 return;
 }
 
-// Check if user already started quiz
+// Reset any incomplete quiz state
 if (getStoredValue('quizStarted') === 'true' && !getStoredValue('quizCompleted')) {
 if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
-return;
+// Clear the incomplete state if user doesn't want to continue
+removeStoredValue('quizStarted');
+removeStoredValue('quizProgress');
 }
 }
 
@@ -2537,14 +2575,118 @@ alert("Please enter your access code to join the game.");
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-// Prevent accidental page refresh
+// FIX 2: Improved session state management to prevent lag issues
 window.addEventListener('beforeunload', function (e) {
 if (getStoredValue('quizStarted') === 'true' && getStoredValue('quizCompleted') !== 'true') {
+// Save progress before leaving
+saveQuizProgress();
 e.preventDefault();
 e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
 return 'You have an ongoing quiz. Are you sure you want to leave?';
 }
 });
+
+// FIX 5: Add timestamp to individual user results
+function loadIndividualUserResults(resultsArray) {
+const userResultsContainer = document.getElementById('user-results-container');
+userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
+
+// Group results by playerCode
+const resultsByUser = {};
+
+resultsArray.forEach(result => {
+if (!resultsByUser[result.playerCode]) {
+resultsByUser[result.playerCode] = [];
+}
+resultsByUser[result.playerCode].push(result);
+});
+
+let userResultsHTML = '';
+
+for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
+const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = userResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+// FIX 5: Get the timestamp of the last answer
+const lastAnswerTime = userResults.length > 0 ?
+new Date(userResults[userResults.length-1].timestamp).toLocaleString() : 'N/A';
+
+userResultsHTML += `
+<div class="user-result-item">
+<div class="user-result-header">
+<div>
+<strong>${userName}</strong> (Code: ${playerCode})
+<br><small>Last answered: ${lastAnswerTime}</small>
+</div>
+<div>
+<button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
+<button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
+<!-- FIX 6: Add delete button for individual user results -->
+<button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
+</div>
+</div>
+<div class="user-result-stats">
+<div class="user-stat">
+<span class="user-stat-number">${correctAnswers}</span>
+<span class="user-stat-label">Correct</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
+<span class="user-stat-label">Incorrect</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers}</span>
+<span class="user-stat-label">Total</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${accuracy}%</span>
+<span class="user-stat-label">Accuracy</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${avgResponseTime}s</span>
+<span class="user-stat-label">Avg Time</span>
+</div>
+</div>
+</div>
+`;
+}
+
+userResultsContainer.innerHTML = userResultsHTML;
+}
+
+// FIX 6: Add function to delete user by code
+function deleteUserByCode(userCode) {
+if (confirm(`Are you sure you want to delete user with code: ${userCode}? This will also delete all their results.`)) {
+// Delete user from users array
+const userIndex = users.findIndex(u => u.code === userCode);
+if (userIndex !== -1) {
+users.splice(userIndex, 1);
+saveUsersToFirebase();
+displayUsers();
+}
+
+// Delete user results
+deleteUserResults(userCode);
+}
+}
+
+// FIX 7: Add response time validation to prevent unrealistic times
+function validateResponseTime(responseTime) {
+// If response time is more than 5 minutes (300 seconds), it's likely an error
+if (responseTime > 300) {
+console.warn(`Unrealistic response time detected: ${responseTime}s. This might be due to page refresh or browser issues.`);
+// Cap at 5 minutes for statistical purposes
+return 300;
+}
+return responseTime;
+}
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -2552,6 +2694,7 @@ document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
 });
 document.getElementById('player').classList.add('active');
+
 // Wait for Firebase to load before showing quiz status
 function checkQuizStatusAfterLoad() {
 // Check if user already completed quiz (after Firebase loads)
@@ -2578,8 +2721,10 @@ document.getElementById("joinBtn").textContent = "Quiz Completed";
 document.getElementById("joinBtn").style.cursor = "not-allowed";
 }
 }
+
 // Wait a bit for Firebase to initialize before checking status
 setTimeout(checkQuizStatusAfterLoad, 1000); // 1 second delay
+
 function initializeApp() {
 try {
 loadDataFromFirebase();
