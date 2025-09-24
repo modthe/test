@@ -10,7 +10,6 @@
 <!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* Previous CSS styles remain the same, adding new styles for user management */
 * {
 margin: 0;
 padding: 0;
@@ -177,11 +176,11 @@ cursor: not-allowed;
 transform: none;
 }
 
-/* Enhanced answer button styles for grid layout */
+/* Enhanced answer button styles for grid layout with better spacing */
 .answers-grid {
 display: grid;
 grid-template-columns: 1fr 1fr;
-gap: 15px;
+gap: 20px; /* Increased gap for better separation */
 margin: 1.5rem 0;
 }
 
@@ -203,6 +202,8 @@ min-height: 100px;
 word-wrap: break-word;
 hyphens: auto;
 cursor: pointer;
+position: relative;
+z-index: 1; /* Ensure buttons stay in their own space */
 }
 
 .answer-btn:hover {
@@ -219,6 +220,7 @@ border-color: #4caf50 !important;
 opacity: 1 !important;
 transform: scale(1.03);
 box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+z-index: 2; /* Ensure correct answer appears above others */
 }
 
 .answer-btn.incorrect {
@@ -228,6 +230,7 @@ border-color: #f44336 !important;
 opacity: 1 !important;
 transform: scale(1.03);
 box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+z-index: 2; /* Ensure incorrect answer appears above others */
 }
 
 .answer-btn:disabled {
@@ -247,7 +250,7 @@ border-color: inherit !important;
 @media (max-width: 768px) {
 .answers-grid {
 grid-template-columns: 1fr;
-gap: 10px;
+gap: 15px; /* Slightly smaller gap on mobile */
 }
 
 .answer-btn {
@@ -756,6 +759,10 @@ background: #f44336;
 background: #2196f3;
 }
 
+.user-btn.delete-results {
+background: #ff9800;
+}
+
 /* Individual user results */
 .user-results {
 margin-top: 1rem;
@@ -1237,9 +1244,30 @@ console.error('Firebase initialization error:', error);
 }
 const database = firebase.database();
 
-// Session management - unique for each device
-if (!sessionStorage.getItem('playerSessionId')) {
-sessionStorage.setItem('playerSessionId', 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9));
+// Session management - unique for each device with fallback for incognito mode
+function getSessionId() {
+// Try sessionStorage first (normal browser)
+if (sessionStorage.getItem('playerSessionId')) {
+return sessionStorage.getItem('playerSessionId');
+}
+
+// Try localStorage as fallback (incognito mode)
+if (localStorage.getItem('playerSessionId')) {
+return localStorage.getItem('playerSessionId');
+}
+
+// Create new session ID
+const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+// Try to save in sessionStorage first
+try {
+sessionStorage.setItem('playerSessionId', sessionId);
+} catch (e) {
+// If sessionStorage fails (incognito), use localStorage
+localStorage.setItem('playerSessionId', sessionId);
+}
+
+return sessionId;
 }
 
 // Tab switching functionality
@@ -1405,7 +1433,7 @@ responseTime: responseTime || 0,
 status: status || "Unknown",
 timestamp: new Date().toISOString(),
 questionIndex: currentIndex,
-sessionId: sessionStorage.getItem('playerSessionId'),
+sessionId: getSessionId(),
 deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
 };
 
@@ -1502,6 +1530,46 @@ loadQuizResults();
 console.error("Error deleting results:", error);
 alert('Error deleting results. Please try again.');
 });
+}
+
+// Delete results for a specific user
+function deleteUserResults(playerCode) {
+if (confirm(`Are you sure you want to delete all results for user with code: ${playerCode}?`)) {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) {
+alert('No results found for this user.');
+return;
+}
+
+const updates = {};
+Object.keys(results).forEach(key => {
+if (results[key].playerCode === playerCode) {
+updates[key] = null;
+}
+});
+
+if (Object.keys(updates).length === 0) {
+alert('No results found for this user.');
+return;
+}
+
+database.ref('quizResults').update(updates)
+.then(() => {
+alert(`All results for user ${playerCode} have been deleted successfully!`);
+loadQuizResults();
+})
+.catch((error) => {
+console.error("Error deleting user results:", error);
+alert('Error deleting user results. Please try again.');
+});
+})
+.catch((error) => {
+console.error("Error loading results:", error);
+alert('Error loading results.');
+});
+}
 }
 
 // Confirm before deleting results
@@ -1637,7 +1705,10 @@ userResultsHTML += `
 <div>
 <strong>${userName}</strong> (Code: ${playerCode})
 </div>
+<div>
 <button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
+<button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
+</div>
 </div>
 <div class="user-result-stats">
 <div class="user-stat">
@@ -2082,20 +2153,26 @@ quizActive = false;
 }
 }
 
-// Save quiz progress to sessionStorage
+// Save quiz progress with fallback for incognito mode
 function saveQuizProgress() {
 var progress = {
 currentIndex: currentIndex,
 playerResults: playerResults,
 timestamp: Date.now()
 };
+
+// Try sessionStorage first, fallback to localStorage for incognito
+try {
 sessionStorage.setItem('quizProgress', JSON.stringify(progress));
+} catch (e) {
+localStorage.setItem('quizProgress', JSON.stringify(progress));
+}
 }
 
-// Resume quiz from saved progress
+// Resume quiz from saved progress with fallback for incognito mode
 function resumeQuiz() {
-playerCode = sessionStorage.getItem('playerCode');
-var savedProgress = sessionStorage.getItem('quizProgress');
+playerCode = getStoredValue('playerCode');
+var savedProgress = getStoredValue('quizProgress');
 
 if (savedProgress) {
 var progress = JSON.parse(savedProgress);
@@ -2115,12 +2192,45 @@ document.getElementById('player-question').innerHTML = "";
 showPlayerQuestion();
 }
 
-// Reset quiz session
+// Get stored value with fallback for incognito mode
+function getStoredValue(key) {
+// Try sessionStorage first
+let value = sessionStorage.getItem(key);
+if (value !== null) return value;
+
+// Fallback to localStorage for incognito mode
+value = localStorage.getItem(key);
+return value;
+}
+
+// Set stored value with fallback for incognito mode
+function setStoredValue(key, value) {
+// Try sessionStorage first
+try {
+sessionStorage.setItem(key, value);
+} catch (e) {
+// Fallback to localStorage for incognito mode
+localStorage.setItem(key, value);
+}
+}
+
+// Remove stored value with fallback for incognito mode
+function removeStoredValue(key) {
+// Try sessionStorage first
+try {
+sessionStorage.removeItem(key);
+} catch (e) {
+// Fallback to localStorage for incognito mode
+localStorage.removeItem(key);
+}
+}
+
+// Reset quiz session with fallback for incognito mode
 function resetQuizSession() {
-sessionStorage.removeItem('quizCompleted');
-sessionStorage.removeItem('quizStarted');
-sessionStorage.removeItem('quizProgress');
-sessionStorage.removeItem('playerCode');
+removeStoredValue('quizCompleted');
+removeStoredValue('quizStarted');
+removeStoredValue('quizProgress');
+removeStoredValue('playerCode');
 location.reload();
 }
 
@@ -2192,9 +2302,9 @@ showPlayerResults();
 // Show player results at the end of quiz
 function showPlayerResults() {
 // Mark quiz as completed
-sessionStorage.setItem('quizCompleted', 'true');
-sessionStorage.removeItem('quizProgress');
-sessionStorage.removeItem('quizStarted');
+setStoredValue('quizCompleted', 'true');
+removeStoredValue('quizProgress');
+removeStoredValue('quizStarted');
 
 var avgResponseTime = playerResults.responseTimes.length > 0
 ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
@@ -2367,13 +2477,13 @@ return;
 }
 
 // Check if user already completed quiz in this session
-if (sessionStorage.getItem('quizCompleted') === 'true') {
+if (getStoredValue('quizCompleted') === 'true') {
 alert("You have already completed this quiz. You cannot retake it.");
 return;
 }
 
 // Check if user already started quiz
-if (sessionStorage.getItem('quizStarted') === 'true' && !sessionStorage.getItem('quizCompleted')) {
+if (getStoredValue('quizStarted') === 'true' && !getStoredValue('quizCompleted')) {
 if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
 return;
 }
@@ -2394,8 +2504,8 @@ return;
 }
 
 // Mark quiz as started
-sessionStorage.setItem('quizStarted', 'true');
-sessionStorage.setItem('playerCode', playerCode);
+setStoredValue('quizStarted', 'true');
+setStoredValue('playerCode', playerCode);
 
 // Reset results when starting new quiz
 playerResults = {
@@ -2407,7 +2517,7 @@ accuracy: 0
 };
 
 // Restore progress if exists
-var savedProgress = sessionStorage.getItem('quizProgress');
+var savedProgress = getStoredValue('quizProgress');
 if (savedProgress) {
 var progress = JSON.parse(savedProgress);
 currentIndex = progress.currentIndex || 0;
@@ -2429,7 +2539,7 @@ updateQuizTimeInfo();
 
 // Prevent accidental page refresh
 window.addEventListener('beforeunload', function (e) {
-if (sessionStorage.getItem('quizStarted') === 'true' && sessionStorage.getItem('quizCompleted') !== 'true') {
+if (getStoredValue('quizStarted') === 'true' && getStoredValue('quizCompleted') !== 'true') {
 e.preventDefault();
 e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
 return 'You have an ongoing quiz. Are you sure you want to leave?';
@@ -2445,8 +2555,8 @@ document.getElementById('player').classList.add('active');
 // Wait for Firebase to load before showing quiz status
 function checkQuizStatusAfterLoad() {
 // Check if user already completed quiz (after Firebase loads)
-if (sessionStorage.getItem('quizCompleted') === 'true') {
-const playerCode = sessionStorage.getItem('playerCode') || 'Unknown';
+if (getStoredValue('quizCompleted') === 'true') {
+const playerCode = getStoredValue('playerCode') || 'Unknown';
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Player';
 
