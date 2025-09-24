@@ -981,7 +981,7 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Kahoot FS Features</h3>
 <ol>
-<li><strong>Admin control:</strong> Full control over quiz</li>
+<li><strong>Admin Password:</strong> Never visible to other users</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
 </ol>
@@ -1752,7 +1752,8 @@ function showPlayerResults() {
             
             <div class="session-warning">
                 <h3>⚠️ Quiz Completed</h3>
-                <p>You have completed this quiz.</p>
+                <p>You have successfully completed this quiz.</p>
+                <p>To start a new attempt, refresh the page completely (Ctrl+F5).</p>
                 <button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
                     Start New Attempt
                 </button>
@@ -1938,54 +1939,60 @@ window.addEventListener('beforeunload', function (e) {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-   document.querySelectorAll('.tab-content').forEach(tab => {
-       tab.classList.remove('active');
-   });
-   document.getElementById('player').classList.add('active');
-   // Wait for Firebase to load before showing quiz status
-   function checkQuizStatusAfterLoad() {
-       // Check if user already completed quiz (after Firebase loads)
-       if (sessionStorage.getItem('quizCompleted') === 'true') {
-           var playerName = sessionStorage.getItem('playerName') || 'Player';
-           document.getElementById('player-question').innerHTML = `
-<div class="player-results">
-<h2>🎯 Quiz Already Completed</h2>
-<p>Hello <strong>${playerName}</strong>, you have successfully completed this quiz!</p>
-<div class="session-warning">
-<h3>⚠️ Attempt Limit Reached</h3>
-<p>Each participant can only complete the quiz once per session.</p>
-<ul style="text-align: left; display: inline-block; margin: 1rem 0;">
-</ul>
-</div>
-</div>
-           `;
-           document.getElementById("name").style.display = "none";
-           // Disable the join button instead of hiding it
-           document.getElementById("joinBtn").disabled = true;
-           document.getElementById("joinBtn").style.background = "#ccc";
-           document.getElementById("joinBtn").textContent = "Quiz Completed";
-           document.getElementById("joinBtn").style.cursor = "not-allowed";
-       }
-   }
-   // Wait a bit for Firebase to initialize before checking status
-   setTimeout(checkQuizStatusAfterLoad, 1000); // 1 second delay
-   function initializeApp() {
-       try {
-           loadDataFromFirebase();
-           // Check status again after Firebase fully loads
-           setTimeout(checkQuizStatusAfterLoad, 2000);
-       } catch (error) {
-           setTimeout(initializeApp, 2000);
-       }
-   }
-   initializeApp();
-   console.log("Quiz System with Grid Answer Layout Initialized");
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById('player').classList.add('active');
+
+    // Check if user already completed quiz
+    if (sessionStorage.getItem('quizCompleted') === 'true') {
+        var playerName = sessionStorage.getItem('playerName') || 'Player';
+        document.getElementById('player-question').innerHTML = `
+            <div class="player-results">
+                <h2>Quiz Already Completed</h2>
+                <p>Hello ${playerName}, you have already completed this quiz.</p>
+                <p>Refresh the page completely (Ctrl+F5) to start a new attempt.</p>
+                <button onclick="resetQuizSession()" style="background: #ff9800; margin: 10px;">
+                    Start New Attempt
+                </button>
+            </div>
+        `;
+        document.getElementById("name").style.display = "none";
+        document.getElementById("joinBtn").style.display = "none";
+    }
+    
+    // Check if user has progress to resume
+    else if (sessionStorage.getItem('quizStarted') === 'true') {
+        var savedName = sessionStorage.getItem('playerName');
+        if (savedName) {
+            document.getElementById('name').value = savedName;
+            document.getElementById('player-question').innerHTML = `
+                <div style="text-align: center; padding: 1rem;">
+                    <p>Welcome back, ${savedName}!</p>
+                    <p>You have an ongoing quiz session.</p>
+                    <button onclick="resumeQuiz()" style="background: #4caf50; margin: 10px;">
+                        Resume Quiz
+                    </button>
+                    <button onclick="resetQuizSession()" style="background: #f44336; margin: 10px;">
+                        Start Fresh
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    function initializeApp() {
+        try {
+            loadDataFromFirebase();
+        } catch (error) {
+            setTimeout(initializeApp, 2000);
+        }
+    }
+    
+    initializeApp();
+    
+    console.log("Quiz System with Grid Answer Layout Initialized");
 });
 </script>
 </body>
 </html>
-
-
-
-
-
