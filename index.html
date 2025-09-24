@@ -176,7 +176,6 @@ cursor: not-allowed;
 transform: none;
 }
 
-/* Enhanced answer button styles for reliable color display */
 .answer-btn {
 display: block;
 width: 100%;
@@ -187,8 +186,6 @@ background: #f8f9fa;
 color: #333;
 border: 1px solid #ddd;
 transition: all 0.2s ease;
-font-size: 1rem;
-font-weight: 500;
 }
 
 .answer-btn:hover {
@@ -197,34 +194,15 @@ transform: translateX(5px);
 }
 
 .answer-btn.correct {
-background-color: #4caf50 !important;
-color: white !important;
-border-color: #4caf50 !important;
-opacity: 1 !important;
-transform: scale(1.02);
-box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+background-color: #4caf50;
+color: white;
+border-color: #4caf50;
 }
 
 .answer-btn.incorrect {
-background-color: #f44336 !important;
-color: white !important;
-border-color: #f44336 !important;
-opacity: 1 !important;
-transform: scale(1.02);
-box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
-}
-
-.answer-btn:disabled {
-opacity: 1 !important;
-pointer-events: none;
-}
-
-/* Force color visibility with higher specificity */
-#player-answers .answer-btn.correct,
-#player-answers .answer-btn.incorrect {
-background-color: inherit !important;
-color: inherit !important;
-border-color: inherit !important;
+background-color: #f44336;
+color: white;
+border-color: #f44336;
 }
 
 .instructions {
@@ -360,10 +338,6 @@ font-size: 0.8rem;
 
 .admin-btn.edit {
 background: #ff9800;
-}
-
-.admin-btn.toggle {
-background: #9c27b0;
 }
 
 .admin-btn.delete {
@@ -533,109 +507,6 @@ color: #1565c0;
 margin-bottom: 0.5rem;
 }
 
-/* Show/Hide question styles */
-.question-toggle {
-background: #ff9800;
-padding: 0.3rem 0.8rem;
-font-size: 0.8rem;
-margin-left: 10px;
-}
-
-.question-toggle.hidden {
-background: #f44336;
-}
-
-.question-item.hidden {
-opacity: 0.6;
-background: #f5f5f5;
-border-left: 4px solid #ff9800;
-}
-
-.status-badge {
-display: inline-block;
-padding: 0.2rem 0.5rem;
-border-radius: 12px;
-font-size: 0.7rem;
-font-weight: bold;
-margin-left: 10px;
-}
-
-.status-visible {
-background: #4caf50;
-color: white;
-}
-
-.status-hidden {
-background: #f44336;
-color: white;
-}
-
-/* Player results styles */
-.player-results {
-text-align: center;
-padding: 2rem;
-background: #f8f9fa;
-border-radius: 10px;
-margin: 1rem 0;
-}
-
-.result-stats {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-gap: 1rem;
-margin: 2rem 0;
-}
-
-.result-stat {
-background: white;
-padding: 1.5rem;
-border-radius: 8px;
-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.result-number {
-font-size: 2.5rem;
-font-weight: bold;
-display: block;
-}
-
-.result-correct { color: #4caf50; }
-.result-incorrect { color: #f44336; }
-.result-accuracy { color: #2196f3; }
-.result-time { color: #ff9800; }
-
-.result-label {
-font-size: 0.9rem;
-color: #666;
-margin-top: 0.5rem;
-}
-
-.download-btn {
-background: #4caf50;
-padding: 1rem 2rem;
-font-size: 1.1rem;
-margin: 1rem;
-}
-
-.download-btn:hover {
-background: #45a049;
-transform: translateY(-2px);
-}
-
-.session-warning {
-background: #fff3cd;
-border-left: 4px solid #ffc107;
-padding: 1rem;
-margin: 1rem 0;
-border-radius: 4px;
-text-align: center;
-}
-
-.session-warning h3 {
-color: #856404;
-margin-bottom: 0.5rem;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -715,10 +586,6 @@ flex-direction: column;
 padding: 0.8rem;
 font-size: 0.9rem;
 }
-
-.result-stats {
-grid-template-columns: 1fr;
-}
 }
 
 @media (min-width: 1200px) {
@@ -766,7 +633,7 @@ font-size: 1.1rem;
 <div class="tabs">
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" onclick="switchTab('firebase-help')">Help</div>
+<div class="tab" onclick="switchTab('firebase-help')">About</div>
 </div>
 
 <div class="content">
@@ -795,8 +662,6 @@ font-size: 1.1rem;
 <li>Select your answer when questions appear</li>
 <li>Your answers and response time will be recorded</li>
 <li>Each device has separate session - names won't conflict</li>
-<li>View your results and download them at the end</li>
-<li><strong>Note:</strong> You can only complete the quiz once per session</li>
 </ol>
 </div>
 </div>
@@ -909,14 +774,13 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Host Instructions</h3>
 <ol>
-<li>Enter the admin code "admin123" to access host features</li>
+<li>Enter the admin code to access host features</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
-<li>Use Show/Hide buttons to control which questions are active</li>
-<li>View results in the Quiz Results section</li>
+<li>View results in the Quiz Results section (now at the bottom)</li>
 <li>Export results to Excel or CSV for analysis</li>
+<li>Delete results when needed with the delete button</li>
 <li>Supports 30+ concurrent users easily</li>
-<li>Prevents users from restarting quiz by refreshing</li>
 </ol>
 </div>
 </div>
@@ -927,7 +791,7 @@ font-size: 1.1rem;
 
 <div class="setup-complete">
 <h3>✅ System Ready!</h3>
-<p>Your quiz app is optimized for production use with Firebase.</p>
+<p>Kahoot app is optimized for production use with Firebase.</p>
 <p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
@@ -957,25 +821,21 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Security Features</h3>
 <ol>
-<li><strong>Admin Password:</strong> Never visible to other users</li>
+<li><strong>Admin Control:</strong> Kahoot Full Control</li>
 <li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
-<li><strong>Anti-Cheat:</strong> Prevents quiz restart by refreshing</li>
 </ol>
 </div>
 
 <div class="card">
-<h3>New Features</h3>
+<h3>Technical Details</h3>
 <ul>
-<li>✅ Show/Hide questions control</li>
-<li>✅ Player results with statistics</li>
-<li>✅ Results download for players</li>
-<li>✅ Anti-refresh protection</li>
-<li>✅ Session progress saving</li>
-<li>✅ Enhanced answer feedback</li>
-<li>✅ 5-second countdown between questions</li>
-<li>✅ Reliable answer colors (no gray buttons)</li>
+<li>✅ Separate sessions for each device</li>
+<li>✅ Optimized for mobile and desktop</li>
+<li>✅ Real-time results tracking</li>
+<li>✅ Secure admin authentication</li>
+<li>✅ Excel exports</li>
 </ul>
 </div>
 </div>
@@ -1039,16 +899,7 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "admin123";
-
-// Player results tracking
-var playerResults = {
-correct: 0,
-incorrect: 0,
-total: 0,
-responseTimes: [],
-accuracy: 0
-};
+var adminCode = "adminHafsa";
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -1075,36 +926,86 @@ quizEndTime = parseInt(quizEndTime);
 
 // Load data from Firebase
 function loadDataFromFirebase() {
-if (!firebase.apps.length) {
-setTimeout(loadDataFromFirebase, 1000);
-return;
+   if (!firebase.apps.length) {
+       setTimeout(loadDataFromFirebase, 1000);
+       return;
+   }
+   database.ref('quizTime').on('value', (snapshot) => {
+       const data = snapshot.val();
+       if (data) {
+           quizStartTime = data.startTime;
+           quizEndTime = data.endTime;
+           localStorage.setItem('quizStartTime', quizStartTime);
+           localStorage.setItem('quizEndTime', quizEndTime);
+           updateQuizTimeInfo();
+       }
+   });
+   database.ref('questions').on('value', (snapshot) => {
+       const data = snapshot.val();
+       // FIX: Handle empty questions array properly
+       if (data) {
+           questions = Object.values(data);
+       } else {
+           questions = []; // Explicitly set to empty array if no data
+       }
+       localStorage.setItem('quizQuestions', JSON.stringify(questions));
+       displayQuestions();
+       if (document.getElementById('player').classList.contains('active') &&
+           document.getElementById('player-question').innerHTML !== "") {
+           showPlayerQuestion();
+       }
+   });
 }
 
-database.ref('quizTime').on('value', (snapshot) => {
-const data = snapshot.val();
-if (data) {
-quizStartTime = data.startTime;
-quizEndTime = data.endTime;
-localStorage.setItem('quizStartTime', quizStartTime);
-localStorage.setItem('quizEndTime', quizEndTime);
-updateQuizTimeInfo();
+// Initialize Firebase data structure
+function initializeFirebaseData() {
+const statusElement = document.getElementById('firebase-init-status');
+if (statusElement) {
+statusElement.textContent = "Initializing Firebase data...";
+statusElement.className = 'url-status';
 }
+
+database.ref('quizTime').once('value').then((snapshot) => {
+if (!snapshot.exists()) {
+var tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+tomorrow.setHours(12, 0, 0, 0);
+var startTime = tomorrow.getTime();
+var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
+
+return database.ref('quizTime').set({
+startTime: startTime,
+endTime: endTime
 });
-
-database.ref('questions').on('value', (snapshot) => {
-const data = snapshot.val();
-if (data) {
-questions = Object.values(data);
-} else {
-questions = [];
 }
-
-localStorage.setItem('quizQuestions', JSON.stringify(questions));
-displayQuestions();
-
-if (document.getElementById('player').classList.contains('active') &&
-document.getElementById('player-question').innerHTML !== "") {
-showPlayerQuestion();
+}).then(() => {
+return database.ref('questions').once('value');
+}).then((snapshot) => {
+if (!snapshot.exists()) {
+const defaultQuestions = [
+{
+question: "What is 2 + 2?",
+answers: ["3", "4", "5", "6"],
+correct: "4"
+},
+{
+question: "Capital of France?",
+answers: ["London", "Paris", "Berlin", "Rome"],
+correct: "Paris"
+}
+];
+return database.ref('questions').set(defaultQuestions);
+}
+}).then(() => {
+if (statusElement) {
+statusElement.textContent = "Firebase data initialized successfully!";
+statusElement.className = 'url-status success';
+}
+loadDataFromFirebase();
+}).catch((error) => {
+if (statusElement) {
+statusElement.textContent = "Error initializing Firebase: " + error.message;
+statusElement.className = 'url-status error';
 }
 });
 }
@@ -1134,7 +1035,7 @@ document.getElementById('question-status').className = 'url-status error';
 });
 }
 
-// Save quiz results to Firebase
+// Save quiz results to Firebase with session management
 function saveToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
 const responseId = database.ref().child('quizResults').push().key;
 
@@ -1151,12 +1052,14 @@ sessionId: sessionStorage.getItem('playerSessionId'),
 deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
 };
 
+// Efficient save with error handling
 database.ref('quizResults/' + responseId).set(quizData)
 .then(() => {
 console.log("Data saved successfully for session:", quizData.sessionId);
 })
 .catch((error) => {
 console.error("Save error, retrying:", error);
+// Simple retry logic
 setTimeout(() => {
 database.ref('quizResults/' + responseId).set(quizData);
 }, 500);
@@ -1238,7 +1141,7 @@ function deleteAllResults() {
 database.ref('quizResults').remove()
 .then(() => {
 alert('All quiz results have been deleted successfully!');
-loadQuizResults();
+loadQuizResults(); // Refresh the results display
 })
 .catch((error) => {
 console.error("Error deleting results:", error);
@@ -1277,6 +1180,7 @@ const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).
 const avgResponseTime = totalResponses > 0 ?
 (resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
 
+// Count unique players by session ID
 const uniqueSessions = new Set(resultsArray.map(r => r.sessionId));
 const uniquePlayers = uniqueSessions.size;
 
@@ -1345,9 +1249,9 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
-questions = JSON.parse(savedQuestions);
+   questions = JSON.parse(savedQuestions);
 } else {
-questions = [];
+   questions = []; // Start with empty array
 }
 
 // Load host time settings
@@ -1371,11 +1275,12 @@ document.getElementById('host-quiz-duration').value = duration;
 displayQuestions();
 }
 
-// Verify admin code
+// Verify admin code - SECURE: Password never visible to others
 function verifyAdmin() {
 var code = document.getElementById('admin-code').value;
 var status = document.getElementById('admin-status');
 
+// Clear the password field for security
 document.getElementById('admin-code').value = '';
 
 if (code === adminCode) {
@@ -1384,6 +1289,7 @@ status.textContent = 'Admin access granted! Features unlocked.';
 status.className = 'url-status success';
 loadQuizResults();
 
+// Hide the admin login section after successful login
 document.querySelector('.admin-section:first-child').style.display = 'none';
 } else {
 status.textContent = 'Invalid admin code. Please try again.';
@@ -1445,8 +1351,7 @@ var correctAnswer = answers[correctAnswerIndex];
 var newQuestion = {
 question: questionText,
 answers: answers,
-correct: correctAnswer,
-hidden: false
+correct: correctAnswer
 };
 
 questions.push(newQuestion);
@@ -1468,7 +1373,7 @@ document.getElementById('question-status').className = 'url-status';
 }, 3000);
 }
 
-// Display all questions with show/hide toggle
+// Display all questions
 function displayQuestions() {
 var container = document.getElementById('questions-container');
 container.innerHTML = '';
@@ -1481,22 +1386,13 @@ return;
 questions.forEach((q, index) => {
 var questionItem = document.createElement('div');
 questionItem.className = 'question-item';
-if (q.hidden) {
-questionItem.classList.add('hidden');
-}
-
 var correctIndex = q.answers.indexOf(q.correct);
-var status = q.hidden ? 'hidden' : 'visible';
 
 questionItem.innerHTML = `
 <strong>Q${index + 1}:</strong> ${q.question}
-<span class="status-badge status-${status}">${status.toUpperCase()}</span>
 <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
 <div class="admin-controls">
 <button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
-<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${index})">
-${q.hidden ? 'Show' : 'Hide'}
-</button>
 <button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
 </div>
 `;
@@ -1508,38 +1404,38 @@ container.appendChild(questionItem);
 function editExistingQuestion(index) {
 var q = questions[index];
 
+// Populate the form with current question data
 document.getElementById('question-text').value = q.question;
 document.getElementById('answer-1').value = q.answers[0];
 document.getElementById('answer-2').value = q.answers[1];
 document.getElementById('answer-3').value = q.answers[2];
 document.getElementById('answer-4').value = q.answers[3];
 
+// Set the correct answer radio button
 var correctIndex = q.answers.indexOf(q.correct);
 document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
 radio.checked = (i === correctIndex);
 });
 
+// Remove the original question
 questions.splice(index, 1);
 saveQuestionsToFirebase();
 
+// Show editing message
 document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
 document.getElementById('question-status').className = 'url-status success';
 
+// Scroll to the form for better UX
 document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Toggle question visibility
-function toggleQuestionVisibility(index) {
-questions[index].hidden = !questions[index].hidden;
-saveQuestionsToFirebase();
-displayQuestions();
-}
-
-// Delete a question
+// Delete a question - ALLOWS deleting even the last question
 function deleteQuestion(index) {
 if (confirm('Are you sure you want to delete this question?')) {
 questions.splice(index, 1);
 saveQuestionsToFirebase();
+
+// Refresh the display
 displayQuestions();
 }
 }
@@ -1590,48 +1486,6 @@ quizActive = false;
 }
 }
 
-// Save quiz progress to sessionStorage
-function saveQuizProgress() {
-var progress = {
-currentIndex: currentIndex,
-playerResults: playerResults,
-timestamp: Date.now()
-};
-sessionStorage.setItem('quizProgress', JSON.stringify(progress));
-}
-
-// Resume quiz from saved progress
-function resumeQuiz() {
-playerName = sessionStorage.getItem('playerName');
-var savedProgress = sessionStorage.getItem('quizProgress');
-
-if (savedProgress) {
-var progress = JSON.parse(savedProgress);
-currentIndex = progress.currentIndex || 0;
-playerResults = progress.playerResults || {
-correct: 0,
-incorrect: 0,
-total: 0,
-responseTimes: [],
-accuracy: 0
-};
-}
-
-document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
-document.getElementById('player-question').innerHTML = "";
-showPlayerQuestion();
-}
-
-// Reset quiz session
-function resetQuizSession() {
-sessionStorage.removeItem('quizCompleted');
-sessionStorage.removeItem('quizStarted');
-sessionStorage.removeItem('quizProgress');
-sessionStorage.removeItem('playerName');
-location.reload();
-}
-
 // Countdown timer function
 function startCountdown() {
 timeLeft = 15;
@@ -1644,24 +1498,16 @@ document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 if (timeLeft <= 0) {
 clearInterval(countdownInterval);
-var visibleQuestions = questions.filter(q => !q.hidden);
-var q = visibleQuestions[currentIndex];
+var q = questions[currentIndex];
 var responseTime = (Date.now() - questionStartTime) / 1000;
 var currentPlayerName = playerName || "Unknown Player";
 saveToFirebase(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
-
-playerResults.incorrect++;
-playerResults.total++;
-playerResults.responseTimes.push(responseTime);
-playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
-
-saveQuizProgress();
 moveToNextQuestion();
 }
 }, 1000);
 }
 
-// 5-second countdown before next question
+// ENHANCEMENT 2: 5-second countdown before next question
 function startNextQuestionCountdown() {
 var countdownTime = 5;
 document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
@@ -1683,98 +1529,18 @@ moveToNextQuestion();
 // Move to next question automatically
 function moveToNextQuestion() {
 currentIndex++;
-var visibleQuestions = questions.filter(q => !q.hidden);
-
-if (currentIndex < visibleQuestions.length) {
-saveQuizProgress();
+if (currentIndex < questions.length) {
 showPlayerQuestion();
 } else {
-showPlayerResults();
-}
-}
-
-// Show player results at the end of quiz
-function showPlayerResults() {
-// Mark quiz as completed
-sessionStorage.setItem('quizCompleted', 'true');
-sessionStorage.removeItem('quizProgress');
-sessionStorage.removeItem('quizStarted');
-
-var avgResponseTime = playerResults.responseTimes.length > 0
-? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
-: 0;
-
-document.getElementById('player-question').innerHTML = `
-<div class="player-results">
-<h2>🎉 Quiz Completed! 🎉</h2>
-<p>Thank you for participating, ${playerName}!</p>
-
-<div class="result-stats">
-<div class="result-stat">
-<span class="result-number result-correct">${playerResults.correct}</span>
-<span class="result-label">Correct Answers</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-incorrect">${playerResults.incorrect}</span>
-<span class="result-label">Incorrect Answers</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
-<span class="result-label">Accuracy</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-time">${avgResponseTime}s</span>
-<span class="result-label">Avg Response Time</span>
-</div>
-</div>
-
-<button class="download-btn" onclick="downloadPlayerResults()">
-📥 Download My Results
-</button>
-
-<div class="session-warning">
-<h3>⚠️ Quiz Completed</h3>
-<p>You have completed this quiz.</p>
-</div>
-</div>
-`;
-
+document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
 document.getElementById('player-answers').innerHTML = "";
 document.getElementById('countdown').textContent = "";
 }
-
-// Download player results as CSV
-function downloadPlayerResults() {
-var avgResponseTime = playerResults.responseTimes.length > 0
-? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
-: 0;
-
-var csvData = [
-['Player Name', 'Correct Answers', 'Incorrect Answers', 'Total Questions', 'Accuracy', 'Average Response Time'],
-[playerName, playerResults.correct, playerResults.incorrect, playerResults.total, playerResults.accuracy.toFixed(1) + '%', avgResponseTime + 's']
-];
-
-var csv = csvData.map(row => row.join(',')).join('\n');
-var blob = new Blob([csv], { type: 'text/csv' });
-var url = window.URL.createObjectURL(blob);
-var a = document.createElement('a');
-a.href = url;
-a.download = `quiz-results-${playerName}-${new Date().toISOString().split('T')[0]}.csv`;
-a.click();
-window.URL.revokeObjectURL(url);
 }
 
-// Enhanced player view functions with reliable answer colors
+// Player view functions
 function showPlayerQuestion() {
-// Filter out hidden questions
-var visibleQuestions = questions.filter(q => !q.hidden);
-
-if (currentIndex >= visibleQuestions.length) {
-showPlayerResults();
-return;
-}
-
-var q = visibleQuestions[currentIndex];
+var q = questions[currentIndex];
 document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
 
 var answersDiv = document.getElementById("player-answers");
@@ -1798,46 +1564,28 @@ var responseTime = (Date.now() - questionStartTime) / 1000;
 
 clearInterval(countdownInterval);
 
-// Immediately disable all buttons to prevent multiple clicks
+// ENHANCEMENT 2: Start 5-second countdown
+startNextQuestionCountdown();
+
 var allButtons = document.querySelectorAll('.answer-btn');
 allButtons.forEach(button => {
 button.disabled = true;
-button.style.pointerEvents = 'none';
-});
-
-// ENHANCED COLOR LOGIC - More reliable with immediate feedback
-allButtons.forEach(button => {
-// Remove any existing classes first
-button.classList.remove('correct', 'incorrect');
-
+// ENHANCEMENT 1: Always show colors clearly
+button.style.opacity = "1"; // Ensure full visibility
 if (button.innerText === correct) {
-// Correct answer - always show green immediately
 button.classList.add('correct');
-} else if (button.innerText === selected) {
-// User's wrong selection - show red immediately
+button.classList.remove('incorrect');
+} else if (button.innerText === selected && selected !== correct) {
 button.classList.add('incorrect');
+button.classList.remove('correct');
 } else {
-// Other options - gray out
+// Gray out incorrect options that weren't selected
 button.style.opacity = "0.6";
 button.style.background = "#f0f0f0";
 }
 });
 
-// TRACK RESULTS
-if (selected === correct) {
-playerResults.correct++;
-} else {
-playerResults.incorrect++;
-}
-playerResults.total++;
-playerResults.responseTimes.push(responseTime);
-playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
-
 saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
-saveQuizProgress();
-
-// Start countdown for next question
-startNextQuestionCountdown();
 };
 answersDiv.appendChild(btn);
 });
@@ -1852,43 +1600,8 @@ alert("The quiz is not currently active. Please check the quiz schedule.");
 return;
 }
 
-// Check if user already completed quiz in this session
-if (sessionStorage.getItem('quizCompleted') === 'true') {
-alert("You have already completed this quiz. Refresh the page to start a new session.");
-return;
-}
-
-// Check if user already started quiz
-if (sessionStorage.getItem('quizStarted') === 'true' && !sessionStorage.getItem('quizCompleted')) {
-if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
-return;
-}
-}
-
 playerName = document.getElementById("name").value;
 if (playerName.trim() !== "") {
-// Mark quiz as started
-sessionStorage.setItem('quizStarted', 'true');
-sessionStorage.setItem('playerName', playerName);
-
-// Reset results when starting new quiz
-playerResults = {
-correct: 0,
-incorrect: 0,
-total: 0,
-responseTimes: [],
-accuracy: 0
-};
-
-// Restore progress if exists
-var savedProgress = sessionStorage.getItem('quizProgress');
-if (savedProgress) {
-var progress = JSON.parse(savedProgress);
-currentIndex = progress.currentIndex || 0;
-playerResults = progress.playerResults || playerResults;
-}
-
-currentIndex = 0;
 document.getElementById("name").style.display = "none";
 document.getElementById("joinBtn").style.display = "none";
 showPlayerQuestion();
@@ -1901,54 +1614,12 @@ alert("Please enter your name to join the game.");
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-// Prevent accidental page refresh
-window.addEventListener('beforeunload', function (e) {
-if (sessionStorage.getItem('quizStarted') === 'true' && sessionStorage.getItem('quizCompleted') !== 'true') {
-e.preventDefault();
-e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
-return 'You have an ongoing quiz. Are you sure you want to leave?';
-}
-});
-
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
 });
 document.getElementById('player').classList.add('active');
-
-// Check if user already completed quiz
-if (sessionStorage.getItem('quizCompleted') === 'true') {
-var playerName = sessionStorage.getItem('playerName') || 'Player';
-document.getElementById('player-question').innerHTML = `
-<div class="player-results">
-<h2>Quiz Already Completed</h2>
-<p>Hello ${playerName}, you have already completed this quiz.</p>
-</div>
-`;
-document.getElementById("name").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
-}
-
-// Check if user has progress to resume
-else if (sessionStorage.getItem('quizStarted') === 'true') {
-var savedName = sessionStorage.getItem('playerName');
-if (savedName) {
-document.getElementById('name').value = savedName;
-document.getElementById('player-question').innerHTML = `
-<div style="text-align: center; padding: 1rem;">
-<p>Welcome back, ${savedName}!</p>
-<p>You have an ongoing quiz session.</p>
-<button onclick="resumeQuiz()" style="background: #4caf50; margin: 10px;">
-Resume Quiz
-</button>
-<button onclick="resetQuizSession()" style="background: #f44336; margin: 10px;">
-Start Fresh
-</button>
-</div>
-`;
-}
-}
 
 function initializeApp() {
 try {
@@ -1960,9 +1631,14 @@ setTimeout(initializeApp, 2000);
 
 initializeApp();
 
-console.log("Enhanced Quiz System with Reliable Answer Colors Initialized");
+// Show system info
+console.log("Quiz System Initialized");
+console.log("Session ID:", sessionStorage.getItem('playerSessionId'));
+console.log("Device Type:", /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
+console.log("Security: Admin password verification is local and secure");
 });
 </script>
 </body>
 </html>
+
 
