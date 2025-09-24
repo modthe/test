@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Game with Admin Features</title>
+<title>Kahoot FS</title>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -782,7 +782,7 @@ font-size: 1.1rem;
 <body>
 <div class="container">
 <header>
-<h1>Quiz Game with Admin Features</h1>
+<h1>Kahoot FS</h1>
 <p class="subtitle">Answer questions within the time limit</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
@@ -790,7 +790,7 @@ font-size: 1.1rem;
 <div class="tabs">
 <div class="tab active" onclick="switchTab('player')">Player</div>
 <div class="tab" onclick="switchTab('host')">Host</div>
-<div class="tab" onclick="switchTab('firebase-help')">Help</div>
+<div class="tab" onclick="switchTab('firebase-help')">About</div>
 </div>
 
 <div class="content">
@@ -833,7 +833,7 @@ font-size: 1.1rem;
 <h3>Admin Access</h3>
 <div class="security-notice">
 <h4>🔒 Security Notice</h4>
-<p>Your admin password is <strong>never visible to other users</strong>. It's securely verified locally and never transmitted in clear text.</p>
+<p>Your admin control is <strong>Full control over kahoot</strong>. It's securely verified locally and never transmitted in clear text.</p>
 </div>
 <div class="form-group">
 <label for="admin-code">Enter Admin Code:</label>
@@ -933,7 +933,7 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Host Instructions</h3>
 <ol>
-<li>Enter the admin code "admin123" to access host features</li>
+<li>Enter the admin code to access host features</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
 <li>Use Show/Hide buttons to control which questions are active</li>
@@ -947,17 +947,17 @@ font-size: 1.1rem;
 
 <!-- Firebase Help Tab -->
 <div id="firebase-help" class="tab-content">
-<h2>System Information</h2>
+<h2>Kahoot FS Information</h2>
 
 <div class="setup-complete">
-<h3>✅ System Ready!</h3>
+<h3>✅ Kahoot FS Ready!✅</h3>
 <p>Your quiz app is optimized for production use with Firebase.</p>
 <p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
 <div class="admin-section">
-<h3>System Capacity</h3>
+<h3>Kahoot FS Capacity</h3>
 <div class="stats-grid">
 <div class="stat-card">
 <span class="stat-number">100</span>
@@ -979,28 +979,21 @@ font-size: 1.1rem;
 </div>
 
 <div class="instructions">
-<h3>Security Features</h3>
+<h3>Kahoot FS Features</h3>
 <ol>
 <li><strong>Admin Password:</strong> Never visible to other users</li>
-<li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
-<li><strong>Anti-Cheat:</strong> Prevents quiz restart by refreshing</li>
 </ol>
 </div>
 
 <div class="card">
-<h3>New Features</h3>
+<h3>Kahoot FS Features</h3>
 <ul>
-<li>✅ Show/Hide questions control</li>
 <li>✅ Player results with statistics</li>
 <li>✅ Results download for players</li>
-<li>✅ Anti-refresh protection</li>
 <li>✅ Session progress saving</li>
 <li>✅ Enhanced answer feedback</li>
-<li>✅ 5-second countdown between questions</li>
-<li>✅ Reliable answer colors (no gray buttons)</li>
-<li>✅ Grid layout for answers (2x2)</li>
 </ul>
 </div>
 </div>
@@ -1064,7 +1057,7 @@ var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
-var adminCode = "admin123";
+var adminCode = "adminHafsa";
 
 // Player results tracking
 var playerResults = {
@@ -2003,3 +1996,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
