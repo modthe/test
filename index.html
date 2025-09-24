@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Game with Admin Features</title>
+<title>Kahoot FS - Enhanced</title>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+/* Previous CSS styles remain the same, adding new styles for user management */
 * {
 margin: 0;
 padding: 0;
@@ -176,33 +177,84 @@ cursor: not-allowed;
 transform: none;
 }
 
+/* Enhanced answer button styles for grid layout */
+.answers-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 15px;
+margin: 1.5rem 0;
+}
+
 .answer-btn {
-display: block;
-width: 100%;
-text-align: left;
-margin: 0.5rem 0;
-padding: 1rem;
+display: flex;
+align-items: center;
+justify-content: center;
+text-align: center;
+margin: 0;
+padding: 1.5rem;
 background: #f8f9fa;
 color: #333;
-border: 1px solid #ddd;
-transition: all 0.2s ease;
+border: 2px solid #ddd;
+border-radius: 10px;
+transition: all 0.3s ease;
+font-size: 1.1rem;
+font-weight: 500;
+min-height: 100px;
+word-wrap: break-word;
+hyphens: auto;
+cursor: pointer;
 }
 
 .answer-btn:hover {
 background: #e9ecef;
-transform: translateX(5px);
+transform: translateY(-3px);
+border-color: #6e8efb;
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .answer-btn.correct {
-background-color: #4caf50;
-color: white;
-border-color: #4caf50;
+background-color: #4caf50 !important;
+color: white !important;
+border-color: #4caf50 !important;
+opacity: 1 !important;
+transform: scale(1.03);
+box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 .answer-btn.incorrect {
-background-color: #f44336;
-color: white;
-border-color: #f44336;
+background-color: #f44336 !important;
+color: white !important;
+border-color: #f44336 !important;
+opacity: 1 !important;
+transform: scale(1.03);
+box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+.answer-btn:disabled {
+opacity: 1 !important;
+pointer-events: none;
+}
+
+/* Force color visibility with higher specificity */
+#player-answers .answer-btn.correct,
+#player-answers .answer-btn.incorrect {
+background-color: inherit !important;
+color: inherit !important;
+border-color: inherit !important;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+.answers-grid {
+grid-template-columns: 1fr;
+gap: 10px;
+}
+
+.answer-btn {
+padding: 1.2rem;
+min-height: 80px;
+font-size: 1rem;
+}
 }
 
 .instructions {
@@ -338,6 +390,10 @@ font-size: 0.8rem;
 
 .admin-btn.edit {
 background: #ff9800;
+}
+
+.admin-btn.toggle {
+background: #9c27b0;
 }
 
 .admin-btn.delete {
@@ -507,6 +563,256 @@ color: #1565c0;
 margin-bottom: 0.5rem;
 }
 
+/* Show/Hide question styles */
+.question-toggle {
+background: #ff9800;
+padding: 0.3rem 0.8rem;
+font-size: 0.8rem;
+margin-left: 10px;
+}
+
+.question-toggle.hidden {
+background: #f44336;
+}
+
+.question-item.hidden {
+opacity: 0.6;
+background: #f5f5f5;
+border-left: 4px solid #ff9800;
+}
+
+.status-badge {
+display: inline-block;
+padding: 0.2rem 0.5rem;
+border-radius: 12px;
+font-size: 0.7rem;
+font-weight: bold;
+margin-left: 10px;
+}
+
+.status-visible {
+background: #4caf50;
+color: white;
+}
+
+.status-hidden {
+background: #f44336;
+color: white;
+}
+
+/* Player results styles */
+.player-results {
+text-align: center;
+padding: 2rem;
+background: #f8f9fa;
+border-radius: 10px;
+margin: 1rem 0;
+}
+
+.result-stats {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 1rem;
+margin: 2rem 0;
+}
+
+.result-stat {
+background: white;
+padding: 1.5rem;
+border-radius: 8px;
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.result-number {
+font-size: 2.5rem;
+font-weight: bold;
+display: block;
+}
+
+.result-correct { color: #4caf50; }
+.result-incorrect { color: #f44336; }
+.result-accuracy { color: #2196f3; }
+.result-time { color: #ff9800; }
+
+.result-label {
+font-size: 0.9rem;
+color: #666;
+margin-top: 0.5rem;
+}
+
+.download-btn {
+background: #4caf50;
+padding: 1rem 2rem;
+font-size: 1.1rem;
+margin: 1rem;
+}
+
+.download-btn:hover {
+background: #45a049;
+transform: translateY(-2px);
+}
+
+.session-warning {
+background: #fff3cd;
+border-left: 4px solid #ffc107;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+text-align: center;
+}
+
+.session-warning h3 {
+color: #856404;
+margin-bottom: 0.5rem;
+}
+
+/* New styles for user management */
+.user-management {
+background: #e8f5e9;
+border-left: 4px solid #4caf50;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.user-management h3 {
+color: #2e7d32;
+}
+
+.user-list {
+margin: 1rem 0;
+max-height: 300px;
+overflow-y: auto;
+border: 1px solid #ddd;
+border-radius: 5px;
+padding: 1rem;
+background: #f9f9f9;
+}
+
+.user-item {
+padding: 0.8rem;
+border-bottom: 1px solid #eee;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.user-item:last-child {
+border-bottom: none;
+}
+
+.user-info {
+flex: 1;
+}
+
+.user-name {
+font-weight: bold;
+}
+
+.user-code {
+font-size: 0.8rem;
+color: #666;
+margin-top: 0.2rem;
+}
+
+.user-status {
+display: inline-block;
+padding: 0.2rem 0.5rem;
+border-radius: 12px;
+font-size: 0.7rem;
+font-weight: bold;
+margin-left: 10px;
+}
+
+.status-active {
+background: #4caf50;
+color: white;
+}
+
+.status-inactive {
+background: #f44336;
+color: white;
+}
+
+.user-controls {
+display: flex;
+gap: 5px;
+}
+
+.user-btn {
+padding: 0.3rem 0.8rem;
+font-size: 0.7rem;
+}
+
+.user-btn.toggle {
+background: #9c27b0;
+}
+
+.user-btn.delete {
+background: #f44336;
+}
+
+.user-btn.export {
+background: #2196f3;
+}
+
+/* Individual user results */
+.user-results {
+margin-top: 1rem;
+}
+
+.user-result-item {
+background: white;
+padding: 1rem;
+margin: 0.5rem 0;
+border-radius: 5px;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-result-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 0.5rem;
+}
+
+.user-result-stats {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+gap: 0.5rem;
+margin-top: 0.5rem;
+}
+
+.user-stat {
+text-align: center;
+padding: 0.5rem;
+background: #f5f5f5;
+border-radius: 4px;
+}
+
+.user-stat-number {
+font-weight: bold;
+font-size: 1.2rem;
+}
+
+.user-stat-label {
+font-size: 0.7rem;
+color: #666;
+}
+
+/* Password change form */
+.password-change {
+background: #e3f2fd;
+border-left: 4px solid #2196f3;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.password-change h3 {
+color: #1565c0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -582,9 +888,19 @@ grid-template-columns: 1fr;
 flex-direction: column;
 }
 
-.answer-btn {
-padding: 0.8rem;
-font-size: 0.9rem;
+.result-stats {
+grid-template-columns: 1fr;
+}
+
+.user-item {
+flex-direction: column;
+align-items: flex-start;
+}
+
+.user-controls {
+margin-top: 0.5rem;
+width: 100%;
+justify-content: flex-end;
 }
 }
 
@@ -625,7 +941,7 @@ font-size: 1.1rem;
 <body>
 <div class="container">
 <header>
-<h1>Quiz Game with Admin Features</h1>
+<h1>Kahoot FS - Enhanced</h1>
 <p class="subtitle">Answer questions within the time limit</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
@@ -646,7 +962,7 @@ font-size: 1.1rem;
 </div>
 
 <div class="card">
-<input id="name" placeholder="Enter your name">
+<input id="player-code" placeholder="Enter your access code">
 <button id="joinBtn">Join Game</button>
 
 <div id="player-question"></div>
@@ -657,11 +973,13 @@ font-size: 1.1rem;
 <div class="instructions">
 <h3>Player Instructions</h3>
 <ol>
-<li>Enter your name and click "Join Game"</li>
+<li>Enter your access code and click "Join Game"</li>
 <li>Wait for the host to start the quiz</li>
 <li>Select your answer when questions appear</li>
 <li>Your answers and response time will be recorded</li>
-<li>Each device has separate session - names won't conflict</li>
+<li>Each device has separate session - codes won't conflict</li>
+<li>View your results and download them at the end</li>
+<li><strong>Note:</strong> You can only complete the quiz once per session</li>
 </ol>
 </div>
 </div>
@@ -674,7 +992,7 @@ font-size: 1.1rem;
 <h3>Admin Access</h3>
 <div class="security-notice">
 <h4>🔒 Security Notice</h4>
-<p>Your admin password is <strong>never visible to other users</strong>. It's securely verified locally and never transmitted in clear text.</p>
+<p>Your admin control is <strong>Full control over kahoot</strong>. It's securely verified locally and never transmitted in clear text.</p>
 </div>
 <div class="form-group">
 <label for="admin-code">Enter Admin Code:</label>
@@ -685,6 +1003,25 @@ font-size: 1.1rem;
 </div>
 
 <div id="admin-features" style="display: none;">
+<!-- Password Change Section -->
+<div class="password-change">
+<h3>Change Admin Password</h3>
+<div class="form-group">
+<label for="current-password">Current Password:</label>
+<input type="password" id="current-password" placeholder="Enter current password">
+</div>
+<div class="form-group">
+<label for="new-password">New Password:</label>
+<input type="password" id="new-password" placeholder="Enter new password">
+</div>
+<div class="form-group">
+<label for="confirm-password">Confirm New Password:</label>
+<input type="password" id="confirm-password" placeholder="Confirm new password">
+</div>
+<button onclick="changeAdminPassword()">Change Password</button>
+<div id="password-status" class="url-status">Change your admin password here</div>
+</div>
+
 <div class="time-config">
 <h3>Quiz Timing Configuration</h3>
 <p>Set when your quiz will be active</p>
@@ -720,6 +1057,29 @@ font-size: 1.1rem;
 
 <button onclick="saveHostQuizTime()">Save Quiz Time</button>
 <div id="host-time-status" class="url-status">Configure when your quiz will be active</div>
+</div>
+
+<!-- User Management Section -->
+<div class="user-management">
+<h3>User Management</h3>
+
+<div class="form-group">
+<label for="user-name">User Name:</label>
+<input type="text" id="user-name" placeholder="Enter user's real name">
+</div>
+
+<div class="form-group">
+<label for="user-code">Access Code:</label>
+<input type="text" id="user-code" placeholder="Enter unique access code">
+</div>
+
+<button onclick="addUser()">Add User</button>
+<div id="user-status" class="url-status">Add users with unique access codes</div>
+
+<div class="user-list">
+<h4>Current Users</h4>
+<div id="users-container"></div>
+</div>
 </div>
 
 <div class="admin-section">
@@ -768,6 +1128,12 @@ font-size: 1.1rem;
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
 <div id="results-container" class="question-list">Click "Refresh Results" to load quiz data</div>
+
+<!-- Individual User Results -->
+<div class="user-results">
+<h3>Individual User Results</h3>
+<div id="user-results-container"></div>
+</div>
 </div>
 </div>
 
@@ -775,29 +1141,31 @@ font-size: 1.1rem;
 <h3>Host Instructions</h3>
 <ol>
 <li>Enter the admin code to access host features</li>
+<li>Add users with unique access codes</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
-<li>View results in the Quiz Results section (now at the bottom)</li>
+<li>Use Show/Hide buttons to control which questions are active</li>
+<li>View results in the Quiz Results section</li>
 <li>Export results to Excel or CSV for analysis</li>
-<li>Delete results when needed with the delete button</li>
 <li>Supports 30+ concurrent users easily</li>
+<li>Prevents users from restarting quiz by refreshing</li>
 </ol>
 </div>
 </div>
 
 <!-- Firebase Help Tab -->
 <div id="firebase-help" class="tab-content">
-<h2>System Information</h2>
+<h2>Kahoot FS Information</h2>
 
 <div class="setup-complete">
-<h3>✅ System Ready!</h3>
-<p>Kahoot app is optimized for production use with Firebase.</p>
+<h3>✅ Kahoot FS Ready!✅</h3>
+<p>Your quiz app is optimized for production use with Firebase.</p>
 <p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
 <div class="admin-section">
-<h3>System Capacity</h3>
+<h3>Kahoot FS Capacity</h3>
 <div class="stats-grid">
 <div class="stat-card">
 <span class="stat-number">100</span>
@@ -819,23 +1187,24 @@ font-size: 1.1rem;
 </div>
 
 <div class="instructions">
-<h3>Security Features</h3>
+<h3>Kahoot FS Features</h3>
 <ol>
-<li><strong>Admin Control:</strong> Kahoot Full Control</li>
-<li><strong>Local Verification:</strong> Password checked locally, not transmitted</li>
+<li><strong>Admin control:</strong> Full control over quiz</li>
+<li><strong>User Management:</strong> Add users with unique access codes</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
 </ol>
 </div>
 
 <div class="card">
-<h3>Technical Details</h3>
+<h3>Kahoot FS Features</h3>
 <ul>
-<li>✅ Separate sessions for each device</li>
-<li>✅ Optimized for mobile and desktop</li>
-<li>✅ Real-time results tracking</li>
-<li>✅ Secure admin authentication</li>
-<li>✅ Excel exports</li>
+<li>✅ Player results with statistics</li>
+<li>✅ Results download for players</li>
+<li>✅ Session progress saving</li>
+<li>✅ Enhanced answer feedback</li>
+<li>✅ Individual user management</li>
+<li>✅ Admin password change</li>
 </ul>
 </div>
 </div>
@@ -888,18 +1257,29 @@ event.target.classList.add('active');
 
 if (tabName === 'host') {
 loadHostTimeSettings();
+loadUsers();
 }
 }
 
 // Initialize variables
 var questions = [];
+var users = [];
 var currentIndex = 0;
-var playerName = "";
+var playerCode = "";
 var countdownInterval;
 var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
 var adminCode = "adminHafsa";
+
+// Player results tracking
+var playerResults = {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0
+};
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -926,86 +1306,51 @@ quizEndTime = parseInt(quizEndTime);
 
 // Load data from Firebase
 function loadDataFromFirebase() {
-   if (!firebase.apps.length) {
-       setTimeout(loadDataFromFirebase, 1000);
-       return;
-   }
-   database.ref('quizTime').on('value', (snapshot) => {
-       const data = snapshot.val();
-       if (data) {
-           quizStartTime = data.startTime;
-           quizEndTime = data.endTime;
-           localStorage.setItem('quizStartTime', quizStartTime);
-           localStorage.setItem('quizEndTime', quizEndTime);
-           updateQuizTimeInfo();
-       }
-   });
-   database.ref('questions').on('value', (snapshot) => {
-       const data = snapshot.val();
-       // FIX: Handle empty questions array properly
-       if (data) {
-           questions = Object.values(data);
-       } else {
-           questions = []; // Explicitly set to empty array if no data
-       }
-       localStorage.setItem('quizQuestions', JSON.stringify(questions));
-       displayQuestions();
-       if (document.getElementById('player').classList.contains('active') &&
-           document.getElementById('player-question').innerHTML !== "") {
-           showPlayerQuestion();
-       }
-   });
+if (!firebase.apps.length) {
+setTimeout(loadDataFromFirebase, 1000);
+return;
 }
 
-// Initialize Firebase data structure
-function initializeFirebaseData() {
-const statusElement = document.getElementById('firebase-init-status');
-if (statusElement) {
-statusElement.textContent = "Initializing Firebase data...";
-statusElement.className = 'url-status';
+database.ref('quizTime').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+quizStartTime = data.startTime;
+quizEndTime = data.endTime;
+localStorage.setItem('quizStartTime', quizStartTime);
+localStorage.setItem('quizEndTime', quizEndTime);
+updateQuizTimeInfo();
 }
-
-database.ref('quizTime').once('value').then((snapshot) => {
-if (!snapshot.exists()) {
-var tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(12, 0, 0, 0);
-var startTime = tomorrow.getTime();
-var endTime = new Date(tomorrow.getTime() + 30 * 60000).getTime();
-
-return database.ref('quizTime').set({
-startTime: startTime,
-endTime: endTime
 });
+
+database.ref('questions').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+questions = Object.values(data);
+} else {
+questions = [];
 }
-}).then(() => {
-return database.ref('questions').once('value');
-}).then((snapshot) => {
-if (!snapshot.exists()) {
-const defaultQuestions = [
-{
-question: "What is 2 + 2?",
-answers: ["3", "4", "5", "6"],
-correct: "4"
-},
-{
-question: "Capital of France?",
-answers: ["London", "Paris", "Berlin", "Rome"],
-correct: "Paris"
+
+localStorage.setItem('quizQuestions', JSON.stringify(questions));
+displayQuestions();
+
+if (document.getElementById('player').classList.contains('active') &&
+document.getElementById('player-question').innerHTML !== "") {
+showPlayerQuestion();
 }
-];
-return database.ref('questions').set(defaultQuestions);
+});
+
+// Load users
+database.ref('users').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+users = Object.values(data);
+} else {
+users = [];
 }
-}).then(() => {
-if (statusElement) {
-statusElement.textContent = "Firebase data initialized successfully!";
-statusElement.className = 'url-status success';
-}
-loadDataFromFirebase();
-}).catch((error) => {
-if (statusElement) {
-statusElement.textContent = "Error initializing Firebase: " + error.message;
-statusElement.className = 'url-status error';
+
+localStorage.setItem('quizUsers', JSON.stringify(users));
+if (document.getElementById('host').classList.contains('active')) {
+displayUsers();
 }
 });
 }
@@ -1035,12 +1380,24 @@ document.getElementById('question-status').className = 'url-status error';
 });
 }
 
-// Save quiz results to Firebase with session management
-function saveToFirebase(playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+// Save users to Firebase
+function saveUsersToFirebase() {
+database.ref('users').set(users).then(() => {
+document.getElementById('user-status').textContent = 'Users saved successfully!';
+document.getElementById('user-status').className = 'url-status success';
+}).catch((error) => {
+document.getElementById('user-status').textContent = 'Error saving users: ' + error.message;
+document.getElementById('user-status').className = 'url-status error';
+});
+}
+
+// Save quiz results to Firebase
+function saveToFirebase(playerCode, playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
 const responseId = database.ref().child('quizResults').push().key;
 
 const quizData = {
-player: playerName || "Unknown Player",
+playerCode: playerCode || "Unknown Code",
+playerName: playerName || "Unknown Player",
 question: question || "Unknown Question",
 selectedAnswer: selectedAnswer || "No Answer",
 correctAnswer: correctAnswer || "Unknown",
@@ -1052,14 +1409,12 @@ sessionId: sessionStorage.getItem('playerSessionId'),
 deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
 };
 
-// Efficient save with error handling
 database.ref('quizResults/' + responseId).set(quizData)
 .then(() => {
 console.log("Data saved successfully for session:", quizData.sessionId);
 })
 .catch((error) => {
 console.error("Save error, retrying:", error);
-// Simple retry logic
 setTimeout(() => {
 database.ref('quizResults/' + responseId).set(quizData);
 }, 500);
@@ -1141,7 +1496,7 @@ function deleteAllResults() {
 database.ref('quizResults').remove()
 .then(() => {
 alert('All quiz results have been deleted successfully!');
-loadQuizResults(); // Refresh the results display
+loadQuizResults();
 })
 .catch((error) => {
 console.error("Error deleting results:", error);
@@ -1180,7 +1535,6 @@ const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).
 const avgResponseTime = totalResponses > 0 ?
 (resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
 
-// Count unique players by session ID
 const uniqueSessions = new Set(resultsArray.map(r => r.sessionId));
 const uniquePlayers = uniqueSessions.size;
 
@@ -1226,7 +1580,7 @@ result.question.substring(0, 30) + '...' : result.question;
 
 resultsHTML += `
 <div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
-<span>${result.player}</span>
+<span>${result.playerName} (${result.playerCode})</span>
 <span title="${result.question}">${shortQuestion}</span>
 <span>${result.selectedAnswer}</span>
 <span>${result.correctAnswer}</span>
@@ -1239,6 +1593,9 @@ resultsHTML += `
 
 resultsHTML += '</div>';
 resultsContainer.innerHTML = resultsHTML;
+
+// Load individual user results
+loadIndividualUserResults(resultsArray);
 })
 .catch((error) => {
 console.error("Error loading results:", error);
@@ -1246,12 +1603,119 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 });
 }
 
+// Load individual user results
+function loadIndividualUserResults(resultsArray) {
+const userResultsContainer = document.getElementById('user-results-container');
+userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
+
+// Group results by playerCode
+const resultsByUser = {};
+
+resultsArray.forEach(result => {
+if (!resultsByUser[result.playerCode]) {
+resultsByUser[result.playerCode] = [];
+}
+resultsByUser[result.playerCode].push(result);
+});
+
+let userResultsHTML = '';
+
+for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
+const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = userResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+userResultsHTML += `
+<div class="user-result-item">
+<div class="user-result-header">
+<div>
+<strong>${userName}</strong> (Code: ${playerCode})
+</div>
+<button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
+</div>
+<div class="user-result-stats">
+<div class="user-stat">
+<span class="user-stat-number">${correctAnswers}</span>
+<span class="user-stat-label">Correct</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
+<span class="user-stat-label">Incorrect</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers}</span>
+<span class="user-stat-label">Total</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${accuracy}%</span>
+<span class="user-stat-label">Accuracy</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${avgResponseTime}s</span>
+<span class="user-stat-label">Avg Time</span>
+</div>
+</div>
+</div>
+`;
+}
+
+userResultsContainer.innerHTML = userResultsHTML;
+}
+
+// Export individual user results
+function exportUserResults(playerCode) {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) {
+alert('No results to export.');
+return;
+}
+
+const allResults = Object.values(results);
+const userResults = allResults.filter(r => r.playerCode === playerCode);
+
+if (userResults.length === 0) {
+alert('No results found for this user.');
+return;
+}
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+const worksheet = XLSX.utils.json_to_sheet(userResults);
+const workbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook, worksheet, "User Results");
+XLSX.writeFile(workbook, `quiz-results-${userName}-${playerCode}.xlsx`);
+alert(`Excel file for ${userName} downloaded successfully!`);
+})
+.catch((error) => {
+console.error("Error exporting user results:", error);
+alert('Error exporting data.');
+});
+}
+
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
-   questions = JSON.parse(savedQuestions);
+questions = JSON.parse(savedQuestions);
 } else {
-   questions = []; // Start with empty array
+questions = [];
+}
+
+// Load users from localStorage
+var savedUsers = localStorage.getItem('quizUsers');
+if (savedUsers) {
+users = JSON.parse(savedUsers);
+} else {
+users = [];
 }
 
 // Load host time settings
@@ -1273,14 +1737,14 @@ var duration = Math.round((quizEndTime - quizStartTime) / 60000);
 document.getElementById('host-quiz-duration').value = duration;
 
 displayQuestions();
+displayUsers();
 }
 
-// Verify admin code - SECURE: Password never visible to others
+// Verify admin code
 function verifyAdmin() {
 var code = document.getElementById('admin-code').value;
 var status = document.getElementById('admin-status');
 
-// Clear the password field for security
 document.getElementById('admin-code').value = '';
 
 if (code === adminCode) {
@@ -1289,12 +1753,46 @@ status.textContent = 'Admin access granted! Features unlocked.';
 status.className = 'url-status success';
 loadQuizResults();
 
-// Hide the admin login section after successful login
 document.querySelector('.admin-section:first-child').style.display = 'none';
 } else {
 status.textContent = 'Invalid admin code. Please try again.';
 status.className = 'url-status error';
 }
+}
+
+// Change admin password
+function changeAdminPassword() {
+var currentPassword = document.getElementById('current-password').value;
+var newPassword = document.getElementById('new-password').value;
+var confirmPassword = document.getElementById('confirm-password').value;
+var status = document.getElementById('password-status');
+
+if (currentPassword !== adminCode) {
+status.textContent = 'Current password is incorrect.';
+status.className = 'url-status error';
+return;
+}
+
+if (newPassword !== confirmPassword) {
+status.textContent = 'New passwords do not match.';
+status.className = 'url-status error';
+return;
+}
+
+if (newPassword.length < 4) {
+status.textContent = 'New password must be at least 4 characters long.';
+status.className = 'url-status error';
+return;
+}
+
+adminCode = newPassword;
+status.textContent = 'Password changed successfully!';
+status.className = 'url-status success';
+
+// Clear the form
+document.getElementById('current-password').value = '';
+document.getElementById('new-password').value = '';
+document.getElementById('confirm-password').value = '';
 }
 
 // Save quiz time configuration
@@ -1330,6 +1828,94 @@ document.getElementById('host-time-status').className = 'url-status';
 }, 3000);
 }
 
+// Add a new user
+function addUser() {
+var userName = document.getElementById('user-name').value;
+var userCode = document.getElementById('user-code').value;
+
+if (!userName || !userCode) {
+document.getElementById('user-status').textContent = 'Please fill in all fields';
+document.getElementById('user-status').className = 'url-status error';
+return;
+}
+
+// Check if code already exists
+if (users.some(u => u.code === userCode)) {
+document.getElementById('user-status').textContent = 'This access code is already in use';
+document.getElementById('user-status').className = 'url-status error';
+return;
+}
+
+var newUser = {
+name: userName,
+code: userCode,
+active: true
+};
+
+users.push(newUser);
+saveUsersToFirebase();
+
+document.getElementById('user-status').textContent = 'User added successfully!';
+document.getElementById('user-status').className = 'url-status success';
+
+document.getElementById('user-name').value = '';
+document.getElementById('user-code').value = '';
+
+setTimeout(() => {
+document.getElementById('user-status').textContent = 'Add users with unique access codes';
+document.getElementById('user-status').className = 'url-status';
+}, 3000);
+}
+
+// Display all users
+function displayUsers() {
+var container = document.getElementById('users-container');
+container.innerHTML = '';
+
+if (users.length === 0) {
+container.innerHTML = '<p>No users added yet.</p>';
+return;
+}
+
+users.forEach((user, index) => {
+var userItem = document.createElement('div');
+userItem.className = 'user-item';
+
+userItem.innerHTML = `
+<div class="user-info">
+<div class="user-name">${user.name}</div>
+<div class="user-code">Access Code: ${user.code}</div>
+</div>
+<span class="user-status status-${user.active ? 'active' : 'inactive'}">
+${user.active ? 'ACTIVE' : 'INACTIVE'}
+</span>
+<div class="user-controls">
+<button class="user-btn toggle" onclick="toggleUserStatus(${index})">
+${user.active ? 'Deactivate' : 'Activate'}
+</button>
+<button class="user-btn delete" onclick="deleteUser(${index})">Delete</button>
+</div>
+`;
+container.appendChild(userItem);
+});
+}
+
+// Toggle user status
+function toggleUserStatus(index) {
+users[index].active = !users[index].active;
+saveUsersToFirebase();
+displayUsers();
+}
+
+// Delete a user
+function deleteUser(index) {
+if (confirm('Are you sure you want to delete this user?')) {
+users.splice(index, 1);
+saveUsersToFirebase();
+displayUsers();
+}
+}
+
 // Add a new question
 function addQuestion() {
 var questionText = document.getElementById('question-text').value;
@@ -1351,7 +1937,8 @@ var correctAnswer = answers[correctAnswerIndex];
 var newQuestion = {
 question: questionText,
 answers: answers,
-correct: correctAnswer
+correct: correctAnswer,
+hidden: false
 };
 
 questions.push(newQuestion);
@@ -1373,7 +1960,7 @@ document.getElementById('question-status').className = 'url-status';
 }, 3000);
 }
 
-// Display all questions
+// Display all questions with show/hide toggle
 function displayQuestions() {
 var container = document.getElementById('questions-container');
 container.innerHTML = '';
@@ -1386,13 +1973,22 @@ return;
 questions.forEach((q, index) => {
 var questionItem = document.createElement('div');
 questionItem.className = 'question-item';
+if (q.hidden) {
+questionItem.classList.add('hidden');
+}
+
 var correctIndex = q.answers.indexOf(q.correct);
+var status = q.hidden ? 'hidden' : 'visible';
 
 questionItem.innerHTML = `
 <strong>Q${index + 1}:</strong> ${q.question}
+<span class="status-badge status-${status}">${status.toUpperCase()}</span>
 <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
 <div class="admin-controls">
 <button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
+<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${index})">
+${q.hidden ? 'Show' : 'Hide'}
+</button>
 <button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
 </div>
 `;
@@ -1404,38 +2000,38 @@ container.appendChild(questionItem);
 function editExistingQuestion(index) {
 var q = questions[index];
 
-// Populate the form with current question data
 document.getElementById('question-text').value = q.question;
 document.getElementById('answer-1').value = q.answers[0];
 document.getElementById('answer-2').value = q.answers[1];
 document.getElementById('answer-3').value = q.answers[2];
 document.getElementById('answer-4').value = q.answers[3];
 
-// Set the correct answer radio button
 var correctIndex = q.answers.indexOf(q.correct);
 document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
 radio.checked = (i === correctIndex);
 });
 
-// Remove the original question
 questions.splice(index, 1);
 saveQuestionsToFirebase();
 
-// Show editing message
 document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
 document.getElementById('question-status').className = 'url-status success';
 
-// Scroll to the form for better UX
 document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Delete a question - ALLOWS deleting even the last question
+// Toggle question visibility
+function toggleQuestionVisibility(index) {
+questions[index].hidden = !questions[index].hidden;
+saveQuestionsToFirebase();
+displayQuestions();
+}
+
+// Delete a question
 function deleteQuestion(index) {
 if (confirm('Are you sure you want to delete this question?')) {
 questions.splice(index, 1);
 saveQuestionsToFirebase();
-
-// Refresh the display
 displayQuestions();
 }
 }
@@ -1486,6 +2082,48 @@ quizActive = false;
 }
 }
 
+// Save quiz progress to sessionStorage
+function saveQuizProgress() {
+var progress = {
+currentIndex: currentIndex,
+playerResults: playerResults,
+timestamp: Date.now()
+};
+sessionStorage.setItem('quizProgress', JSON.stringify(progress));
+}
+
+// Resume quiz from saved progress
+function resumeQuiz() {
+playerCode = sessionStorage.getItem('playerCode');
+var savedProgress = sessionStorage.getItem('quizProgress');
+
+if (savedProgress) {
+var progress = JSON.parse(savedProgress);
+currentIndex = progress.currentIndex || 0;
+playerResults = progress.playerResults || {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0
+};
+}
+
+document.getElementById("player-code").style.display = "none";
+document.getElementById("joinBtn").style.display = "none";
+document.getElementById('player-question').innerHTML = "";
+showPlayerQuestion();
+}
+
+// Reset quiz session
+function resetQuizSession() {
+sessionStorage.removeItem('quizCompleted');
+sessionStorage.removeItem('quizStarted');
+sessionStorage.removeItem('quizProgress');
+sessionStorage.removeItem('playerCode');
+location.reload();
+}
+
 // Countdown timer function
 function startCountdown() {
 timeLeft = 15;
@@ -1498,16 +2136,28 @@ document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 if (timeLeft <= 0) {
 clearInterval(countdownInterval);
-var q = questions[currentIndex];
+var visibleQuestions = questions.filter(q => !q.hidden);
+var q = visibleQuestions[currentIndex];
 var responseTime = (Date.now() - questionStartTime) / 1000;
-var currentPlayerName = playerName || "Unknown Player";
-saveToFirebase(currentPlayerName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+saveToFirebase(playerCode, userName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+
+playerResults.incorrect++;
+playerResults.total++;
+playerResults.responseTimes.push(responseTime);
+playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
+
+saveQuizProgress();
 moveToNextQuestion();
 }
 }, 1000);
 }
 
-// ENHANCEMENT 2: 5-second countdown before next question
+// 5-second countdown before next question
 function startNextQuestionCountdown() {
 var countdownTime = 5;
 document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
@@ -1529,29 +2179,122 @@ moveToNextQuestion();
 // Move to next question automatically
 function moveToNextQuestion() {
 currentIndex++;
-if (currentIndex < questions.length) {
+var visibleQuestions = questions.filter(q => !q.hidden);
+
+if (currentIndex < visibleQuestions.length) {
+saveQuizProgress();
 showPlayerQuestion();
 } else {
-document.getElementById('player-question').innerHTML = "<h3>Quiz Completed!</h3>";
-document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').textContent = "";
+showPlayerResults();
 }
 }
 
-// Player view functions
+// Show player results at the end of quiz
+function showPlayerResults() {
+// Mark quiz as completed
+sessionStorage.setItem('quizCompleted', 'true');
+sessionStorage.removeItem('quizProgress');
+sessionStorage.removeItem('quizStarted');
+
+var avgResponseTime = playerResults.responseTimes.length > 0
+? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+: 0;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+document.getElementById('player-question').innerHTML = `
+<div class="player-results">
+<h2>🎉 Quiz Completed! 🎉</h2>
+<p>Thank you for participating, ${userName}!</p>
+
+<div class="result-stats">
+<div class="result-stat">
+<span class="result-number result-correct">${playerResults.correct}</span>
+<span class="result-label">Correct Answers</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-incorrect">${playerResults.incorrect}</span>
+<span class="result-label">Incorrect Answers</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
+<span class="result-label">Accuracy</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-time">${avgResponseTime}s</span>
+<span class="result-label">Avg Response Time</span>
+</div>
+</div>
+
+<button class="download-btn" onclick="downloadPlayerResults()">
+📥 Download My Results
+</button>
+
+<div class="session-warning">
+<h3>⚠️ Quiz Completed</h3>
+<p>You have completed this quiz.</p>
+<p><strong>Note:</strong> You cannot retake this quiz.</p>
+</div>
+</div>
+`;
+
+document.getElementById('player-answers').innerHTML = "";
+document.getElementById('countdown').textContent = "";
+}
+
+// Download player results as CSV
+function downloadPlayerResults() {
+var avgResponseTime = playerResults.responseTimes.length > 0
+? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+: 0;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+var csvData = [
+['Player Name', 'Player Code', 'Correct Answers', 'Incorrect Answers', 'Total Questions', 'Accuracy', 'Average Response Time'],
+[userName, playerCode, playerResults.correct, playerResults.incorrect, playerResults.total, playerResults.accuracy.toFixed(1) + '%', avgResponseTime + 's']
+];
+
+var csv = csvData.map(row => row.join(',')).join('\n');
+var blob = new Blob([csv], { type: 'text/csv' });
+var url = window.URL.createObjectURL(blob);
+var a = document.createElement('a');
+a.href = url;
+a.download = `quiz-results-${userName}-${new Date().toISOString().split('T')[0]}.csv`;
+a.click();
+window.URL.revokeObjectURL(url);
+}
+
+// Enhanced player view functions with grid layout
 function showPlayerQuestion() {
-var q = questions[currentIndex];
+// Filter out hidden questions
+var visibleQuestions = questions.filter(q => !q.hidden);
+
+if (currentIndex >= visibleQuestions.length) {
+showPlayerResults();
+return;
+}
+
+var q = visibleQuestions[currentIndex];
 document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
 
 var answersDiv = document.getElementById("player-answers");
 answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+
+// Create grid container
+var gridContainer = document.createElement("div");
+gridContainer.className = "answers-grid";
 
 questionStartTime = Date.now();
 
 q.answers.forEach(a => {
 var btn = document.createElement("button");
 btn.className = "answer-btn";
-btn.innerText = a;
+btn.innerHTML = a;
 btn.onclick = function() {
 if (!quizActive) {
 alert("The quiz is not currently active. Please check the quiz schedule.");
@@ -1564,32 +2307,55 @@ var responseTime = (Date.now() - questionStartTime) / 1000;
 
 clearInterval(countdownInterval);
 
-// ENHANCEMENT 2: Start 5-second countdown
-startNextQuestionCountdown();
-
+// Immediately disable all buttons to prevent multiple clicks
 var allButtons = document.querySelectorAll('.answer-btn');
 allButtons.forEach(button => {
 button.disabled = true;
-// ENHANCEMENT 1: Always show colors clearly
-button.style.opacity = "1"; // Ensure full visibility
-if (button.innerText === correct) {
+button.style.pointerEvents = 'none';
+});
+
+// ENHANCED COLOR LOGIC - More reliable with immediate feedback
+allButtons.forEach(button => {
+// Remove any existing classes first
+button.classList.remove('correct', 'incorrect');
+
+if (button.innerHTML === correct) {
+// Correct answer - always show green immediately
 button.classList.add('correct');
-button.classList.remove('incorrect');
-} else if (button.innerText === selected && selected !== correct) {
+} else if (button.innerHTML === selected) {
+// User's wrong selection - show red immediately
 button.classList.add('incorrect');
-button.classList.remove('correct');
 } else {
-// Gray out incorrect options that weren't selected
+// Other options - gray out
 button.style.opacity = "0.6";
 button.style.background = "#f0f0f0";
 }
 });
 
-saveToFirebase(playerName, q.question, selected, correct, responseTime, "Answered");
+// TRACK RESULTS
+if (selected === correct) {
+playerResults.correct++;
+} else {
+playerResults.incorrect++;
+}
+playerResults.total++;
+playerResults.responseTimes.push(responseTime);
+playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered");
+saveQuizProgress();
+
+// Start countdown for next question
+startNextQuestionCountdown();
 };
-answersDiv.appendChild(btn);
+gridContainer.appendChild(btn);
 });
 
+answersDiv.appendChild(gridContainer);
 startCountdown();
 }
 
@@ -1600,13 +2366,60 @@ alert("The quiz is not currently active. Please check the quiz schedule.");
 return;
 }
 
-playerName = document.getElementById("name").value;
-if (playerName.trim() !== "") {
-document.getElementById("name").style.display = "none";
+// Check if user already completed quiz in this session
+if (sessionStorage.getItem('quizCompleted') === 'true') {
+alert("You have already completed this quiz. You cannot retake it.");
+return;
+}
+
+// Check if user already started quiz
+if (sessionStorage.getItem('quizStarted') === 'true' && !sessionStorage.getItem('quizCompleted')) {
+if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
+return;
+}
+}
+
+playerCode = document.getElementById("player-code").value.trim();
+if (playerCode !== "") {
+// Check if user code is valid and active
+const user = users.find(u => u.code === playerCode);
+if (!user) {
+alert("Invalid access code. Please check your code and try again.");
+return;
+}
+
+if (!user.active) {
+alert("Your account is inactive. Please contact the quiz administrator.");
+return;
+}
+
+// Mark quiz as started
+sessionStorage.setItem('quizStarted', 'true');
+sessionStorage.setItem('playerCode', playerCode);
+
+// Reset results when starting new quiz
+playerResults = {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0
+};
+
+// Restore progress if exists
+var savedProgress = sessionStorage.getItem('quizProgress');
+if (savedProgress) {
+var progress = JSON.parse(savedProgress);
+currentIndex = progress.currentIndex || 0;
+playerResults = progress.playerResults || playerResults;
+}
+
+currentIndex = 0;
+document.getElementById("player-code").style.display = "none";
 document.getElementById("joinBtn").style.display = "none";
 showPlayerQuestion();
 } else {
-alert("Please enter your name to join the game.");
+alert("Please enter your access code to join the game.");
 }
 };
 
@@ -1614,31 +2427,61 @@ alert("Please enter your name to join the game.");
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
+// Prevent accidental page refresh
+window.addEventListener('beforeunload', function (e) {
+if (sessionStorage.getItem('quizStarted') === 'true' && sessionStorage.getItem('quizCompleted') !== 'true') {
+e.preventDefault();
+e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
+return 'You have an ongoing quiz. Are you sure you want to leave?';
+}
+});
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
 });
 document.getElementById('player').classList.add('active');
+// Wait for Firebase to load before showing quiz status
+function checkQuizStatusAfterLoad() {
+// Check if user already completed quiz (after Firebase loads)
+if (sessionStorage.getItem('quizCompleted') === 'true') {
+const playerCode = sessionStorage.getItem('playerCode') || 'Unknown';
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Player';
 
+document.getElementById('player-question').innerHTML = `
+<div class="player-results">
+<h2>🏁 Quiz Already Completed</h2>
+<p>Hello <strong>${userName}</strong>, you have successfully completed this quiz!</p>
+<div class="session-warning">
+<h3>⚠️ Attempt Limit Reached</h3>
+<p>Each participant can only complete the quiz once.</p>
+</div>
+</div>
+`;
+document.getElementById("player-code").style.display = "none";
+// Disable the join button instead of hiding it
+document.getElementById("joinBtn").disabled = true;
+document.getElementById("joinBtn").style.background = "#ccc";
+document.getElementById("joinBtn").textContent = "Quiz Completed";
+document.getElementById("joinBtn").style.cursor = "not-allowed";
+}
+}
+// Wait a bit for Firebase to initialize before checking status
+setTimeout(checkQuizStatusAfterLoad, 1000); // 1 second delay
 function initializeApp() {
 try {
 loadDataFromFirebase();
+// Check status again after Firebase fully loads
+setTimeout(checkQuizStatusAfterLoad, 2000);
 } catch (error) {
 setTimeout(initializeApp, 2000);
 }
 }
-
 initializeApp();
-
-// Show system info
-console.log("Quiz System Initialized");
-console.log("Session ID:", sessionStorage.getItem('playerSessionId'));
-console.log("Device Type:", /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
-console.log("Security: Admin password verification is local and secure");
+console.log("Enhanced Kahoot FS with User Management Initialized");
 });
 </script>
 </body>
 </html>
-
-
