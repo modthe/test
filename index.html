@@ -1545,47 +1545,75 @@ resultsByUser[result.playerCode] = [];
 resultsByUser[result.playerCode].push(result);
 });
 
-// Create CSV for each user
-let allUsersCSV = '';
+// Create a clean workbook with separate sheets for each user
+const workbook = XLSX.utils.book_new();
 
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-// User header
-allUsersCSV += `USER: ${userName} (${playerCode})\n`;
+// Prepare data for Excel sheet
+const excelData = [];
 
-// Headers
-const headers = ['Question', 'Selected Answer', 'Correct Answer', 'Response Time', 'Status', 'Timestamp'];
-allUsersCSV += headers.join(',') + '\n';
+// Add header row
+excelData.push([
+'Question Number',
+'Question Text',
+'Selected Answer',
+'Correct Answer',
+'Response Time (seconds)',
+'Status',
+'Timestamp',
+'Result'
+]);
 
-// User results
-userResults.forEach(result => {
-const row = [
-`"${result.question}"`,
-`"${result.selectedAnswer}"`,
-`"${result.correctAnswer}"`,
-result.responseTime + 's',
-result.status,
-result.timestamp
-];
-allUsersCSV += row.join(',') + '\n';
+// Add user results
+userResults.forEach((result, index) => {
+const isCorrect = result.selectedAnswer === result.correctAnswer;
+
+excelData.push([
+index + 1,
+result.question || 'N/A',
+result.selectedAnswer || 'No Answer',
+result.correctAnswer || 'N/A',
+result.responseTime || 0,
+result.status || 'Unknown',
+new Date(result.timestamp).toLocaleString(),
+isCorrect ? 'CORRECT' : 'INCORRECT'
+]);
 });
 
-// Separator between users
-allUsersCSV += '\n' + '='.repeat(50) + '\n\n';
+// Add summary row
+const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = userResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+
+excelData.push([]); // Empty row
+excelData.push(['SUMMARY', '', '', '', '', '', '']);
+excelData.push(['Total Questions:', totalAnswers]);
+excelData.push(['Correct Answers:', correctAnswers]);
+excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers]);
+excelData.push(['Accuracy:', accuracy + '%']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds']);
+
+// Create worksheet
+const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+// Add worksheet to workbook with user name as sheet name
+// Clean sheet name (Excel has restrictions on sheet names)
+let sheetName = `${userName} (${playerCode})`;
+sheetName = sheetName.substring(0, 31); // Excel sheet name limit
+sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+
+XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 });
 
-// Download the file
-const blob = new Blob([allUsersCSV], { type: 'text/csv' });
-const url = window.URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `all-users-results-${new Date().toISOString().split('T')[0]}.csv`;
-a.click();
-window.URL.revokeObjectURL(url);
+// Download the Excel file
+XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
 
-alert('All individual user results downloaded successfully!');
+alert('All individual user results downloaded successfully as Excel file!');
 })
 .catch((error) => {
 console.error("Error exporting all user results:", error);
@@ -2735,4 +2763,5 @@ console.log("Enhanced Kahoot FS with User Management Initialized");
 </script>
 </body>
 </html>
+
 
