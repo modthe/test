@@ -835,6 +835,60 @@ border-radius: 15px;
 font-size: 0.8rem;
 font-weight: bold;
 margin-left: 10px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.model-badge:hover {
+background: #7b1fa2;
+transform: scale(1.05);
+}
+
+.model-item {
+padding: 0.8rem;
+border-bottom: 1px solid #eee;
+display: flex;
+justify-content: space-between;
+align-items: center;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.model-item:hover {
+background: #f3e5f5;
+}
+
+.model-item:last-child {
+border-bottom: none;
+}
+
+.model-info {
+flex: 1;
+}
+
+.model-name {
+font-weight: bold;
+font-size: 1.1rem;
+}
+
+.model-count {
+font-size: 0.8rem;
+color: #666;
+margin-top: 0.2rem;
+}
+
+.model-controls {
+display: flex;
+gap: 5px;
+}
+
+.model-btn {
+padding: 0.3rem 0.8rem;
+font-size: 0.7rem;
+}
+
+.model-btn.delete {
+background: #f44336;
 }
 
 /* Responsive Design */
@@ -922,6 +976,17 @@ align-items: flex-start;
 }
 
 .user-controls {
+margin-top: 0.5rem;
+width: 100%;
+justify-content: flex-end;
+}
+
+.model-item {
+flex-direction: column;
+align-items: flex-start;
+}
+
+.model-controls {
 margin-top: 0.5rem;
 width: 100%;
 justify-content: flex-end;
@@ -1096,7 +1161,7 @@ font-size: 1.1rem;
 <div id="model-status" class="url-status">Create quiz models to organize questions</div>
 
 <div class="question-list">
-<h4>Current Models</h4>
+<h4>Current Models - Click to View Questions</h4>
 <div id="models-container"></div>
 </div>
 </div>
@@ -1164,7 +1229,7 @@ font-size: 1.1rem;
 </div>
 
 <div class="question-list">
-<h3>Current Questions</h3>
+<h3>Current Questions <span id="current-model-display"></span></h3>
 <div id="questions-container"></div>
 </div>
 
@@ -1192,6 +1257,7 @@ font-size: 1.1rem;
 <ol>
 <li>Enter the admin code to access host features</li>
 <li>Create quiz models to organize questions</li>
+<li>Click on model names to view their questions</li>
 <li>Add users with unique access codes</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
@@ -1242,6 +1308,7 @@ font-size: 1.1rem;
 <ol>
 <li><strong>Admin control:</strong> Full control over quiz</li>
 <li><strong>Quiz Models:</strong> Organize questions into different models</li>
+<li><strong>Clickable Models:</strong> Click models to view their questions</li>
 <li><strong>User Management:</strong> Add users with unique access codes</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
@@ -1258,8 +1325,9 @@ font-size: 1.1rem;
 <li>✅ Individual user management</li>
 <li>✅ Admin password change</li>
 <li>✅ Quiz models organization</li>
+<li>✅ Clickable model navigation</li>
 <li>✅ Download all individual user results</li>
-<li>✅ Pass/Fail status based on accuracy</li>
+<li>✅ Pass/Fail status (50% threshold)</li>
 </ul>
 </div>
 </div>
@@ -1377,6 +1445,7 @@ var countdownInterval;
 var timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
 var questionStartTime;
 var quizActive = false;
+var currentModelFilter = null; // Track which model is currently selected
 
 // Player results tracking
 var playerResults = {
@@ -1632,7 +1701,7 @@ const workbook = XLSX.utils.book_new();
 // Sheet 1: All Users Combined
 const allUsersData = [];
 allUsersData.push([
-'User Name', 'User Code', 'Question Number', 'Question Text',
+'User Name', 'User Code', 'Accuracy %', 'Question Number', 'Question Text',
 'Selected Answer', 'Correct Answer', 'Response Time (seconds)',
 'Status', 'Timestamp', 'Result', 'Pass/Fail'
 ]);
@@ -1645,7 +1714,8 @@ const userName = user ? user.name : 'Unknown User';
 const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = userResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const passFail = accuracy >= 70 ? 'PASS' : 'FAIL';
+// FIX: Changed to 50% threshold for pass/fail
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 userResults.forEach((result, index) => {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
@@ -1653,6 +1723,7 @@ const isCorrect = result.selectedAnswer === result.correctAnswer;
 allUsersData.push([
 userName,
 playerCode,
+accuracy + '%',
 `Q${userCounter}.${index + 1}`,
 result.question || 'N/A',
 result.selectedAnswer || 'No Answer',
@@ -1712,7 +1783,8 @@ const totalAnswers = userResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
 (userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-const passFail = accuracy >= 70 ? 'PASS' : 'FAIL';
+// FIX: Changed to 50% threshold for pass/fail
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 excelData.push([]); // Empty row
 excelData.push(['SUMMARY', '', '', '', '', '', '', '']);
@@ -1941,7 +2013,8 @@ const totalAnswers = userResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
 (userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-const passFail = accuracy >= 70 ? 'PASS' : 'FAIL';
+// FIX: Changed to 50% threshold for pass/fail
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
 
 // Find user name
@@ -2151,14 +2224,21 @@ return;
 }
 
 quizModels.forEach((model, index) => {
-// Add to models container
+const questionCount = questions.filter(q => q.modelId === model.id).length;
+
+// Add to models container as clickable items
 var modelItem = document.createElement('div');
-modelItem.className = 'question-item';
+modelItem.className = 'model-item';
+modelItem.onclick = function() {
+filterQuestionsByModel(model.id);
+};
 modelItem.innerHTML = `
-<strong>${model.name}</strong>
-<span class="model-badge">${questions.filter(q => q.modelId === model.id).length} questions</span>
-<div class="admin-controls">
-<button class="admin-btn delete" onclick="deleteQuizModel(${index})">Delete</button>
+<div class="model-info">
+<div class="model-name">${model.name}</div>
+<div class="model-count">${questionCount} questions</div>
+</div>
+<div class="model-controls">
+<button class="model-btn delete" onclick="event.stopPropagation(); deleteQuizModel(${index})">Delete</button>
 </div>
 `;
 container.appendChild(modelItem);
@@ -2171,11 +2251,35 @@ modelSelect.appendChild(option);
 });
 }
 
+// NEW FUNCTION: Filter questions by model
+function filterQuestionsByModel(modelId) {
+currentModelFilter = modelId;
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Model';
+
+// Update display header
+document.getElementById('current-model-display').innerHTML = `- ${modelName}`;
+
+// Display filtered questions
+displayQuestions();
+}
+
+// NEW FUNCTION: Show all questions (clear filter)
+function showAllQuestions() {
+currentModelFilter = null;
+document.getElementById('current-model-display').innerHTML = '';
+displayQuestions();
+}
+
 function deleteQuizModel(index) {
 if (confirm('Are you sure you want to delete this model? Questions in this model will not be deleted but will have no model assigned.')) {
 quizModels.splice(index, 1);
 saveQuizModelsToFirebase();
 displayQuizModels();
+// If we were viewing this model, show all questions
+if (currentModelFilter === quizModels[index]?.id) {
+showAllQuestions();
+}
 }
 }
 
@@ -2415,12 +2519,32 @@ function displayQuestions() {
 var container = document.getElementById('questions-container');
 container.innerHTML = '';
 
-if (questions.length === 0) {
-container.innerHTML = '<p>No questions added yet.</p>';
+// Add "Show All" button when filtered
+if (currentModelFilter) {
+const showAllButton = document.createElement('button');
+showAllButton.className = 'admin-btn';
+showAllButton.textContent = 'Show All Questions';
+showAllButton.onclick = showAllQuestions;
+showAllButton.style.marginBottom = '1rem';
+container.appendChild(showAllButton);
+}
+
+let filteredQuestions = questions;
+
+// Apply model filter if active
+if (currentModelFilter) {
+filteredQuestions = questions.filter(q => q.modelId === currentModelFilter);
+}
+
+if (filteredQuestions.length === 0) {
+container.innerHTML += '<p>No questions found.</p>';
 return;
 }
 
-questions.forEach((q, index) => {
+filteredQuestions.forEach((q, index) => {
+// Find the actual index in the main questions array
+const actualIndex = questions.findIndex(question => question === q);
+
 var questionItem = document.createElement('div');
 questionItem.className = 'question-item';
 if (q.hidden) {
@@ -2433,16 +2557,16 @@ var model = quizModels.find(m => m.id === q.modelId);
 var modelName = model ? model.name : 'No Model';
 
 questionItem.innerHTML = `
-<strong>Q${index + 1}:</strong> ${q.question}
+<strong>Q${actualIndex + 1}:</strong> ${q.question}
 <span class="model-badge">${modelName}</span>
 <span class="status-badge status-${status}">${status.toUpperCase()}</span>
 <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
 <div class="admin-controls">
-<button class="admin-btn edit" onclick="editExistingQuestion(${index})">Edit</button>
-<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${index})">
+<button class="admin-btn edit" onclick="editExistingQuestion(${actualIndex})">Edit</button>
+<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${actualIndex})">
 ${q.hidden ? 'Show' : 'Hide'}
 </button>
-<button class="admin-btn delete" onclick="deleteQuestion(${index})">Delete</button>
+<button class="admin-btn delete" onclick="deleteQuestion(${actualIndex})">Delete</button>
 </div>
 `;
 container.appendChild(questionItem);
@@ -2697,9 +2821,9 @@ var avgResponseTime = playerResults.responseTimes.length > 0
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-// Calculate pass/fail (70% or higher to pass)
+// Calculate pass/fail (50% or higher to pass) - CHANGED FROM 70% TO 50%
 const accuracy = playerResults.accuracy;
-const passFail = accuracy >= 70 ? 'PASS' : 'FAIL';
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
 
 document.getElementById('player-question').innerHTML = `
@@ -2756,9 +2880,9 @@ var avgResponseTime = playerResults.responseTimes.length > 0
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-// Calculate pass/fail
+// Calculate pass/fail - CHANGED FROM 70% TO 50%
 const accuracy = playerResults.accuracy;
-const passFail = accuracy >= 70 ? 'PASS' : 'FAIL';
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 var csvData = [
 ['Player Name', 'Player Code', 'Correct Answers', 'Incorrect Answers', 'Total Questions', 'Accuracy', 'Average Response Time', 'Final Result'],
@@ -3004,7 +3128,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Quiz Models Initialized");
+console.log("Enhanced Kahoot FS with Clickable Models Initialized");
 });
 </script>
 </body>
