@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kahoot FS</title>
+<title>Kahoot FS - Enhanced</title>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -238,14 +238,6 @@ z-index: 2; /* Ensure incorrect answer appears above others */
 opacity: 1 !important;
 pointer-events: none;
 }
-
-/* Force color visibility with higher specificity 
-#player-answers .answer-btn.correct,
-#player-answers .answer-btn.incorrect {
-background-color: inherit !important;
-color: inherit !important;
-border-color: inherit !important;
-}*/
 
 /* Responsive design for mobile */
 @media (max-width: 768px) {
@@ -949,7 +941,7 @@ font-size: 1.1rem;
 <body>
 <div class="container">
 <header>
-<h1>Kahoot FS</h1>
+<h1>Kahoot FS - Enhanced</h1>
 <p class="subtitle">Answer questions within the time limit</p>
 <div class="quiz-timer" id="quiz-timer">Quiz: Not started</div>
 </header>
@@ -1132,6 +1124,7 @@ font-size: 1.1rem;
 <div class="export-buttons">
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
+<button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results</button>
 <button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
@@ -1213,6 +1206,7 @@ font-size: 1.1rem;
 <li>✅ Enhanced answer feedback</li>
 <li>✅ Individual user management</li>
 <li>✅ Admin password change</li>
+<li>✅ Download all individual user results</li>
 </ul>
 </div>
 </div>
@@ -1325,7 +1319,7 @@ var users = [];
 var currentIndex = 0;
 var playerCode = "";
 var countdownInterval;
-var timeLeft = 15;
+var timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
 var questionStartTime;
 var quizActive = false;
 
@@ -1526,6 +1520,75 @@ alert('CSV file downloaded successfully!');
 })
 .catch((error) => {
 console.error("Error exporting to CSV:", error);
+alert('Error exporting data.');
+});
+}
+
+// NEW FUNCTION: Download all individual user results
+function downloadAllUserResults() {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) {
+alert('No results to export.');
+return;
+}
+
+const allResults = Object.values(results);
+const resultsByUser = {};
+
+// Group results by user
+allResults.forEach(result => {
+if (!resultsByUser[result.playerCode]) {
+resultsByUser[result.playerCode] = [];
+}
+resultsByUser[result.playerCode].push(result);
+});
+
+// Create CSV for each user
+let allUsersCSV = '';
+
+Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+// User header
+allUsersCSV += `USER: ${userName} (${playerCode})\n`;
+
+// Headers
+const headers = ['Question', 'Selected Answer', 'Correct Answer', 'Response Time', 'Status', 'Timestamp'];
+allUsersCSV += headers.join(',') + '\n';
+
+// User results
+userResults.forEach(result => {
+const row = [
+`"${result.question}"`,
+`"${result.selectedAnswer}"`,
+`"${result.correctAnswer}"`,
+result.responseTime + 's',
+result.status,
+result.timestamp
+];
+allUsersCSV += row.join(',') + '\n';
+});
+
+// Separator between users
+allUsersCSV += '\n' + '='.repeat(50) + '\n\n';
+});
+
+// Download the file
+const blob = new Blob([allUsersCSV], { type: 'text/csv' });
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `all-users-results-${new Date().toISOString().split('T')[0]}.csv`;
+a.click();
+window.URL.revokeObjectURL(url);
+
+alert('All individual user results downloaded successfully!');
+})
+.catch((error) => {
+console.error("Error exporting all user results:", error);
 alert('Error exporting data.');
 });
 }
@@ -1731,15 +1794,22 @@ const avgResponseTime = totalAnswers > 0 ?
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
+// FIX 5: Get the timestamp of the last answer
+const lastAnswerTime = userResults.length > 0 ?
+new Date(userResults[userResults.length-1].timestamp).toLocaleString() : 'N/A';
+
 userResultsHTML += `
 <div class="user-result-item">
 <div class="user-result-header">
 <div>
 <strong>${userName}</strong> (Code: ${playerCode})
+<br><small>Last answered: ${lastAnswerTime}</small>
 </div>
 <div>
 <button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
 <button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
+<!-- FIX 6: Add delete button for individual user results -->
+<button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
 </div>
 </div>
 <div class="user-result-stats">
@@ -1769,6 +1839,22 @@ userResultsHTML += `
 }
 
 userResultsContainer.innerHTML = userResultsHTML;
+}
+
+// FIX 6: Add function to delete user by code
+function deleteUserByCode(userCode) {
+if (confirm(`Are you sure you want to delete user with code: ${userCode}? This will also delete all their results.`)) {
+// Delete user from users array
+const userIndex = users.findIndex(u => u.code === userCode);
+if (userIndex !== -1) {
+users.splice(userIndex, 1);
+saveUsersToFirebase();
+displayUsers();
+}
+
+// Delete user results
+deleteUserResults(userCode);
+}
 }
 
 // Export individual user results
@@ -2271,7 +2357,7 @@ location.reload();
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 15;
+timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 clearInterval(countdownInterval);
@@ -2586,97 +2672,6 @@ return 'You have an ongoing quiz. Are you sure you want to leave?';
 }
 });
 
-// FIX 5: Add timestamp to individual user results
-function loadIndividualUserResults(resultsArray) {
-const userResultsContainer = document.getElementById('user-results-container');
-userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
-
-// Group results by playerCode
-const resultsByUser = {};
-
-resultsArray.forEach(result => {
-if (!resultsByUser[result.playerCode]) {
-resultsByUser[result.playerCode] = [];
-}
-resultsByUser[result.playerCode].push(result);
-});
-
-let userResultsHTML = '';
-
-for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
-const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = userResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const avgResponseTime = totalAnswers > 0 ?
-(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-
-// Find user name
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
-
-// FIX 5: Get the timestamp of the last answer
-const lastAnswerTime = userResults.length > 0 ?
-new Date(userResults[userResults.length-1].timestamp).toLocaleString() : 'N/A';
-
-userResultsHTML += `
-<div class="user-result-item">
-<div class="user-result-header">
-<div>
-<strong>${userName}</strong> (Code: ${playerCode})
-<br><small>Last answered: ${lastAnswerTime}</small>
-</div>
-<div>
-<button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
-<button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
-<!-- FIX 6: Add delete button for individual user results -->
-<button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
-</div>
-</div>
-<div class="user-result-stats">
-<div class="user-stat">
-<span class="user-stat-number">${correctAnswers}</span>
-<span class="user-stat-label">Correct</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
-<span class="user-stat-label">Incorrect</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${totalAnswers}</span>
-<span class="user-stat-label">Total</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${accuracy}%</span>
-<span class="user-stat-label">Accuracy</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${avgResponseTime}s</span>
-<span class="user-stat-label">Avg Time</span>
-</div>
-</div>
-</div>
-`;
-}
-
-userResultsContainer.innerHTML = userResultsHTML;
-}
-
-// FIX 6: Add function to delete user by code
-function deleteUserByCode(userCode) {
-if (confirm(`Are you sure you want to delete user with code: ${userCode}? This will also delete all their results.`)) {
-// Delete user from users array
-const userIndex = users.findIndex(u => u.code === userCode);
-if (userIndex !== -1) {
-users.splice(userIndex, 1);
-saveUsersToFirebase();
-displayUsers();
-}
-
-// Delete user results
-deleteUserResults(userCode);
-}
-}
-
 // FIX 7: Add response time validation to prevent unrealistic times
 function validateResponseTime(responseTime) {
 // If response time is more than 5 minutes (300 seconds), it's likely an error
@@ -2740,4 +2735,3 @@ console.log("Enhanced Kahoot FS with User Management Initialized");
 </script>
 </body>
 </html>
-
