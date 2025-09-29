@@ -891,6 +891,28 @@ font-size: 0.7rem;
 background: #f44336;
 }
 
+.model-btn.select {
+background: #4caf50;
+}
+
+.model-btn.selected {
+background: #2e7d32;
+}
+
+/* Active Model Display */
+.active-model-display {
+background: #e8f5e9;
+border-left: 4px solid #4caf50;
+padding: 1rem;
+margin: 1rem 0;
+border-radius: 4px;
+}
+
+.active-model-display h3 {
+color: #2e7d32;
+margin-bottom: 0.5rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -1092,6 +1114,13 @@ font-size: 1.1rem;
 </div>
 
 <div id="admin-features" style="display: none;">
+<!-- Active Model Display -->
+<div class="active-model-display">
+<h3>Active Quiz Model</h3>
+<p id="active-model-info">No model selected. Players will see all questions.</p>
+<button onclick="clearActiveModel()" class="model-btn">Clear Selection</button>
+</div>
+
 <!-- Password Change Section -->
 <div class="password-change">
 <h3>Change Admin Password</h3>
@@ -1258,6 +1287,7 @@ font-size: 1.1rem;
 <li>Enter the admin code to access host features</li>
 <li>Create quiz models to organize questions</li>
 <li>Click on model names to view their questions</li>
+<li>Use the "Select" button to set a model as active for the quiz</li>
 <li>Add users with unique access codes</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
@@ -1309,6 +1339,7 @@ font-size: 1.1rem;
 <li><strong>Admin control:</strong> Full control over quiz</li>
 <li><strong>Quiz Models:</strong> Organize questions into different models</li>
 <li><strong>Clickable Models:</strong> Click models to view their questions</li>
+<li><strong>Model Selection:</strong> Select which model players will see</li>
 <li><strong>User Management:</strong> Add users with unique access codes</li>
 <li><strong>Session Isolation:</strong> Each device has separate session</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
@@ -1326,6 +1357,7 @@ font-size: 1.1rem;
 <li>✅ Admin password change</li>
 <li>✅ Quiz models organization</li>
 <li>✅ Clickable model navigation</li>
+<li>✅ Model selection for quizzes</li>
 <li>✅ Download all individual user results</li>
 <li>✅ Pass/Fail status (50% threshold)</li>
 </ul>
@@ -1432,6 +1464,7 @@ if (tabName === 'host') {
 loadHostTimeSettings();
 loadUsers();
 loadQuizModels();
+updateActiveModelDisplay();
 }
 }
 
@@ -1446,6 +1479,7 @@ var timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null; // Track which model is currently selected
+var activeQuizModel = null; // Track which model is active for the quiz
 
 // Player results tracking
 var playerResults = {
@@ -1546,6 +1580,64 @@ if (document.getElementById('host').classList.contains('active')) {
 displayQuizModels();
 }
 });
+
+// Load active quiz model
+database.ref('activeQuizModel').on('value', (snapshot) => {
+const data = snapshot.val();
+if (data) {
+activeQuizModel = data;
+updateActiveModelDisplay();
+} else {
+activeQuizModel = null;
+updateActiveModelDisplay();
+}
+});
+}
+
+// Save active quiz model to Firebase
+function saveActiveQuizModel(modelId) {
+database.ref('activeQuizModel').set(modelId)
+.then(() => {
+console.log("Active quiz model saved to Firebase");
+})
+.catch((error) => {
+console.error("Error saving active quiz model:", error);
+});
+}
+
+// Clear active quiz model
+function clearActiveModel() {
+activeQuizModel = null;
+saveActiveQuizModel(null);
+updateActiveModelDisplay();
+document.getElementById('model-status').textContent = 'Active model cleared. Players will see all questions.';
+document.getElementById('model-status').className = 'url-status success';
+
+setTimeout(() => {
+document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
+document.getElementById('model-status').className = 'url-status';
+}, 3000);
+}
+
+// Update active model display
+function updateActiveModelDisplay() {
+const activeModelInfo = document.getElementById('active-model-info');
+
+if (activeQuizModel) {
+const model = quizModels.find(m => m.id === activeQuizModel);
+const modelName = model ? model.name : 'Unknown Model';
+const questionCount = questions.filter(q => q.modelId === activeQuizModel).length;
+
+activeModelInfo.innerHTML = `
+<strong>${modelName}</strong> - ${questionCount} questions
+<br><small>Players will only see questions from this model</small>
+`;
+} else {
+activeModelInfo.innerHTML = `
+<strong>No model selected</strong>
+<br><small>Players will see all questions from all models</small>
+`;
+}
 }
 
 // Save quiz time to Firebase
@@ -2232,12 +2324,19 @@ modelItem.className = 'model-item';
 modelItem.onclick = function() {
 filterQuestionsByModel(model.id);
 };
+
+// Check if this model is the active one
+const isActive = activeQuizModel === model.id;
+
 modelItem.innerHTML = `
 <div class="model-info">
-<div class="model-name">${model.name}</div>
+<div class="model-name">${model.name} ${isActive ? '⭐' : ''}</div>
 <div class="model-count">${questionCount} questions</div>
 </div>
 <div class="model-controls">
+<button class="model-btn select ${isActive ? 'selected' : ''}" onclick="event.stopPropagation(); selectQuizModel('${model.id}')">
+${isActive ? 'Selected' : 'Select'}
+</button>
 <button class="model-btn delete" onclick="event.stopPropagation(); deleteQuizModel(${index})">Delete</button>
 </div>
 `;
@@ -2249,6 +2348,27 @@ option.value = model.id;
 option.textContent = model.name;
 modelSelect.appendChild(option);
 });
+}
+
+// NEW FUNCTION: Select a model for the quiz
+function selectQuizModel(modelId) {
+activeQuizModel = modelId;
+saveActiveQuizModel(modelId);
+
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Model';
+
+document.getElementById('model-status').textContent = `"${modelName}" is now the active quiz model. Players will only see questions from this model.`;
+document.getElementById('model-status').className = 'url-status success';
+
+// Update the display
+displayQuizModels();
+updateActiveModelDisplay();
+
+setTimeout(() => {
+document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
+document.getElementById('model-status').className = 'url-status';
+}, 5000);
 }
 
 // NEW FUNCTION: Filter questions by model
@@ -2273,6 +2393,11 @@ displayQuestions();
 
 function deleteQuizModel(index) {
 if (confirm('Are you sure you want to delete this model? Questions in this model will not be deleted but will have no model assigned.')) {
+// If this was the active model, clear the active model
+if (activeQuizModel === quizModels[index].id) {
+clearActiveModel();
+}
+
 quizModels.splice(index, 1);
 saveQuizModelsToFirebase();
 displayQuizModels();
@@ -2753,7 +2878,7 @@ document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 if (timeLeft <= 0) {
 clearInterval(countdownInterval);
-var visibleQuestions = questions.filter(q => !q.hidden);
+var visibleQuestions = getVisibleQuestions();
 var q = visibleQuestions[currentIndex];
 var responseTime = (Date.now() - questionStartTime) / 1000;
 
@@ -2793,10 +2918,22 @@ moveToNextQuestion();
 }, 1000);
 }
 
+// Get visible questions based on active model
+function getVisibleQuestions() {
+let visibleQuestions = questions.filter(q => !q.hidden);
+
+// If an active model is selected, filter questions by that model
+if (activeQuizModel) {
+visibleQuestions = visibleQuestions.filter(q => q.modelId === activeQuizModel);
+}
+
+return visibleQuestions;
+}
+
 // Move to next question automatically
 function moveToNextQuestion() {
 currentIndex++;
-var visibleQuestions = questions.filter(q => !q.hidden);
+var visibleQuestions = getVisibleQuestions();
 
 if (currentIndex < visibleQuestions.length) {
 saveQuizProgress();
@@ -2901,8 +3038,8 @@ window.URL.revokeObjectURL(url);
 
 // Enhanced player view functions with grid layout
 function showPlayerQuestion() {
-// Filter out hidden questions
-var visibleQuestions = questions.filter(q => !q.hidden);
+// Get visible questions based on active model
+var visibleQuestions = getVisibleQuestions();
 
 if (currentIndex >= visibleQuestions.length) {
 showPlayerResults();
@@ -3128,7 +3265,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Clickable Models Initialized");
+console.log("Enhanced Kahoot FS with Model Selection Initialized");
 });
 </script>
 </body>
