@@ -2066,8 +2066,8 @@ const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).
 const avgResponseTime = totalResponses > 0 ?
 (resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
 
-const uniqueSessions = new Set(resultsArray.map(r => r.sessionId));
-const uniquePlayers = uniqueSessions.size;
+// FIX: Count unique players by playerCode instead of sessionId
+const uniquePlayers = new Set(resultsArray.map(r => r.playerCode)).size;
 
 let resultsHTML = `
 <div class="stats-container">
@@ -2231,7 +2231,7 @@ deleteUserResults(userCode);
 }
 }
 
-// Export individual user results
+// Export individual user results - FIXED with better formatting
 function exportUserResults(playerCode) {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
@@ -2253,10 +2253,74 @@ return;
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-const worksheet = XLSX.utils.json_to_sheet(userResults);
+// Create a clean workbook with proper formatting
 const workbook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(workbook, worksheet, "User Results");
-XLSX.writeFile(workbook, `quiz-results-${userName}-${playerCode}.xlsx`);
+
+// Create detailed data with proper formatting
+const excelData = [];
+
+// Add header row
+excelData.push([
+'Question Number',
+'Question Text',
+'Selected Answer',
+'Correct Answer',
+'Response Time (seconds)',
+'Status',
+'Timestamp',
+'Result',
+'Model Name'
+]);
+
+// Add user results with proper formatting
+userResults.forEach((result, index) => {
+const isCorrect = result.selectedAnswer === result.correctAnswer;
+const model = quizModels.find(m => m.id === result.modelId);
+const modelName = model ? model.name : 'No Model';
+
+excelData.push([
+index + 1,
+result.question || 'N/A',
+result.selectedAnswer || 'No Answer',
+result.correctAnswer || 'N/A',
+result.responseTime || 0,
+result.status || 'Unknown',
+new Date(result.timestamp).toLocaleString(),
+isCorrect ? 'CORRECT' : 'INCORRECT',
+modelName
+]);
+});
+
+// Add summary section
+const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = userResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
+excelData.push([]); // Empty row
+excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
+excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
+excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
+
+// Create worksheet
+const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+// Add worksheet to workbook
+let sheetName = `${userName} (${playerCode})`;
+sheetName = sheetName.substring(0, 31); // Excel sheet name limit
+sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+
+XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+// Download the Excel file
+XLSX.writeFile(workbook, `quiz-results-${userName}-${playerCode}-${new Date().toISOString().split('T')[0]}.xlsx`);
+
 alert(`Excel file for ${userName} downloaded successfully!`);
 })
 .catch((error) => {
