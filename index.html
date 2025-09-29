@@ -899,6 +899,10 @@ background: #4caf50;
 background: #2e7d32;
 }
 
+.model-btn.deselect {
+background: #ff9800;
+}
+
 /* Active Model Display */
 .active-model-display {
 background: #e8f5e9;
@@ -911,6 +915,24 @@ border-radius: 4px;
 .active-model-display h3 {
 color: #2e7d32;
 margin-bottom: 0.5rem;
+}
+
+/* Quick Navigation */
+.quick-nav {
+display: flex;
+gap: 10px;
+margin: 1rem 0;
+flex-wrap: wrap;
+}
+
+.quick-nav-btn {
+background: #6e8efb;
+padding: 0.5rem 1rem;
+font-size: 0.8rem;
+}
+
+.quick-nav-btn:hover {
+background: #5a7df9;
 }
 
 /* Responsive Design */
@@ -1013,6 +1035,10 @@ margin-top: 0.5rem;
 width: 100%;
 justify-content: flex-end;
 }
+
+.quick-nav {
+flex-direction: column;
+}
 }
 
 @media (min-width: 1200px) {
@@ -1114,15 +1140,26 @@ font-size: 1.1rem;
 </div>
 
 <div id="admin-features" style="display: none;">
+<!-- Quick Navigation -->
+<div class="quick-nav">
+<button class="quick-nav-btn" onclick="scrollToSection('active-model')">Active Model</button>
+<button class="quick-nav-btn" onclick="scrollToSection('password-change')">Password</button>
+<button class="quick-nav-btn" onclick="scrollToSection('time-config')">Quiz Time</button>
+<button class="quick-nav-btn" onclick="scrollToSection('quiz-model')">Models</button>
+<button class="quick-nav-btn" onclick="scrollToSection('user-management')">Users</button>
+<button class="quick-nav-btn" onclick="scrollToSection('question-management')">Questions</button>
+<button class="quick-nav-btn" onclick="scrollToSection('quiz-results')">Results</button>
+</div>
+
 <!-- Active Model Display -->
-<div class="active-model-display">
+<div class="active-model-display" id="active-model">
 <h3>Active Quiz Model</h3>
 <p id="active-model-info">No model selected. Players will see all questions.</p>
-<button onclick="clearActiveModel()" class="model-btn">Clear Selection</button>
+<button onclick="clearActiveModel()" class="model-btn deselect">Clear Selection</button>
 </div>
 
 <!-- Password Change Section -->
-<div class="password-change">
+<div class="password-change" id="password-change">
 <h3>Change Admin Password</h3>
 <div class="form-group">
 <label for="current-password">Current Password:</label>
@@ -1140,7 +1177,7 @@ font-size: 1.1rem;
 <div id="password-status" class="url-status">Change your admin password here</div>
 </div>
 
-<div class="time-config">
+<div class="time-config" id="time-config">
 <h3>Quiz Timing Configuration</h3>
 <p>Set when your quiz will be active</p>
 
@@ -1178,7 +1215,7 @@ font-size: 1.1rem;
 </div>
 
 <!-- Quiz Models Section -->
-<div class="quiz-model">
+<div class="quiz-model" id="quiz-model">
 <h3>Quiz Models Management</h3>
 
 <div class="form-group">
@@ -1196,7 +1233,7 @@ font-size: 1.1rem;
 </div>
 
 <!-- User Management Section -->
-<div class="user-management">
+<div class="user-management" id="user-management">
 <h3>User Management</h3>
 
 <div class="form-group">
@@ -1218,7 +1255,7 @@ font-size: 1.1rem;
 </div>
 </div>
 
-<div class="admin-section">
+<div class="admin-section" id="question-management">
 <h3>Question Management</h3>
 
 <div class="form-group">
@@ -1262,7 +1299,7 @@ font-size: 1.1rem;
 <div id="questions-container"></div>
 </div>
 
-<div class="admin-section">
+<div class="admin-section" id="quiz-results">
 <h3>Quiz Results</h3>
 <div class="export-buttons">
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
@@ -1288,6 +1325,7 @@ font-size: 1.1rem;
 <li>Create quiz models to organize questions</li>
 <li>Click on model names to view their questions</li>
 <li>Use the "Select" button to set a model as active for the quiz</li>
+<li>Use the "Deselect" button to remove a model from being active</li>
 <li>Add users with unique access codes</li>
 <li>Set the date and time for your quiz</li>
 <li>Add questions using the question management form</li>
@@ -1468,6 +1506,11 @@ updateActiveModelDisplay();
 }
 }
 
+// Quick navigation function
+function scrollToSection(sectionId) {
+document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+}
+
 // Initialize variables
 var questions = [];
 var users = [];
@@ -1610,6 +1653,7 @@ function clearActiveModel() {
 activeQuizModel = null;
 saveActiveQuizModel(null);
 updateActiveModelDisplay();
+displayQuizModels(); // Refresh the models display
 document.getElementById('model-status').textContent = 'Active model cleared. Players will see all questions.';
 document.getElementById('model-status').className = 'url-status success';
 
@@ -1688,7 +1732,7 @@ document.getElementById('model-status').className = 'url-status error';
 }
 
 // Save quiz results to Firebase
-function saveToFirebase(playerCode, playerName, question, selectedAnswer, correctAnswer, responseTime, status) {
+function saveToFirebase(playerCode, playerName, question, selectedAnswer, correctAnswer, responseTime, status, modelId) {
 const responseId = database.ref().child('quizResults').push().key;
 
 const quizData = {
@@ -1702,7 +1746,8 @@ status: status || "Unknown",
 timestamp: new Date().toISOString(),
 questionIndex: currentIndex,
 sessionId: getSessionId(),
-deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+modelId: modelId || "No Model"
 };
 
 database.ref('quizResults/' + responseId).set(quizData)
@@ -1793,7 +1838,7 @@ const workbook = XLSX.utils.book_new();
 // Sheet 1: All Users Combined
 const allUsersData = [];
 allUsersData.push([
-'User Name', 'User Code', 'Accuracy %', 'Question Number', 'Question Text',
+'User Name', 'User Code', 'Model Name', 'Accuracy %', 'Question Number', 'Question Text',
 'Selected Answer', 'Correct Answer', 'Response Time (seconds)',
 'Status', 'Timestamp', 'Result', 'Pass/Fail'
 ]);
@@ -1811,10 +1856,13 @@ const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 userResults.forEach((result, index) => {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
+const model = quizModels.find(m => m.id === result.modelId);
+const modelName = model ? model.name : 'No Model';
 
 allUsersData.push([
 userName,
 playerCode,
+modelName,
 accuracy + '%',
 `Q${userCounter}.${index + 1}`,
 result.question || 'N/A',
@@ -1850,12 +1898,15 @@ excelData.push([
 'Response Time (seconds)',
 'Status',
 'Timestamp',
-'Result'
+'Result',
+'Model Name'
 ]);
 
 // Add user results
 userResults.forEach((result, index) => {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
+const model = quizModels.find(m => m.id === result.modelId);
+const modelName = model ? model.name : 'No Model';
 
 excelData.push([
 index + 1,
@@ -1865,7 +1916,8 @@ result.correctAnswer || 'N/A',
 result.responseTime || 0,
 result.status || 'Unknown',
 new Date(result.timestamp).toLocaleString(),
-isCorrect ? 'CORRECT' : 'INCORRECT'
+isCorrect ? 'CORRECT' : 'INCORRECT',
+modelName
 ]);
 });
 
@@ -1879,13 +1931,13 @@ const avgResponseTime = totalAnswers > 0 ?
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 excelData.push([]); // Empty row
-excelData.push(['SUMMARY', '', '', '', '', '', '', '']);
-excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
-excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
-excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
-excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
-excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
-excelData.push(['Final Result:', passFail, '', '', '', '', '', '']);
+excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
+excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
+excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
+excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
 
 // Create worksheet
 const worksheet = XLSX.utils.aoa_to_sheet(excelData);
@@ -2047,7 +2099,7 @@ let resultsHTML = `
 
 resultsHTML += '<div class="results-table">';
 resultsHTML += '<div class="result-header">';
-resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Device</span>';
+resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Device</span><span>Model</span>';
 resultsHTML += '</div>';
 
 resultsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -2056,6 +2108,8 @@ resultsArray.forEach((result) => {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
 const shortQuestion = result.question.length > 30 ?
 result.question.substring(0, 30) + '...' : result.question;
+const model = quizModels.find(m => m.id === result.modelId);
+const modelName = model ? model.name : 'No Model';
 
 resultsHTML += `
 <div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
@@ -2066,6 +2120,7 @@ resultsHTML += `
 <span>${result.responseTime}s</span>
 <span>${result.status}</span>
 <span>${result.deviceType}</span>
+<span>${modelName}</span>
 </div>
 `;
 });
@@ -2334,9 +2389,10 @@ modelItem.innerHTML = `
 <div class="model-count">${questionCount} questions</div>
 </div>
 <div class="model-controls">
-<button class="model-btn select ${isActive ? 'selected' : ''}" onclick="event.stopPropagation(); selectQuizModel('${model.id}')">
-${isActive ? 'Selected' : 'Select'}
-</button>
+${isActive ?
+`<button class="model-btn deselect" onclick="event.stopPropagation(); deselectQuizModel()">Deselect</button>` :
+`<button class="model-btn select" onclick="event.stopPropagation(); selectQuizModel('${model.id}')">Select</button>`
+}
 <button class="model-btn delete" onclick="event.stopPropagation(); deleteQuizModel(${index})">Delete</button>
 </div>
 `;
@@ -2359,6 +2415,24 @@ const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Model';
 
 document.getElementById('model-status').textContent = `"${modelName}" is now the active quiz model. Players will only see questions from this model.`;
+document.getElementById('model-status').className = 'url-status success';
+
+// Update the display
+displayQuizModels();
+updateActiveModelDisplay();
+
+setTimeout(() => {
+document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
+document.getElementById('model-status').className = 'url-status';
+}, 5000);
+}
+
+// NEW FUNCTION: Deselect a model for the quiz
+function deselectQuizModel() {
+activeQuizModel = null;
+saveActiveQuizModel(null);
+
+document.getElementById('model-status').textContent = 'Model deselected. Players will see all questions.';
 document.getElementById('model-status').className = 'url-status success';
 
 // Update the display
@@ -2395,7 +2469,7 @@ function deleteQuizModel(index) {
 if (confirm('Are you sure you want to delete this model? Questions in this model will not be deleted but will have no model assigned.')) {
 // If this was the active model, clear the active model
 if (activeQuizModel === quizModels[index].id) {
-clearActiveModel();
+deselectQuizModel();
 }
 
 quizModels.splice(index, 1);
@@ -2681,8 +2755,12 @@ var status = q.hidden ? 'hidden' : 'visible';
 var model = quizModels.find(m => m.id === q.modelId);
 var modelName = model ? model.name : 'No Model';
 
+// Calculate the question number within the current model
+const modelQuestions = questions.filter(question => question.modelId === q.modelId);
+const modelQuestionIndex = modelQuestions.indexOf(q) + 1;
+
 questionItem.innerHTML = `
-<strong>Q${actualIndex + 1}:</strong> ${q.question}
+<strong>Q${modelQuestionIndex}:</strong> ${q.question}
 <span class="model-badge">${modelName}</span>
 <span class="status-badge status-${status}">${status.toUpperCase()}</span>
 <div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
@@ -2886,7 +2964,7 @@ var responseTime = (Date.now() - questionStartTime) / 1000;
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-saveToFirebase(playerCode, userName, q.question, "No Answer", q.correct, responseTime, "Unanswered");
+saveToFirebase(playerCode, userName, q.question, "No Answer", q.correct, responseTime, "Unanswered", q.modelId);
 
 playerResults.incorrect++;
 playerResults.total++;
@@ -3113,7 +3191,7 @@ playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered");
+saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
 saveQuizProgress();
 
 // Start countdown for next question
@@ -3265,7 +3343,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Model Selection Initialized");
+console.log("Enhanced Kahoot FS with Model Management Initialized");
 });
 </script>
 </body>
