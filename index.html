@@ -1800,153 +1800,174 @@ alert('Error exporting data.');
 }
 
 // NEW FUNCTION: Download all individual user results with improved format
+// NEW FUNCTION: Download all individual user results with improved format
 function downloadAllUserResults() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('No results to export.');
-return;
-}
+    database.ref('quizResults').once('value')
+    .then((snapshot) => {
+        const results = snapshot.val();
+        if (!results) {
+            alert('No results to export.');
+            return;
+        }
 
-const allResults = Object.values(results);
-const resultsByUser = {};
+        const allResults = Object.values(results);
+        const resultsByUser = {};
 
-// Group results by user
-allResults.forEach(result => {
-if (!resultsByUser[result.playerCode]) {
-resultsByUser[result.playerCode] = [];
-}
-resultsByUser[result.playerCode].push(result);
-});
+        // Group results by user
+        allResults.forEach(result => {
+            if (!resultsByUser[result.playerCode]) {
+                resultsByUser[result.playerCode] = [];
+            }
+            resultsByUser[result.playerCode].push(result);
+        });
 
-// Create a clean workbook with separate sheets
-const workbook = XLSX.utils.book_new();
+        // Create a clean workbook with separate sheets
+        const workbook = XLSX.utils.book_new();
 
-// Sheet 1: All Users Combined
-const allUsersData = [];
-allUsersData.push([
-'User Name', 'User Code', 'Model Name', 'Accuracy %', 'Question Number', 'Question Text',
-'Selected Answer', 'Correct Answer', 'Response Time (seconds)',
-'Status', 'Timestamp', 'Result', 'Pass/Fail'
-]);
+        // Sheet 1: All Users Combined (ONE ROW PER USER)
+        const allUsersData = [];
+        
+        // Header row for All Users Combined sheet
+        allUsersData.push([
+            'Player Name', 
+            'Code', 
+            'Model', 
+            'Number of Questions Answered', 
+            'Correct Answers', 
+            'Wrong Answers', 
+            'Accuracy %', 
+            'Response Time Avg (seconds)',
+            'Pass/Fail'
+        ]);
 
-let userCounter = 1;
-Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+        // Process each user and create ONE ROW per user
+        Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
+            const user = users.find(u => u.code === playerCode);
+            const userName = user ? user.name : 'Unknown User';
 
-const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = userResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-// FIX: Changed to 50% threshold for pass/fail
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+            // Calculate user statistics
+            const totalQuestions = userResults.length;
+            const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+            const wrongAnswers = totalQuestions - correctAnswers;
+            const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
+            
+            // Calculate average response time
+            const totalResponseTime = userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+            const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
+            
+            // Determine pass/fail (50% threshold)
+            const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-userResults.forEach((result, index) => {
-const isCorrect = result.selectedAnswer === result.correctAnswer;
-const model = quizModels.find(m => m.id === result.modelId);
-const modelName = model ? model.name : 'No Model';
+            // Get the model name (use the most common model or first one)
+            const modelCounts = {};
+            userResults.forEach(result => {
+                const model = quizModels.find(m => m.id === result.modelId);
+                const modelName = model ? model.name : 'No Model';
+                modelCounts[modelName] = (modelCounts[modelName] || 0) + 1;
+            });
+            
+            let primaryModel = 'Mixed Models';
+            let maxCount = 0;
+            Object.entries(modelCounts).forEach(([modelName, count]) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    primaryModel = modelName;
+                }
+            });
 
-allUsersData.push([
-userName,
-playerCode,
-modelName,
-accuracy + '%',
-`Q${userCounter}.${index + 1}`,
-result.question || 'N/A',
-result.selectedAnswer || 'No Answer',
-result.correctAnswer || 'N/A',
-result.responseTime || 0,
-result.status || 'Unknown',
-new Date(result.timestamp).toLocaleString(),
-isCorrect ? 'CORRECT' : 'INCORRECT',
-passFail
-]);
-});
+            // Add ONE ROW for this user with all their summary data
+            allUsersData.push([
+                userName,
+                playerCode,
+                primaryModel,
+                totalQuestions,
+                correctAnswers,
+                wrongAnswers,
+                accuracy + '%',
+                avgResponseTime,
+                passFail
+            ]);
+        });
 
-userCounter++;
-});
+        const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
+        XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
 
-const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
-XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+        // Sheet 2: Individual User Sheets (keep the detailed breakdown)
+        Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
+            const user = users.find(u => u.code === playerCode);
+            const userName = user ? user.name : 'Unknown User';
 
-// Sheet 2: Individual User Sheets
-Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+            const excelData = [];
 
-const excelData = [];
+            // Add header row for individual sheet
+            excelData.push([
+                'Question Number',
+                'Question Text',
+                'Selected Answer',
+                'Correct Answer',
+                'Response Time (seconds)',
+                'Status',
+                'Timestamp',
+                'Result',
+                'Model Name'
+            ]);
 
-// Add header row
-excelData.push([
-'Question Number',
-'Question Text',
-'Selected Answer',
-'Correct Answer',
-'Response Time (seconds)',
-'Status',
-'Timestamp',
-'Result',
-'Model Name'
-]);
+            // Add user results
+            userResults.forEach((result, index) => {
+                const isCorrect = result.selectedAnswer === result.correctAnswer;
+                const model = quizModels.find(m => m.id === result.modelId);
+                const modelName = model ? model.name : 'No Model';
 
-// Add user results
-userResults.forEach((result, index) => {
-const isCorrect = result.selectedAnswer === result.correctAnswer;
-const model = quizModels.find(m => m.id === result.modelId);
-const modelName = model ? model.name : 'No Model';
+                excelData.push([
+                    index + 1,
+                    result.question || 'N/A',
+                    result.selectedAnswer || 'No Answer',
+                    result.correctAnswer || 'N/A',
+                    result.responseTime || 0,
+                    result.status || 'Unknown',
+                    new Date(result.timestamp).toLocaleString(),
+                    isCorrect ? 'CORRECT' : 'INCORRECT',
+                    modelName
+                ]);
+            });
 
-excelData.push([
-index + 1,
-result.question || 'N/A',
-result.selectedAnswer || 'No Answer',
-result.correctAnswer || 'N/A',
-result.responseTime || 0,
-result.status || 'Unknown',
-new Date(result.timestamp).toLocaleString(),
-isCorrect ? 'CORRECT' : 'INCORRECT',
-modelName
-]);
-});
+            // Add summary row for individual sheet
+            const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+            const totalAnswers = userResults.length;
+            const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+            const avgResponseTime = totalAnswers > 0 ?
+                (userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+            const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-// Add summary row
-const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = userResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const avgResponseTime = totalAnswers > 0 ?
-(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-// FIX: Changed to 50% threshold for pass/fail
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+            excelData.push([]); // Empty row
+            excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
+            excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
+            excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
+            excelData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
+            excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
+            excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
+            excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
 
-excelData.push([]); // Empty row
-excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
-excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
-excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
-excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
+            // Create worksheet
+            const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
-// Create worksheet
-const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+            // Add worksheet to workbook with user name as sheet name
+            let sheetName = `${userName} (${playerCode})`;
+            sheetName = sheetName.substring(0, 31); // Excel sheet name limit
+            sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
 
-// Add worksheet to workbook with user name as sheet name
-let sheetName = `${userName} (${playerCode})`;
-sheetName = sheetName.substring(0, 31); // Excel sheet name limit
-sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        });
 
-XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-});
+        // Download the Excel file
+        XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
 
-// Download the Excel file
-XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
-
-alert('All individual user results downloaded successfully as Excel file!');
-})
-.catch((error) => {
-console.error("Error exporting all user results:", error);
-alert('Error exporting data.');
-});
+        alert('All individual user results downloaded successfully as Excel file!');
+    })
+    .catch((error) => {
+        console.error("Error exporting all user results:", error);
+        alert('Error exporting data.');
+    });
 }
 
 function convertToCSV(data) {
@@ -3400,6 +3421,7 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
 
 
 
