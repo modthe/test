@@ -1506,7 +1506,7 @@ var quizModels = [];
 var currentIndex = 0;
 var playerCode = "";
 var countdownInterval;
-var timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
+var timeLeft = 25; // CHANGE THIS TO ADJUST QUESTION TIME
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null; // Track which model is currently selected
@@ -3019,7 +3019,7 @@ location.reload();
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 15; // CHANGE THIS TO ADJUST QUESTION TIME
+timeLeft = 25; // CHANGE THIS TO ADJUST QUESTION TIME
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 clearInterval(countdownInterval);
@@ -3421,6 +3421,7 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
 
 
 
