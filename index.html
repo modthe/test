@@ -935,6 +935,89 @@ font-size: 0.8rem;
 background: #5a7df9;
 }
 
+/* Model Selection Modal */
+.modal {
+display: none;
+position: fixed;
+z-index: 1000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+background-color: white;
+margin: 10% auto;
+padding: 2rem;
+border-radius: 10px;
+width: 90%;
+max-width: 500px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1rem;
+}
+
+.close-modal {
+background: none;
+border: none;
+font-size: 1.5rem;
+cursor: pointer;
+color: #666;
+}
+
+.close-modal:hover {
+color: #333;
+}
+
+.model-selection-list {
+max-height: 300px;
+overflow-y: auto;
+margin: 1rem 0;
+}
+
+.model-selection-item {
+padding: 1rem;
+border: 1px solid #ddd;
+border-radius: 5px;
+margin-bottom: 0.5rem;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.model-selection-item:hover {
+background: #f5f5f5;
+border-color: #6e8efb;
+}
+
+.model-selection-item.selected {
+background: #e8f5e9;
+border-color: #4caf50;
+}
+
+/* Quiz Separator */
+.quiz-separator {
+border-top: 2px dashed #ddd;
+margin: 2rem 0;
+padding-top: 1rem;
+}
+
+.quiz-title {
+font-size: 1.2rem;
+font-weight: bold;
+color: #6e8efb;
+margin-bottom: 1rem;
+padding: 0.5rem;
+background: #f8f9fa;
+border-radius: 5px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -1038,6 +1121,12 @@ justify-content: flex-end;
 
 .quick-nav {
 flex-direction: column;
+}
+
+.modal-content {
+margin: 5% auto;
+width: 95%;
+padding: 1rem;
 }
 }
 
@@ -1237,6 +1326,7 @@ font-size: 1.1rem;
 <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Use this if questions lose their model association:</p>
 <button onclick="recoverMissingModels()" class="model-btn" style="background: #ff9800;">Recover Missing Models</button>
 <button onclick="validateAllModels()" class="model-btn" style="background: #2196f3;">Validate All Models</button>
+<button onclick="debugModelQuestions()" class="model-btn" style="background: #607d8b;">Debug Models & Questions</button>
 </div>
 </div>
 
@@ -1400,6 +1490,23 @@ font-size: 1.1rem;
 </div>
 </div>
 
+<!-- Model Selection Modal -->
+<div id="modelSelectionModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>Select Model to Export</h3>
+<button class="close-modal" onclick="closeModelSelection()">&times;</button>
+</div>
+<div class="model-selection-list" id="modelSelectionList">
+<!-- Models will be populated here -->
+</div>
+<div class="modal-footer">
+<button onclick="exportSelectedModel()" style="background: #4caf50; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Export Selected Model</button>
+<button onclick="closeModelSelection()" style="background: #f44336; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; margin-left: 10px;">Cancel</button>
+</div>
+</div>
+</div>
+
 <script>
 // Firebase configuration
 const firebaseConfig = {
@@ -1514,11 +1621,13 @@ var quizModels = [];
 var currentIndex = 0;
 var playerCode = "";
 var countdownInterval;
-var timeLeft = 25;
+var timeLeft = 15;
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null;
 var activeQuizModel = null;
+var selectedUserForExport = null;
+var selectedModelForExport = null;
 
 // Player results tracking
 var playerResults = {
@@ -1807,7 +1916,7 @@ alert('Error exporting data.');
 });
 }
 
-// Download all individual user results with improved format
+// Download all individual user results with improved format - SEPARATED BY QUIZ/MODEL
 function downloadAllUserResults() {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
@@ -1831,139 +1940,165 @@ resultsByUser[result.playerCode].push(result);
 // Create a clean workbook with separate sheets
 const workbook = XLSX.utils.book_new();
 
-// Sheet 1: All Users Combined (ONE ROW PER USER)
+// Sheet 1: All Users Combined (ONE ROW PER USER PER QUIZ)
 const allUsersData = [];
-        
+
 // Header row for All Users Combined sheet
 allUsersData.push([
-    'Player Name', 
-    'Code', 
-    'Model', 
-    'Number of Questions Answered', 
-    'Correct Answers', 
-    'Wrong Answers', 
-    'Accuracy %', 
-    'Response Time Avg (seconds)',
-    'Pass/Fail'
+'Player Name',
+'Code',
+'Quiz Model',
+'Number of Questions Answered',
+'Correct Answers',
+'Wrong Answers',
+'Accuracy %',
+'Response Time Avg (seconds)',
+'Pass/Fail'
 ]);
 
-// Process each user and create ONE ROW per user
+// Process each user and create ONE ROW per user per quiz
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-    const user = users.find(u => u.code === playerCode);
-    const userName = user ? user.name : 'Unknown User';
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
 
-    // Calculate user statistics
-    const totalQuestions = userResults.length;
-    const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-    const wrongAnswers = totalQuestions - correctAnswers;
-    const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
-    
-    // Calculate average response time
-    const totalResponseTime = userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
-    const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
-    
-    // Determine pass/fail (50% threshold)
-    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+// Group results by model (quiz)
+const resultsByModel = {};
+userResults.forEach(result => {
+if (!resultsByModel[result.modelId]) {
+resultsByModel[result.modelId] = [];
+}
+resultsByModel[result.modelId].push(result);
+});
 
-    // Get the model name (use the most common model or first one)
-    const modelCounts = {};
-    userResults.forEach(result => {
-        const model = quizModels.find(m => m.id === result.modelId);
-        const modelName = model ? model.name : 'No Model';
-        modelCounts[modelName] = (modelCounts[modelName] || 0) + 1;
-    });
-    
-    let primaryModel = 'Mixed Models';
-    let maxCount = 0;
-    Object.entries(modelCounts).forEach(([modelName, count]) => {
-        if (count > maxCount) {
-            maxCount = count;
-            primaryModel = modelName;
-        }
-    });
+// Create a row for each quiz the user took
+Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Quiz';
 
-    // Add ONE ROW for this user with all their summary data
-    allUsersData.push([
-        userName,
-        playerCode,
-        primaryModel,
-        totalQuestions,
-        correctAnswers,
-        wrongAnswers,
-        accuracy + '%',
-        avgResponseTime,
-        passFail
-    ]);
+// Calculate user statistics for this specific quiz
+const totalQuestions = modelResults.length;
+const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const wrongAnswers = totalQuestions - correctAnswers;
+const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
+
+// Calculate average response time for this quiz
+const totalResponseTime = modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
+
+// Determine pass/fail (50% threshold) for this quiz
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
+// Add ONE ROW for this user for this specific quiz
+allUsersData.push([
+userName,
+playerCode,
+modelName,
+totalQuestions,
+correctAnswers,
+wrongAnswers,
+accuracy + '%',
+avgResponseTime,
+passFail
+]);
+});
 });
 
 const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
 XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
 
-// Sheet 2: Individual User Sheets (keep the detailed breakdown)
+// Sheet 2: Individual User Sheets (SEPARATED BY QUIZ)
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-    const user = users.find(u => u.code === playerCode);
-    const userName = user ? user.name : 'Unknown User';
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
 
-    const excelData = [];
+// Group results by model (quiz)
+const resultsByModel = {};
+userResults.forEach(result => {
+if (!resultsByModel[result.modelId]) {
+resultsByModel[result.modelId] = [];
+}
+resultsByModel[result.modelId].push(result);
+});
 
-    // Add header row for individual sheet
-    excelData.push([
-        'Question Number',
-        'Question Text',
-        'Selected Answer',
-        'Correct Answer',
-        'Response Time (seconds)',
-        'Status',
-        'Timestamp',
-        'Result',
-        'Model Name'
-    ]);
+// Create a separate section for each quiz
+let quizCounter = 1;
+Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Quiz';
 
-    // Add user results
-    userResults.forEach((result, index) => {
-        const isCorrect = result.selectedAnswer === result.correctAnswer;
-        const model = quizModels.find(m => m.id === result.modelId);
-        const modelName = model ? model.name : 'No Model';
+const excelData = [];
 
-        excelData.push([
-            index + 1,
-            result.question || 'N/A',
-            result.selectedAnswer || 'No Answer',
-            result.correctAnswer || 'N/A',
-            result.responseTime || 0,
-            result.status || 'Unknown',
-            new Date(result.timestamp).toLocaleString(),
-            isCorrect ? 'CORRECT' : 'INCORRECT',
-            modelName
-        ]);
-    });
+// Add quiz title
+excelData.push([`QUIZ ${quizCounter}: ${modelName}`]);
+excelData.push([]); // Empty row
 
-    // Add summary row for individual sheet
-    const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-    const totalAnswers = userResults.length;
-    const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-    const avgResponseTime = totalAnswers > 0 ?
-        (userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+// Add header row for this quiz
+excelData.push([
+'Question Number',
+'Question Text',
+'Selected Answer',
+'Correct Answer',
+'Response Time (seconds)',
+'Status',
+'Timestamp',
+'Result'
+]);
 
-    excelData.push([]); // Empty row
-    excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
-    excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
-    excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
-    excelData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
-    excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
-    excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
-    excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
+// Add user results for this quiz
+modelResults.forEach((result, index) => {
+const isCorrect = result.selectedAnswer === result.correctAnswer;
 
-    // Create worksheet
-    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+excelData.push([
+index + 1,
+result.question || 'N/A',
+result.selectedAnswer || 'No Answer',
+result.correctAnswer || 'N/A',
+result.responseTime || 0,
+result.status || 'Unknown',
+new Date(result.timestamp).toLocaleString(),
+isCorrect ? 'CORRECT' : 'INCORRECT'
+]);
+});
 
-    // Add worksheet to workbook with user name as sheet name
-    let sheetName = `${userName} (${playerCode})`;
-    sheetName = sheetName.substring(0, 31); // Excel sheet name limit
-    sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+// Add summary section for this quiz
+const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = modelResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+excelData.push([]); // Empty row
+excelData.push(['QUIZ SUMMARY', '', '', '', '', '', '', '']);
+excelData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
+excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
+excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
+excelData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
+excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
+excelData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
+
+// Add separator between quizzes (except for the last one)
+if (quizCounter < Object.keys(resultsByModel).length) {
+excelData.push([]); // Empty row
+excelData.push(['--- END OF QUIZ ---', '', '', '', '', '', '', '']);
+excelData.push([]); // Empty row
+}
+
+// Create worksheet
+const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+// Add worksheet to workbook with user name as sheet name
+let sheetName = `${userName} (${playerCode})`;
+if (Object.keys(resultsByModel).length > 1) {
+sheetName = `${userName} (${playerCode}) - Quiz ${quizCounter}`;
+}
+sheetName = sheetName.substring(0, 31); // Excel sheet name limit
+sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+
+XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+quizCounter++;
+});
 });
 
 // Download the Excel file
@@ -2152,7 +2287,7 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 });
 }
 
-// Load individual user results
+// Load individual user results - SEPARATED BY QUIZ
 function loadIndividualUserResults(resultsArray) {
 const userResultsContainer = document.getElementById('user-results-container');
 userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
@@ -2170,36 +2305,53 @@ resultsByUser[result.playerCode].push(result);
 let userResultsHTML = '';
 
 for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
-const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = userResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const avgResponseTime = totalAnswers > 0 ?
-(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
-
-// Find user name
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-// Get the timestamp of the last answer
-const lastAnswerTime = userResults.length > 0 ?
-new Date(userResults[userResults.length-1].timestamp).toLocaleString() : 'N/A';
+// Group results by model (quiz)
+const resultsByModel = {};
+userResults.forEach(result => {
+if (!resultsByModel[result.modelId]) {
+resultsByModel[result.modelId] = [];
+}
+resultsByModel[result.modelId].push(result);
+});
 
 userResultsHTML += `
 <div class="user-result-item">
 <div class="user-result-header">
 <div>
 <strong>${userName}</strong> (Code: ${playerCode})
-<span class="user-status ${passFailClass}">${passFail}</span>
-<br><small>Last answered: ${lastAnswerTime}</small>
+<br><small>Total Quizzes Taken: ${Object.keys(resultsByModel).length}</small>
 </div>
 <div>
-<button class="user-btn export" onclick="exportUserResults('${playerCode}')">Export</button>
+<button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export</button>
 <button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
 <button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
 </div>
-</div>
+</div>`;
+
+// Display results for each quiz separately
+let quizCounter = 1;
+Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Quiz';
+
+const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = modelResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+const avgResponseTime = totalAnswers > 0 ?
+(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
+
+// Get the timestamp of the last answer for this quiz
+const lastAnswerTime = modelResults.length > 0 ?
+new Date(modelResults[modelResults.length-1].timestamp).toLocaleString() : 'N/A';
+
+userResultsHTML += `
+<div class="quiz-separator">
+<div class="quiz-title">Quiz ${quizCounter}: ${modelName}</div>
 <div class="user-result-stats">
 <div class="user-stat">
 <span class="user-stat-number">${correctAnswers}</span>
@@ -2221,9 +2373,19 @@ userResultsHTML += `
 <span class="user-stat-number">${avgResponseTime}s</span>
 <span class="user-stat-label">Avg Time</span>
 </div>
+<div class="user-stat">
+<span class="user-stat-number ${passFailClass}">${passFail}</span>
+<span class="user-stat-label">Result</span>
 </div>
 </div>
-`;
+<div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
+Last answered: ${lastAnswerTime}
+</div>
+</div>`;
+quizCounter++;
+});
+
+userResultsHTML += `</div>`;
 }
 
 userResultsContainer.innerHTML = userResultsHTML;
@@ -2245,13 +2407,22 @@ deleteUserResults(userCode);
 }
 }
 
-// Export individual user results
-function exportUserResults(playerCode) {
+// NEW: Open model selection modal for export
+function openModelSelection(playerCode) {
+selectedUserForExport = playerCode;
+const modal = document.getElementById('modelSelectionModal');
+const modelList = document.getElementById('modelSelectionList');
+
+// Clear previous selections
+modelList.innerHTML = '';
+selectedModelForExport = null;
+
+// Get all models that this user has results for
 database.ref('quizResults').once('value')
 .then((snapshot) => {
 const results = snapshot.val();
 if (!results) {
-alert('No results to export.');
+alert('No results found for this user.');
 return;
 }
 
@@ -2263,15 +2434,104 @@ alert('No results found for this user.');
 return;
 }
 
+// Get unique models from user results
+const userModels = [...new Set(userResults.map(r => r.modelId))];
+
+// Create model selection items
+userModels.forEach(modelId => {
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Quiz';
+const modelResults = userResults.filter(r => r.modelId === modelId);
+const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = modelResults.length;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+
+const modelItem = document.createElement('div');
+modelItem.className = 'model-selection-item';
+modelItem.innerHTML = `
+<div>
+<strong>${modelName}</strong>
+<div style="font-size: 0.8rem; color: #666;">
+${totalAnswers} questions | ${accuracy}% accuracy | ${correctAnswers} correct
+</div>
+</div>
+`;
+modelItem.onclick = function() {
+// Remove selected class from all items
+document.querySelectorAll('.model-selection-item').forEach(item => {
+item.classList.remove('selected');
+});
+// Add selected class to clicked item
+this.classList.add('selected');
+selectedModelForExport = modelId;
+};
+modelList.appendChild(modelItem);
+});
+
+// Show the modal
+modal.style.display = 'block';
+})
+.catch((error) => {
+console.error("Error loading user results:", error);
+alert('Error loading user results.');
+});
+}
+
+// NEW: Close model selection modal
+function closeModelSelection() {
+const modal = document.getElementById('modelSelectionModal');
+modal.style.display = 'none';
+selectedUserForExport = null;
+selectedModelForExport = null;
+}
+
+// NEW: Export selected model for user
+function exportSelectedModel() {
+if (!selectedUserForExport || !selectedModelForExport) {
+alert('Please select a quiz to export.');
+return;
+}
+
+exportUserResultsForModel(selectedUserForExport, selectedModelForExport);
+closeModelSelection();
+}
+
+// NEW: Export specific model results for user
+function exportUserResultsForModel(playerCode, modelId) {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) {
+alert('No results to export.');
+return;
+}
+
+const allResults = Object.values(results);
+const userResults = allResults.filter(r => r.playerCode === playerCode && r.modelId === modelId);
+
+if (userResults.length === 0) {
+alert('No results found for this user and quiz.');
+return;
+}
+
 // Find user name
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
+
+// Find model name
+const model = quizModels.find(m => m.id === modelId);
+const modelName = model ? model.name : 'Unknown Quiz';
 
 // Create a clean workbook with proper formatting
 const workbook = XLSX.utils.book_new();
 
 // Create detailed data with proper formatting
 const excelData = [];
+
+// Add quiz title
+excelData.push([`QUIZ: ${modelName}`]);
+excelData.push([`USER: ${userName} (${playerCode})`]);
+excelData.push([]); // Empty row
 
 // Add header row
 excelData.push([
@@ -2282,15 +2542,12 @@ excelData.push([
 'Response Time (seconds)',
 'Status',
 'Timestamp',
-'Result',
-'Model Name'
+'Result'
 ]);
 
 // Add user results with proper formatting
 userResults.forEach((result, index) => {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
-const model = quizModels.find(m => m.id === result.modelId);
-const modelName = model ? model.name : 'No Model';
 
 excelData.push([
 index + 1,
@@ -2300,8 +2557,7 @@ result.correctAnswer || 'N/A',
 result.responseTime || 0,
 result.status || 'Unknown',
 new Date(result.timestamp).toLocaleString(),
-isCorrect ? 'CORRECT' : 'INCORRECT',
-modelName
+isCorrect ? 'CORRECT' : 'INCORRECT'
 ]);
 });
 
@@ -2314,28 +2570,29 @@ const avgResponseTime = totalAnswers > 0 ?
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 excelData.push([]); // Empty row
-excelData.push(['SUMMARY', '', '', '', '', '', '', '', '']);
-excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '', '']);
-excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '', '']);
-excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '', '']);
-excelData.push(['Final Result:', passFail, '', '', '', '', '', '', '']);
+excelData.push(['QUIZ SUMMARY', '', '', '', '', '', '', '']);
+excelData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
+excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
+excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
+excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
+excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
+excelData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
 
 // Create worksheet
 const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
 // Add worksheet to workbook
-let sheetName = `${userName} (${playerCode})`;
+let sheetName = `${userName} - ${modelName}`;
 sheetName = sheetName.substring(0, 31); // Excel sheet name limit
 sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
 
 XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
 // Download the Excel file
-XLSX.writeFile(workbook, `quiz-results-${userName}-${playerCode}-${new Date().toISOString().split('T')[0]}.xlsx`);
+XLSX.writeFile(workbook, `quiz-results-${userName}-${modelName}-${new Date().toISOString().split('T')[0]}.xlsx`);
 
-alert(`Excel file for ${userName} downloaded successfully!`);
+alert(`Excel file for ${userName} - ${modelName} downloaded successfully!`);
 })
 .catch((error) => {
 console.error("Error exporting user results:", error);
@@ -2544,84 +2801,131 @@ displayQuestions();
 }
 
 function deleteQuizModel(index) {
-if (confirm('Are you sure you want to delete this model? Questions in this model will not be deleted but will have no model assigned.')) {
+const model = quizModels[index];
+const modelQuestions = questions.filter(q => q.modelId === model.id);
+
+if (modelQuestions.length > 0) {
+if (!confirm(`This model has ${modelQuestions.length} questions. Deleting it will remove the model association from these questions. Are you sure you want to delete this model?`)) {
+return;
+}
+
+// Remove model association from questions instead of deleting them
+questions.forEach(question => {
+if (question.modelId === model.id) {
+question.modelId = null;
+question.modelName = null;
+}
+});
+saveQuestionsToFirebase();
+}
+
 // If this was the active model, clear the active model
-if (activeQuizModel === quizModels[index].id) {
-deselectQuizModel();
+if (activeQuizModel === model.id) {
+activeQuizModel = null;
+saveActiveQuizModel(null);
 }
 
 quizModels.splice(index, 1);
 saveQuizModelsToFirebase();
 displayQuizModels();
+
 // If we were viewing this model, show all questions
-if (currentModelFilter === quizModels[index]?.id) {
+if (currentModelFilter === model.id) {
 showAllQuestions();
-}
 }
 }
 
 // NEW FUNCTION: Recover questions with missing models
 function recoverMissingModels() {
 let recoveredCount = 0;
-    
+let assignedToDefault = 0;
+
 questions.forEach(question => {
-    if (!question.modelId || question.modelId === "No Model") {
-        // Try to find a model by name first
-        if (question.modelName) {
-            const model = quizModels.find(m => m.name === question.modelName);
-            if (model) {
-                question.modelId = model.id;
-                recoveredCount++;
-            }
-        }
-        
-        // If still no model, assign to default model
-        if (!question.modelId || question.modelId === "No Model") {
-            const defaultModel = quizModels.find(m => m.id === 'default') || quizModels[0];
-            if (defaultModel) {
-                question.modelId = defaultModel.id;
-                question.modelName = defaultModel.name;
-                recoveredCount++;
-            }
-        }
-    }
+if (!question.modelId || question.modelId === "No Model" || !quizModels.find(m => m.id === question.modelId)) {
+// Try to find a model by name first
+if (question.modelName && quizModels.length > 0) {
+const model = quizModels.find(m => m.name === question.modelName);
+if (model) {
+question.modelId = model.id;
+recoveredCount++;
+return;
+}
+}
+
+// If still no model, assign to first available model
+if (quizModels.length > 0) {
+const firstModel = quizModels[0];
+question.modelId = firstModel.id;
+question.modelName = firstModel.name;
+assignedToDefault++;
+}
+}
 });
-    
-if (recoveredCount > 0) {
-    saveQuestionsToFirebase();
-    displayQuestions();
-    alert(`Recovered ${recoveredCount} questions with missing model associations!`);
+
+if (recoveredCount > 0 || assignedToDefault > 0) {
+saveQuestionsToFirebase();
+displayQuestions();
+let message = '';
+if (recoveredCount > 0) message += `Recovered ${recoveredCount} questions with missing model associations! `;
+if (assignedToDefault > 0) message += `Assigned ${assignedToDefault} questions to default model.`;
+alert(message);
 } else {
-    alert('No questions with missing models found.');
+alert('No questions with missing models found.');
 }
 }
 
 // NEW FUNCTION: Validate all models and questions
 function validateAllModels() {
 let issuesFound = 0;
-    
+
 // Check for questions with missing models
 questions.forEach((question, index) => {
-    if (!question.modelId || !quizModels.find(m => m.id === question.modelId)) {
-        console.warn(`Question ${index} has missing model:`, question);
-        issuesFound++;
-    }
+if (!question.modelId || !quizModels.find(m => m.id === question.modelId)) {
+console.warn(`Question ${index} has missing model:`, question);
+issuesFound++;
+}
 });
-    
+
 // Check for models with no questions
 quizModels.forEach(model => {
-    const modelQuestions = questions.filter(q => q.modelId === model.id);
-    if (modelQuestions.length === 0) {
-        console.warn(`Model "${model.name}" has no questions`);
-        issuesFound++;
-    }
-});
-    
-if (issuesFound === 0) {
-    alert('✅ All models and questions are properly linked!');
-} else {
-    alert(`Found ${issuesFound} model-question linking issues. Check console for details.`);
+const modelQuestions = questions.filter(q => q.modelId === model.id);
+if (modelQuestions.length === 0) {
+console.warn(`Model "${model.name}" has no questions`);
+issuesFound++;
 }
+});
+
+if (issuesFound === 0) {
+alert('✅ All models and questions are properly linked!');
+} else {
+alert(`Found ${issuesFound} model-question linking issues. Check console for details.`);
+}
+}
+
+// NEW FUNCTION: Debug model and question relationships
+function debugModelQuestions() {
+console.log("=== DEBUG: Models and Questions ===");
+console.log("Total models:", quizModels.length);
+console.log("Total questions:", questions.length);
+
+quizModels.forEach(model => {
+const modelQuestions = questions.filter(q => q.modelId === model.id);
+console.log(`Model "${model.name}" (${model.id}): ${modelQuestions.length} questions`);
+
+modelQuestions.forEach((q, index) => {
+console.log(` Q${index + 1}: ${q.question.substring(0, 50)}...`);
+});
+});
+
+// Check for questions without models
+const orphanedQuestions = questions.filter(q => !q.modelId || !quizModels.find(m => m.id === q.modelId));
+console.log("Orphaned questions (no valid model):", orphanedQuestions.length);
+
+orphanedQuestions.forEach((q, index) => {
+console.log(` Orphan Q${index + 1}: ${q.question.substring(0, 50)}... (Model: ${q.modelId})`);
+});
+
+alert(`Debug complete. Check console for details.\nTotal models: ${quizModels.length}\nTotal questions: ${questions.length}\nOrphaned questions: ${orphanedQuestions.length}`);
 }
 
 // Verify admin code
@@ -2828,7 +3132,7 @@ const selectedModel = quizModels.find(m => m.id === modelId);
 if (!selectedModel) {
 document.getElementById('question-status').textContent = 'Error: Selected model no longer exists. Please select a valid model.';
 document.getElementById('question-status').className = 'url-status error';
-    
+
 // Refresh the model dropdown
 displayQuizModels();
 return;
@@ -2844,14 +3148,15 @@ answers: answers,
 correct: correctAnswer,
 hidden: false,
 modelId: modelId,
-modelName: selectedModel.name, // Store model name for backup
-timestamp: new Date().toISOString()
+modelName: selectedModel.name,
+timestamp: new Date().toISOString(),
+questionId: 'q-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
 };
 
 questions.push(newQuestion);
 saveQuestionsToFirebase();
 
-document.getElementById('question-status').textContent = `Question added successfully to "${selectedModel.name}" model!`;
+document.getElementById('question-status').textContent = `Question added successfully to "${selectedModel.name}" model! Total questions in this model: ${questions.filter(q => q.modelId === modelId).length}`;
 document.getElementById('question-status').className = 'url-status success';
 
 // Clear form but KEEP the model selection
@@ -2920,7 +3225,7 @@ modelName = model.name;
 } else if (q.modelName) {
 // If model ID not found but model name exists, try to find by name
 modelName = q.modelName + ' (Missing)';
-    
+
 // Try to recover the model ID
 const foundModel = quizModels.find(m => m.name === q.modelName);
 if (foundModel) {
@@ -3122,7 +3427,7 @@ location.reload();
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 25;
+timeLeft = 15;
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 clearInterval(countdownInterval);
@@ -3172,13 +3477,23 @@ moveToNextQuestion();
 }, 1000);
 }
 
-// Get visible questions based on active model
+// Get visible questions based on active model - FIXED VERSION
 function getVisibleQuestions() {
 let visibleQuestions = questions.filter(q => !q.hidden);
 
 // If an active model is selected, filter questions by that model
 if (activeQuizModel) {
-visibleQuestions = visibleQuestions.filter(q => q.modelId === activeQuizModel);
+console.log("Filtering questions for active model:", activeQuizModel);
+visibleQuestions = visibleQuestions.filter(q => {
+const matches = q.modelId === activeQuizModel;
+if (!matches) {
+console.log("Question filtered out - Model ID:", q.modelId, "Expected:", activeQuizModel);
+}
+return matches;
+});
+console.log("Visible questions after filtering:", visibleQuestions.length);
+} else {
+console.log("No active model - showing all visible questions:", visibleQuestions.length);
 }
 
 return visibleQuestions;
@@ -3295,13 +3610,18 @@ function showPlayerQuestion() {
 // Get visible questions based on active model
 var visibleQuestions = getVisibleQuestions();
 
+console.log("Current Index:", currentIndex, "Total Visible Questions:", visibleQuestions.length);
+
 if (currentIndex >= visibleQuestions.length) {
+console.log("End of quiz reached");
 showPlayerResults();
 return;
 }
 
 var q = visibleQuestions[currentIndex];
-document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + ":</h3><p>" + q.question + "</p>";
+console.log("Showing question:", q.question.substring(0, 50) + "...", "Model:", q.modelId);
+
+document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + " of " + visibleQuestions.length + ":</h3><p>" + q.question + "</p>";
 
 var answersDiv = document.getElementById("player-answers");
 answersDiv.innerHTML = "<h3>Select your answer:</h3>";
@@ -3506,4 +3826,3 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
-
