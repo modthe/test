@@ -1927,15 +1927,30 @@ return;
 }
 
 const allResults = Object.values(results);
+
+// Check if there are any results at all
+if (allResults.length === 0) {
+alert('No results to export.');
+return;
+}
+
 const resultsByUser = {};
 
 // Group results by user
 allResults.forEach(result => {
+if (result && result.playerCode) {
 if (!resultsByUser[result.playerCode]) {
 resultsByUser[result.playerCode] = [];
 }
 resultsByUser[result.playerCode].push(result);
+}
 });
+
+// Check if we have any valid user results
+if (Object.keys(resultsByUser).length === 0) {
+alert('No valid user results to export.');
+return;
+}
 
 // Create a clean workbook with separate sheets
 const workbook = XLSX.utils.book_new();
@@ -1958,26 +1973,30 @@ allUsersData.push([
 
 // Process each user and create ONE ROW per user per quiz
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+// Safely find user - handle case where user might be deleted
+const user = users.find(u => u && u.code === playerCode);
+const userName = user ? user.name : `Unknown User (${playerCode})`;
 
 // Group results by model (quiz)
 const resultsByModel = {};
 userResults.forEach(result => {
+if (result && result.modelId) {
 if (!resultsByModel[result.modelId]) {
 resultsByModel[result.modelId] = [];
 }
 resultsByModel[result.modelId].push(result);
+}
 });
 
 // Create a row for each quiz the user took
 Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-const model = quizModels.find(m => m.id === modelId);
-const modelName = model ? model.name : 'Unknown Quiz';
+// Safely find model - handle case where model might be deleted
+const model = quizModels.find(m => m && m.id === modelId);
+const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
 
 // Calculate user statistics for this specific quiz
 const totalQuestions = modelResults.length;
-const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
 const wrongAnswers = totalQuestions - correctAnswers;
 const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
 
@@ -2003,33 +2022,41 @@ passFail
 });
 });
 
+// Only create the "All Users Combined" sheet if we have data
+if (allUsersData.length > 1) { // More than just headers
 const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
 XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+}
 
 // Sheet 2: Individual User Sheets (SEPARATED BY QUIZ)
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+// Safely find user
+const user = users.find(u => u && u.code === playerCode);
+const userName = user ? user.name : `Unknown User (${playerCode})`;
 
 // Group results by model (quiz)
 const resultsByModel = {};
 userResults.forEach(result => {
+if (result && result.modelId) {
 if (!resultsByModel[result.modelId]) {
 resultsByModel[result.modelId] = [];
 }
 resultsByModel[result.modelId].push(result);
+}
 });
 
 // Create a separate section for each quiz
 let quizCounter = 1;
 Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-const model = quizModels.find(m => m.id === modelId);
-const modelName = model ? model.name : 'Unknown Quiz';
+// Safely find model
+const model = quizModels.find(m => m && m.id === modelId);
+const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
 
 const excelData = [];
 
 // Add quiz title
 excelData.push([`QUIZ ${quizCounter}: ${modelName}`]);
+excelData.push([`USER: ${userName} (${playerCode})`]);
 excelData.push([]); // Empty row
 
 // Add header row for this quiz
@@ -2046,6 +2073,7 @@ excelData.push([
 
 // Add user results for this quiz
 modelResults.forEach((result, index) => {
+if (result) {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
 
 excelData.push([
@@ -2058,10 +2086,11 @@ result.status || 'Unknown',
 new Date(result.timestamp).toLocaleString(),
 isCorrect ? 'CORRECT' : 'INCORRECT'
 ]);
+}
 });
 
 // Add summary section for this quiz
-const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = modelResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
@@ -2101,6 +2130,12 @@ quizCounter++;
 });
 });
 
+// Check if we have any sheets in the workbook
+if (workbook.SheetNames.length === 0) {
+alert('No valid data to export.');
+return;
+}
+
 // Download the Excel file
 XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
 
@@ -2108,7 +2143,7 @@ alert('All individual user results downloaded successfully as Excel file!');
 })
 .catch((error) => {
 console.error("Error exporting all user results:", error);
-alert('Error exporting data.');
+alert('Error exporting data: ' + error.message);
 });
 }
 
@@ -2158,13 +2193,16 @@ return;
 }
 
 const updates = {};
+let foundResults = false;
+
 Object.keys(results).forEach(key => {
-if (results[key].playerCode === playerCode) {
+if (results[key] && results[key].playerCode === playerCode) {
 updates[key] = null;
+foundResults = true;
 }
 });
 
-if (Object.keys(updates).length === 0) {
+if (!foundResults) {
 alert('No results found for this user.');
 return;
 }
@@ -2172,7 +2210,10 @@ return;
 database.ref('quizResults').update(updates)
 .then(() => {
 alert(`All results for user ${playerCode} have been deleted successfully!`);
+// Force refresh the results display
+setTimeout(() => {
 loadQuizResults();
+}, 1000);
 })
 .catch((error) => {
 console.error("Error deleting user results:", error);
@@ -3826,3 +3867,4 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
