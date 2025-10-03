@@ -1936,7 +1936,7 @@ return;
 
 const resultsByUser = {};
 
-// Group results by user
+// Group results by user and sort by timestamp
 allResults.forEach(result => {
 if (result && result.playerCode) {
 if (!resultsByUser[result.playerCode]) {
@@ -1944,6 +1944,11 @@ resultsByUser[result.playerCode] = [];
 }
 resultsByUser[result.playerCode].push(result);
 }
+});
+
+// Sort each user's results by timestamp to get chronological order
+Object.keys(resultsByUser).forEach(playerCode => {
+resultsByUser[playerCode].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 });
 
 // Check if we have any valid user results
@@ -1955,29 +1960,19 @@ return;
 // Create a clean workbook with separate sheets
 const workbook = XLSX.utils.book_new();
 
-// Sheet 1: All Users Combined (ONE ROW PER USER PER QUIZ)
+// Sheet 1: All Users Combined (ONE ROW PER USER - SEQUENTIAL QUIZ HISTORY)
 const allUsersData = [];
 
 // Header row for All Users Combined sheet
-allUsersData.push([
+const headers = [
 'Player Name',
-'Code',
-'Quiz Model',
-'Number of Questions Answered',
-'Correct Answers',
-'Wrong Answers',
-'Accuracy %',
-'Response Time Avg (seconds)',
-'Pass/Fail'
-]);
+'Code'
+];
 
-// Process each user and create ONE ROW per user per quiz
-Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-// Safely find user - handle case where user might be deleted
-const user = users.find(u => u && u.code === playerCode);
-const userName = user ? user.name : `Unknown User (${playerCode})`;
-
-// Group results by model (quiz)
+// Find the maximum number of quizzes any user has taken
+let maxQuizzes = 0;
+Object.values(resultsByUser).forEach(userResults => {
+// Group by model to count distinct quizzes
 const resultsByModel = {};
 userResults.forEach(result => {
 if (result && result.modelId) {
@@ -1987,54 +1982,38 @@ resultsByModel[result.modelId] = [];
 resultsByModel[result.modelId].push(result);
 }
 });
-
-// Create a row for each quiz the user took
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-// Safely find model - handle case where model might be deleted
-const model = quizModels.find(m => m && m.id === modelId);
-const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
-
-// Calculate user statistics for this specific quiz
-const totalQuestions = modelResults.length;
-const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
-const wrongAnswers = totalQuestions - correctAnswers;
-const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
-
-// Calculate average response time for this quiz
-const totalResponseTime = modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
-const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
-
-// Determine pass/fail (50% threshold) for this quiz
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-
-// Add ONE ROW for this user for this specific quiz
-allUsersData.push([
-userName,
-playerCode,
-modelName,
-totalQuestions,
-correctAnswers,
-wrongAnswers,
-accuracy + '%',
-avgResponseTime,
-passFail
-]);
-});
+maxQuizzes = Math.max(maxQuizzes, Object.keys(resultsByModel).length);
 });
 
-// Only create the "All Users Combined" sheet if we have data
-if (allUsersData.length > 1) { // More than just headers
-const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
-XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+// Add dynamic headers for each quiz
+for (let i = 1; i <= maxQuizzes; i++) {
+headers.push(
+`Quiz ${i} Name`,
+`Quiz ${i} Questions`,
+`Quiz ${i} Correct`,
+`Quiz ${i} Wrong`,
+`Quiz ${i} Accuracy`,
+`Quiz ${i} Avg Time`,
+`Quiz ${i} Result`
+);
 }
 
-// Sheet 2: Individual User Sheets (SEPARATED BY QUIZ)
+// Add overall statistics headers
+headers.push(
+'Total Quizzes',
+'Overall Accuracy',
+'Overall Pass Rate'
+);
+
+allUsersData.push(headers);
+
+// Process each user and create ONE ROW per user with sequential quiz history
 Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
 // Safely find user
 const user = users.find(u => u && u.code === playerCode);
 const userName = user ? user.name : `Unknown User (${playerCode})`;
 
-// Group results by model (quiz)
+// Group results by model (quiz) and sort by earliest timestamp in each quiz
 const resultsByModel = {};
 userResults.forEach(result => {
 if (result && result.modelId) {
@@ -2045,17 +2024,157 @@ resultsByModel[result.modelId].push(result);
 }
 });
 
-// Create a separate section for each quiz
-let quizCounter = 1;
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-// Safely find model
-const model = quizModels.find(m => m && m.id === modelId);
-const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
+// Sort quizzes by their earliest attempt time to get chronological order
+const sortedQuizzes = Object.entries(resultsByModel)
+.map(([modelId, quizResults]) => {
+const earliestTime = Math.min(...quizResults.map(r => new Date(r.timestamp).getTime()));
+return {
+modelId,
+quizResults,
+earliestTime
+};
+})
+.sort((a, b) => a.earliestTime - b.earliestTime);
+
+const userRow = [
+userName,
+playerCode
+];
+
+let totalQuizzes = 0;
+let totalQuestions = 0;
+let totalCorrect = 0;
+let quizzesPassed = 0;
+
+// Add data for each quiz in chronological order
+sortedQuizzes.forEach((quiz, index) => {
+const model = quizModels.find(m => m && m.id === quiz.modelId);
+const modelName = model ? model.name : `Unknown Quiz (${quiz.modelId})`;
+
+const quizQuestions = quiz.quizResults.length;
+const quizCorrect = quiz.quizResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+const quizWrong = quizQuestions - quizCorrect;
+const quizAccuracy = quizQuestions > 0 ? ((quizCorrect / quizQuestions) * 100).toFixed(1) : 0;
+
+// Calculate average response time for this quiz
+const totalResponseTime = quiz.quizResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+const avgResponseTime = quizQuestions > 0 ? (totalResponseTime / quizQuestions).toFixed(2) : 0;
+
+const quizResult = quizAccuracy >= 50 ? 'PASS' : 'FAIL';
+
+// Add quiz data to the row
+userRow.push(
+modelName,
+quizQuestions,
+quizCorrect,
+quizWrong,
+quizAccuracy + '%',
+avgResponseTime + 's',
+quizResult
+);
+
+// Update overall statistics
+totalQuizzes++;
+totalQuestions += quizQuestions;
+totalCorrect += quizCorrect;
+if (quizResult === 'PASS') {
+quizzesPassed++;
+}
+});
+
+// Fill empty cells for users with fewer quizzes than the maximum
+const remainingQuizzes = maxQuizzes - sortedQuizzes.length;
+for (let i = 0; i < remainingQuizzes; i++) {
+userRow.push('', '', '', '', '', '', '');
+}
+
+// Calculate overall statistics
+const overallAccuracy = totalQuestions > 0 ? ((totalCorrect / totalQuestions) * 100).toFixed(1) : 0;
+const overallPassRate = totalQuizzes > 0 ? ((quizzesPassed / totalQuizzes) * 100).toFixed(1) : 0;
+
+// Add overall statistics to the row
+userRow.push(
+totalQuizzes,
+overallAccuracy + '%',
+overallPassRate + '%'
+);
+
+allUsersData.push(userRow);
+});
+
+// Only create the "All Users Combined" sheet if we have data
+if (allUsersData.length > 1) { // More than just headers
+const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
+
+// Set column widths for better readability
+const colWidths = [
+{wch: 20}, // Player Name
+{wch: 10} // Code
+];
+
+// Add widths for each quiz (7 columns per quiz)
+for (let i = 0; i < maxQuizzes; i++) {
+colWidths.push(
+{wch: 20}, // Quiz Name
+{wch: 10}, // Questions
+{wch: 10}, // Correct
+{wch: 10}, // Wrong
+{wch: 12}, // Accuracy
+{wch: 12}, // Avg Time
+{wch: 10} // Result
+);
+}
+
+// Add widths for overall statistics
+colWidths.push(
+{wch: 12}, // Total Quizzes
+{wch: 15}, // Overall Accuracy
+{wch: 15} // Overall Pass Rate
+);
+
+allUsersSheet['!cols'] = colWidths;
+
+XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+}
+
+// Sheet 2: Individual User Sheets (SEPARATED BY QUIZ - Detailed breakdown)
+Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
+// Safely find user
+const user = users.find(u => u && u.code === playerCode);
+const userName = user ? user.name : `Unknown User (${playerCode})`;
+
+// Group results by model (quiz) and sort chronologically
+const resultsByModel = {};
+userResults.forEach(result => {
+if (result && result.modelId) {
+if (!resultsByModel[result.modelId]) {
+resultsByModel[result.modelId] = [];
+}
+resultsByModel[result.modelId].push(result);
+}
+});
+
+// Sort quizzes by their earliest attempt time
+const sortedQuizzes = Object.entries(resultsByModel)
+.map(([modelId, quizResults]) => {
+const earliestTime = Math.min(...quizResults.map(r => new Date(r.timestamp).getTime()));
+return {
+modelId,
+quizResults,
+earliestTime
+};
+})
+.sort((a, b) => a.earliestTime - b.earliestTime);
+
+// Create a separate section for each quiz in chronological order
+sortedQuizzes.forEach((quiz, quizCounter) => {
+const model = quizModels.find(m => m && m.id === quiz.modelId);
+const modelName = model ? model.name : `Unknown Quiz (${quiz.modelId})`;
 
 const excelData = [];
 
-// Add quiz title
-excelData.push([`QUIZ ${quizCounter}: ${modelName}`]);
+// Add quiz title with sequence number
+excelData.push([`QUIZ ${quizCounter + 1}: ${modelName}`]);
 excelData.push([`USER: ${userName} (${playerCode})`]);
 excelData.push([]); // Empty row
 
@@ -2072,7 +2191,7 @@ excelData.push([
 ]);
 
 // Add user results for this quiz
-modelResults.forEach((result, index) => {
+quiz.quizResults.forEach((result, index) => {
 if (result) {
 const isCorrect = result.selectedAnswer === result.correctAnswer;
 
@@ -2090,11 +2209,11 @@ isCorrect ? 'CORRECT' : 'INCORRECT'
 });
 
 // Add summary section for this quiz
-const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = modelResults.length;
+const correctAnswers = quiz.quizResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = quiz.quizResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
-(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+(quiz.quizResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
 excelData.push([]); // Empty row
@@ -2108,7 +2227,7 @@ excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', 
 excelData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
 
 // Add separator between quizzes (except for the last one)
-if (quizCounter < Object.keys(resultsByModel).length) {
+if (quizCounter < sortedQuizzes.length - 1) {
 excelData.push([]); // Empty row
 excelData.push(['--- END OF QUIZ ---', '', '', '', '', '', '', '']);
 excelData.push([]); // Empty row
@@ -2119,14 +2238,13 @@ const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
 // Add worksheet to workbook with user name as sheet name
 let sheetName = `${userName} (${playerCode})`;
-if (Object.keys(resultsByModel).length > 1) {
-sheetName = `${userName} (${playerCode}) - Quiz ${quizCounter}`;
+if (sortedQuizzes.length > 1) {
+sheetName = `${userName} (${playerCode}) - Quiz ${quizCounter + 1}`;
 }
 sheetName = sheetName.substring(0, 31); // Excel sheet name limit
 sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
 
 XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-quizCounter++;
 });
 });
 
@@ -2343,68 +2461,167 @@ resultsByUser[result.playerCode] = [];
 resultsByUser[result.playerCode].push(result);
 });
 
+// Sort each user's results by timestamp to get chronological order
+Object.keys(resultsByUser).forEach(playerCode => {
+resultsByUser[playerCode].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+});
+
 let userResultsHTML = '';
 
 for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
 const user = users.find(u => u.code === playerCode);
 const userName = user ? user.name : 'Unknown User';
 
-// Group results by model (quiz)
+// Group results by model (quiz) and sort by earliest timestamp in each quiz
 const resultsByModel = {};
 userResults.forEach(result => {
+if (result && result.modelId) {
 if (!resultsByModel[result.modelId]) {
 resultsByModel[result.modelId] = [];
 }
 resultsByModel[result.modelId].push(result);
+}
 });
+
+// Sort quizzes by their earliest attempt time to get chronological order
+const sortedQuizzes = Object.entries(resultsByModel)
+.map(([modelId, quizResults]) => {
+const earliestTime = Math.min(...quizResults.map(r => new Date(r.timestamp).getTime()));
+return {
+modelId,
+quizResults,
+earliestTime
+};
+})
+.sort((a, b) => a.earliestTime - b.earliestTime);
+
+// Calculate overall statistics
+let totalQuizzes = 0;
+let totalQuestions = 0;
+let totalCorrect = 0;
+let quizzesPassed = 0;
+
+sortedQuizzes.forEach(quiz => {
+const quizQuestions = quiz.quizResults.length;
+const quizCorrect = quiz.quizResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+const quizAccuracy = quizQuestions > 0 ? ((quizCorrect / quizQuestions) * 100).toFixed(1) : 0;
+
+totalQuizzes++;
+totalQuestions += quizQuestions;
+totalCorrect += quizCorrect;
+if (quizAccuracy >= 50) {
+quizzesPassed++;
+}
+});
+
+const overallAccuracy = totalQuestions > 0 ? ((totalCorrect / totalQuestions) * 100).toFixed(1) : 0;
+const overallPassRate = totalQuizzes > 0 ? ((quizzesPassed / totalQuizzes) * 100).toFixed(1) : 0;
 
 userResultsHTML += `
 <div class="user-result-item">
 <div class="user-result-header">
 <div>
 <strong>${userName}</strong> (Code: ${playerCode})
-<br><small>Total Quizzes Taken: ${Object.keys(resultsByModel).length}</small>
+<br><small>Total Quizzes: ${totalQuizzes} | Overall Accuracy: ${overallAccuracy}% | Pass Rate: ${overallPassRate}%</small>
 </div>
 <div>
 <button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export</button>
 <button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
 <button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
 </div>
-</div>`;
+</div>
 
-// Display results for each quiz separately
-let quizCounter = 1;
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-const model = quizModels.find(m => m.id === modelId);
-const modelName = model ? model.name : 'Unknown Quiz';
+<div style="margin-top: 1rem; overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 5px; overflow: hidden;">
+<thead>
+<tr style="background: #6e8efb; color: white;">
+<th style="padding: 0.8rem; text-align: left; border: 1px solid #ddd;">Quiz #</th>
+<th style="padding: 0.8rem; text-align: left; border: 1px solid #ddd;">Quiz Name</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Questions</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Correct</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Wrong</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Accuracy</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Avg Time</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Result</th>
+<th style="padding: 0.8rem; text-align: center; border: 1px solid #ddd;">Date</th>
+</tr>
+</thead>
+<tbody>`;
 
-const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = modelResults.length;
+// Add each quiz in chronological order
+sortedQuizzes.forEach((quiz, index) => {
+const model = quizModels.find(m => m && m.id === quiz.modelId);
+const modelName = model ? model.name : `Unknown Quiz (${quiz.modelId})`;
+
+const quizQuestions = quiz.quizResults.length;
+const quizCorrect = quiz.quizResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+const quizWrong = quizQuestions - quizCorrect;
+const quizAccuracy = quizQuestions > 0 ? ((quizCorrect / quizQuestions) * 100).toFixed(1) : 0;
+
+// Calculate average response time for this quiz
+const totalResponseTime = quiz.quizResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+const avgResponseTime = quizQuestions > 0 ? (totalResponseTime / quizQuestions).toFixed(2) : 0;
+
+const quizResult = quizAccuracy >= 50 ? 'PASS' : 'FAIL';
+const quizResultClass = quizResult === 'PASS' ? 'status-active' : 'status-inactive';
+
+// Get the date of the first attempt in this quiz
+const firstAttemptDate = quiz.quizResults.length > 0 ?
+new Date(quiz.quizResults[0].timestamp).toLocaleDateString() : 'N/A';
+
+userResultsHTML += `
+<tr style="border-bottom: 1px solid #eee;">
+<td style="padding: 0.8rem; border: 1px solid #ddd; font-weight: bold;">${index + 1}</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; font-weight: bold;">${modelName}</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center;">${quizQuestions}</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center; color: #4caf50; font-weight: bold;">${quizCorrect}</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center; color: #f44336; font-weight: bold;">${quizWrong}</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center; font-weight: bold;">${quizAccuracy}%</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center;">${avgResponseTime}s</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center;">
+<span class="user-status ${quizResultClass}">${quizResult}</span>
+</td>
+<td style="padding: 0.8rem; border: 1px solid #ddd; text-align: center; font-size: 0.8rem; color: #666;">${firstAttemptDate}</td>
+</tr>`;
+});
+
+userResultsHTML += `
+</tbody>
+</table>
+</div>
+
+<!-- Detailed Quiz Breakdown -->
+<div style="margin-top: 1.5rem;">
+<h4 style="color: #6e8efb; margin-bottom: 1rem;">Detailed Quiz Breakdown</h4>`;
+
+// Add detailed breakdown for each quiz
+sortedQuizzes.forEach((quiz, quizCounter) => {
+const model = quizModels.find(m => m && m.id === quiz.modelId);
+const modelName = model ? model.name : `Unknown Quiz (${quiz.modelId})`;
+
+const correctAnswers = quiz.quizResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+const totalAnswers = quiz.quizResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
-(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+(quiz.quizResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
 
-// Get the timestamp of the last answer for this quiz
-const lastAnswerTime = modelResults.length > 0 ?
-new Date(modelResults[modelResults.length-1].timestamp).toLocaleString() : 'N/A';
-
 userResultsHTML += `
 <div class="quiz-separator">
-<div class="quiz-title">Quiz ${quizCounter}: ${modelName}</div>
+<div class="quiz-title">Quiz ${quizCounter + 1}: ${modelName}</div>
 <div class="user-result-stats">
 <div class="user-stat">
-<span class="user-stat-number">${correctAnswers}</span>
+<span class="user-stat-number">${totalAnswers}</span>
+<span class="user-stat-label">Total Questions</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number" style="color: #4caf50;">${correctAnswers}</span>
 <span class="user-stat-label">Correct</span>
 </div>
 <div class="user-stat">
-<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
+<span class="user-stat-number" style="color: #f44336;">${totalAnswers - correctAnswers}</span>
 <span class="user-stat-label">Incorrect</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${totalAnswers}</span>
-<span class="user-stat-label">Total</span>
 </div>
 <div class="user-stat">
 <span class="user-stat-number">${accuracy}%</span>
@@ -2420,13 +2637,12 @@ userResultsHTML += `
 </div>
 </div>
 <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
-Last answered: ${lastAnswerTime}
+First Attempt: ${quiz.quizResults.length > 0 ? new Date(quiz.quizResults[0].timestamp).toLocaleString() : 'N/A'}
 </div>
 </div>`;
-quizCounter++;
 });
 
-userResultsHTML += `</div>`;
+userResultsHTML += `</div></div>`;
 }
 
 userResultsContainer.innerHTML = userResultsHTML;
@@ -3867,4 +4083,5 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
 
