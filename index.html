@@ -1917,234 +1917,284 @@ alert('Error exporting data.');
 }
 
 // Download all individual user results with improved format - SEPARATED BY QUIZ/MODEL
+// Download all individual user results with improved format - SHOWING ALL QUIZ ATTEMPTS
 function downloadAllUserResults() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('No results to export.');
-return;
+    database.ref('quizResults').once('value')
+    .then((snapshot) => {
+        const results = snapshot.val();
+        if (!results) {
+            alert('No results to export.');
+            return;
+        }
+
+        const allResults = Object.values(results);
+
+        // Check if there are any results at all
+        if (allResults.length === 0) {
+            alert('No results to export.');
+            return;
+        }
+
+        // Group results by user AND by quiz/model to track multiple attempts
+        const resultsByUserAndQuiz = {};
+
+        // First, organize results by user, then by quiz, then by attempt (using timestamp)
+        allResults.forEach(result => {
+            if (result && result.playerCode && result.modelId) {
+                const userCode = result.playerCode;
+                const quizId = result.modelId;
+                
+                if (!resultsByUserAndQuiz[userCode]) {
+                    resultsByUserAndQuiz[userCode] = {};
+                }
+                
+                if (!resultsByUserAndQuiz[userCode][quizId]) {
+                    resultsByUserAndQuiz[userCode][quizId] = [];
+                }
+                
+                resultsByUserAndQuiz[userCode][quizId].push(result);
+            }
+        });
+
+        // Check if we have any valid user results
+        if (Object.keys(resultsByUserAndQuiz).length === 0) {
+            alert('No valid user results to export.');
+            return;
+        }
+
+        // Create a clean workbook with separate sheets
+        const workbook = XLSX.utils.book_new();
+
+        // Sheet 1: All Users Combined - ONE ROW PER USER PER QUIZ ATTEMPT
+        const allUsersData = [];
+
+        // Header row for All Users Combined sheet
+        allUsersData.push([
+            'Player Name',
+            'Code', 
+            'Quiz Model',
+            'Attempt Date',
+            'Number of Questions Answered',
+            'Correct Answers',
+            'Wrong Answers',
+            'Accuracy %',
+            'Response Time Avg (seconds)',
+            'Pass/Fail'
+        ]);
+
+        // Process each user and each quiz attempt
+        Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
+            // Safely find user
+            const user = users.find(u => u && u.code === playerCode);
+            const userName = user ? user.name : `Unknown User (${playerCode})`;
+
+            // Process each quiz the user took
+            Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
+                // Safely find model
+                const model = quizModels.find(m => m && m.id === modelId);
+                const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
+
+                // Group results by attempt (different timestamps indicate different attempts)
+                const attempts = groupResultsByAttempt(quizResults);
+
+                // Create a row for EACH ATTEMPT
+                attempts.forEach((attemptResults, attemptIndex) => {
+                    // Calculate statistics for this specific attempt
+                    const totalQuestions = attemptResults.length;
+                    const correctAnswers = attemptResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+                    const wrongAnswers = totalQuestions - correctAnswers;
+                    const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
+
+                    // Calculate average response time for this attempt
+                    const totalResponseTime = attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+                    const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
+
+                    // Determine pass/fail (50% threshold) for this attempt
+                    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
+                    // Get attempt date from the first result
+                    const attemptDate = attemptResults.length > 0 ? 
+                        new Date(attemptResults[0].timestamp).toLocaleDateString() : 'Unknown Date';
+
+                    // Add ONE ROW for this user for this specific quiz attempt
+                    allUsersData.push([
+                        userName,
+                        playerCode,
+                        modelName,
+                        attemptDate + (attempts.length > 1 ? ` (Attempt ${attemptIndex + 1})` : ''),
+                        totalQuestions,
+                        correctAnswers,
+                        wrongAnswers,
+                        accuracy + '%',
+                        avgResponseTime,
+                        passFail
+                    ]);
+                });
+            });
+        });
+
+        // Only create the "All Users Combined" sheet if we have data
+        if (allUsersData.length > 1) { // More than just headers
+            const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
+            XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+        }
+
+        // Sheet 2: Individual User Sheets (SEPARATED BY QUIZ AND ATTEMPT)
+        Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
+            // Safely find user
+            const user = users.find(u => u && u.code === playerCode);
+            const userName = user ? user.name : `Unknown User (${playerCode})`;
+
+            let userSheetData = [];
+            let quizCounter = 1;
+
+            // Process each quiz the user took
+            Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
+                // Safely find model
+                const model = quizModels.find(m => m && m.id === modelId);
+                const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
+
+                // Group results by attempt
+                const attempts = groupResultsByAttempt(quizResults);
+
+                // Create a separate section for each attempt
+                attempts.forEach((attemptResults, attemptIndex) => {
+                    // Add quiz title for this attempt
+                    userSheetData.push([`QUIZ ${quizCounter}: ${modelName}`]);
+                    if (attempts.length > 1) {
+                        userSheetData.push([`ATTEMPT ${attemptIndex + 1}`]);
+                    }
+                    userSheetData.push([`USER: ${userName} (${playerCode})`]);
+                    userSheetData.push([`DATE: ${new Date(attemptResults[0].timestamp).toLocaleString()}`]);
+                    userSheetData.push([]); // Empty row
+
+                    // Add header row for this attempt
+                    userSheetData.push([
+                        'Question Number',
+                        'Question Text', 
+                        'Selected Answer',
+                        'Correct Answer',
+                        'Response Time (seconds)',
+                        'Status',
+                        'Timestamp',
+                        'Result'
+                    ]);
+
+                    // Add user results for this attempt
+                    attemptResults.forEach((result, index) => {
+                        if (result) {
+                            const isCorrect = result.selectedAnswer === result.correctAnswer;
+
+                            userSheetData.push([
+                                index + 1,
+                                result.question || 'N/A',
+                                result.selectedAnswer || 'No Answer',
+                                result.correctAnswer || 'N/A',
+                                result.responseTime || 0,
+                                result.status || 'Unknown',
+                                new Date(result.timestamp).toLocaleString(),
+                                isCorrect ? 'CORRECT' : 'INCORRECT'
+                            ]);
+                        }
+                    });
+
+                    // Add summary section for this attempt
+                    const correctAnswers = attemptResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+                    const totalAnswers = attemptResults.length;
+                    const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+                    const avgResponseTime = totalAnswers > 0 ?
+                        (attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+                    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
+                    userSheetData.push([]); // Empty row
+                    userSheetData.push(['ATTEMPT SUMMARY', '', '', '', '', '', '', '']);
+                    userSheetData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
+                    userSheetData.push(['Attempt:', attempts.length > 1 ? `Attempt ${attemptIndex + 1}` : 'Single Attempt', '', '', '', '', '', '']);
+                    userSheetData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
+                    userSheetData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
+                    userSheetData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
+                    userSheetData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
+                    userSheetData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
+                    userSheetData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
+
+                    // Add separator between attempts (except for the last one)
+                    if (attemptIndex < attempts.length - 1) {
+                        userSheetData.push([]);
+                        userSheetData.push(['--- NEXT ATTEMPT ---', '', '', '', '', '', '', '']);
+                        userSheetData.push([]);
+                    } else if (quizCounter < Object.keys(userQuizzes).length) {
+                        userSheetData.push([]);
+                        userSheetData.push(['--- NEXT QUIZ ---', '', '', '', '', '', '', '']);
+                        userSheetData.push([]);
+                    }
+
+                    quizCounter++;
+                });
+            });
+
+            // Create worksheet for this user
+            if (userSheetData.length > 0) {
+                const worksheet = XLSX.utils.aoa_to_sheet(userSheetData);
+                
+                // Create sheet name
+                let sheetName = `${userName} (${playerCode})`;
+                sheetName = sheetName.substring(0, 31); // Excel sheet name limit
+                sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+                
+                XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+            }
+        });
+
+        // Check if we have any sheets in the workbook
+        if (workbook.SheetNames.length === 0) {
+            alert('No valid data to export.');
+            return;
+        }
+
+        // Download the Excel file
+        XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        alert('All individual user results downloaded successfully! Now showing ALL quiz attempts for each user.');
+    })
+    .catch((error) => {
+        console.error("Error exporting all user results:", error);
+        alert('Error exporting data: ' + error.message);
+    });
 }
 
-const allResults = Object.values(results);
-
-// Check if there are any results at all
-if (allResults.length === 0) {
-alert('No results to export.');
-return;
-}
-
-const resultsByUser = {};
-
-// Group results by user
-allResults.forEach(result => {
-if (result && result.playerCode) {
-if (!resultsByUser[result.playerCode]) {
-resultsByUser[result.playerCode] = [];
-}
-resultsByUser[result.playerCode].push(result);
-}
-});
-
-// Check if we have any valid user results
-if (Object.keys(resultsByUser).length === 0) {
-alert('No valid user results to export.');
-return;
-}
-
-// Create a clean workbook with separate sheets
-const workbook = XLSX.utils.book_new();
-
-// Sheet 1: All Users Combined (ONE ROW PER USER PER QUIZ)
-const allUsersData = [];
-
-// Header row for All Users Combined sheet
-allUsersData.push([
-'Player Name',
-'Code',
-'Quiz Model',
-'Number of Questions Answered',
-'Correct Answers',
-'Wrong Answers',
-'Accuracy %',
-'Response Time Avg (seconds)',
-'Pass/Fail'
-]);
-
-// Process each user and create ONE ROW per user per quiz
-Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-// Safely find user - handle case where user might be deleted
-const user = users.find(u => u && u.code === playerCode);
-const userName = user ? user.name : `Unknown User (${playerCode})`;
-
-// Group results by model (quiz)
-const resultsByModel = {};
-userResults.forEach(result => {
-if (result && result.modelId) {
-if (!resultsByModel[result.modelId]) {
-resultsByModel[result.modelId] = [];
-}
-resultsByModel[result.modelId].push(result);
-}
-});
-
-// Create a row for each quiz the user took
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-// Safely find model - handle case where model might be deleted
-const model = quizModels.find(m => m && m.id === modelId);
-const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
-
-// Calculate user statistics for this specific quiz
-const totalQuestions = modelResults.length;
-const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
-const wrongAnswers = totalQuestions - correctAnswers;
-const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
-
-// Calculate average response time for this quiz
-const totalResponseTime = modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
-const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
-
-// Determine pass/fail (50% threshold) for this quiz
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-
-// Add ONE ROW for this user for this specific quiz
-allUsersData.push([
-userName,
-playerCode,
-modelName,
-totalQuestions,
-correctAnswers,
-wrongAnswers,
-accuracy + '%',
-avgResponseTime,
-passFail
-]);
-});
-});
-
-// Only create the "All Users Combined" sheet if we have data
-if (allUsersData.length > 1) { // More than just headers
-const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
-XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
-}
-
-// Sheet 2: Individual User Sheets (SEPARATED BY QUIZ)
-Object.entries(resultsByUser).forEach(([playerCode, userResults]) => {
-// Safely find user
-const user = users.find(u => u && u.code === playerCode);
-const userName = user ? user.name : `Unknown User (${playerCode})`;
-
-// Group results by model (quiz)
-const resultsByModel = {};
-userResults.forEach(result => {
-if (result && result.modelId) {
-if (!resultsByModel[result.modelId]) {
-resultsByModel[result.modelId] = [];
-}
-resultsByModel[result.modelId].push(result);
-}
-});
-
-// Create a separate section for each quiz
-let quizCounter = 1;
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-// Safely find model
-const model = quizModels.find(m => m && m.id === modelId);
-const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
-
-const excelData = [];
-
-// Add quiz title
-excelData.push([`QUIZ ${quizCounter}: ${modelName}`]);
-excelData.push([`USER: ${userName} (${playerCode})`]);
-excelData.push([]); // Empty row
-
-// Add header row for this quiz
-excelData.push([
-'Question Number',
-'Question Text',
-'Selected Answer',
-'Correct Answer',
-'Response Time (seconds)',
-'Status',
-'Timestamp',
-'Result'
-]);
-
-// Add user results for this quiz
-modelResults.forEach((result, index) => {
-if (result) {
-const isCorrect = result.selectedAnswer === result.correctAnswer;
-
-excelData.push([
-index + 1,
-result.question || 'N/A',
-result.selectedAnswer || 'No Answer',
-result.correctAnswer || 'N/A',
-result.responseTime || 0,
-result.status || 'Unknown',
-new Date(result.timestamp).toLocaleString(),
-isCorrect ? 'CORRECT' : 'INCORRECT'
-]);
-}
-});
-
-// Add summary section for this quiz
-const correctAnswers = modelResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = modelResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const avgResponseTime = totalAnswers > 0 ?
-(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-
-excelData.push([]); // Empty row
-excelData.push(['QUIZ SUMMARY', '', '', '', '', '', '', '']);
-excelData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
-excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
-excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
-excelData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
-excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
-excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
-excelData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
-
-// Add separator between quizzes (except for the last one)
-if (quizCounter < Object.keys(resultsByModel).length) {
-excelData.push([]); // Empty row
-excelData.push(['--- END OF QUIZ ---', '', '', '', '', '', '', '']);
-excelData.push([]); // Empty row
-}
-
-// Create worksheet
-const worksheet = XLSX.utils.aoa_to_sheet(excelData);
-
-// Add worksheet to workbook with user name as sheet name
-let sheetName = `${userName} (${playerCode})`;
-if (Object.keys(resultsByModel).length > 1) {
-sheetName = `${userName} (${playerCode}) - Quiz ${quizCounter}`;
-}
-sheetName = sheetName.substring(0, 31); // Excel sheet name limit
-sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
-
-XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-quizCounter++;
-});
-});
-
-// Check if we have any sheets in the workbook
-if (workbook.SheetNames.length === 0) {
-alert('No valid data to export.');
-return;
-}
-
-// Download the Excel file
-XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
-
-alert('All individual user results downloaded successfully as Excel file!');
-})
-.catch((error) => {
-console.error("Error exporting all user results:", error);
-alert('Error exporting data: ' + error.message);
-});
+// NEW FUNCTION: Group results by attempt (different sessions/timestamps)
+function groupResultsByAttempt(results) {
+    if (!results || results.length === 0) return [];
+    
+    // Sort by timestamp
+    const sortedResults = [...results].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    const attempts = [];
+    let currentAttempt = [sortedResults[0]];
+    
+    for (let i = 1; i < sortedResults.length; i++) {
+        const currentResult = sortedResults[i];
+        const previousResult = sortedResults[i - 1];
+        
+        // If there's a significant time gap (more than 30 minutes) or different session, consider it a new attempt
+        const timeDiff = new Date(currentResult.timestamp) - new Date(previousResult.timestamp);
+        const isNewAttempt = timeDiff > 30 * 60 * 1000 || // 30 minutes gap
+                            currentResult.sessionId !== previousResult.sessionId; // Different session
+        
+        if (isNewAttempt) {
+            attempts.push(currentAttempt);
+            currentAttempt = [currentResult];
+        } else {
+            currentAttempt.push(currentResult);
+        }
+    }
+    
+    // Push the last attempt
+    if (currentAttempt.length > 0) {
+        attempts.push(currentAttempt);
+    }
+    
+    return attempts;
 }
 
 function convertToCSV(data) {
@@ -2329,107 +2379,113 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 }
 
 // Load individual user results - SEPARATED BY QUIZ
+// Load individual user results - SHOWING ALL ATTEMPTS
 function loadIndividualUserResults(resultsArray) {
-const userResultsContainer = document.getElementById('user-results-container');
-userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
+    const userResultsContainer = document.getElementById('user-results-container');
+    userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
 
-// Group results by playerCode
-const resultsByUser = {};
+    // Group results by playerCode and then by modelId
+    const resultsByUserAndQuiz = {};
 
-resultsArray.forEach(result => {
-if (!resultsByUser[result.playerCode]) {
-resultsByUser[result.playerCode] = [];
-}
-resultsByUser[result.playerCode].push(result);
-});
+    resultsArray.forEach(result => {
+        if (!resultsByUserAndQuiz[result.playerCode]) {
+            resultsByUserAndQuiz[result.playerCode] = {};
+        }
+        if (!resultsByUserAndQuiz[result.playerCode][result.modelId]) {
+            resultsByUserAndQuiz[result.playerCode][result.modelId] = [];
+        }
+        resultsByUserAndQuiz[result.playerCode][result.modelId].push(result);
+    });
 
-let userResultsHTML = '';
+    let userResultsHTML = '';
 
-for (const [playerCode, userResults] of Object.entries(resultsByUser)) {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+    for (const [playerCode, userQuizzes] of Object.entries(resultsByUserAndQuiz)) {
+        const user = users.find(u => u.code === playerCode);
+        const userName = user ? user.name : 'Unknown User';
 
-// Group results by model (quiz)
-const resultsByModel = {};
-userResults.forEach(result => {
-if (!resultsByModel[result.modelId]) {
-resultsByModel[result.modelId] = [];
-}
-resultsByModel[result.modelId].push(result);
-});
+        userResultsHTML += `
+        <div class="user-result-item">
+            <div class="user-result-header">
+                <div>
+                    <strong>${userName}</strong> (Code: ${playerCode})
+                    <br><small>Total Quizzes Taken: ${Object.keys(userQuizzes).length}</small>
+                </div>
+                <div>
+                    <button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export</button>
+                    <button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
+                    <button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
+                </div>
+            </div>`;
 
-userResultsHTML += `
-<div class="user-result-item">
-<div class="user-result-header">
-<div>
-<strong>${userName}</strong> (Code: ${playerCode})
-<br><small>Total Quizzes Taken: ${Object.keys(resultsByModel).length}</small>
-</div>
-<div>
-<button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export</button>
-<button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
-<button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
-</div>
-</div>`;
+        // Display results for each quiz separately
+        let quizCounter = 1;
+        Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
+            const model = quizModels.find(m => m.id === modelId);
+            const modelName = model ? model.name : 'Unknown Quiz';
 
-// Display results for each quiz separately
-let quizCounter = 1;
-Object.entries(resultsByModel).forEach(([modelId, modelResults]) => {
-const model = quizModels.find(m => m.id === modelId);
-const modelName = model ? model.name : 'Unknown Quiz';
+            // Group by attempts
+            const attempts = groupResultsByAttempt(quizResults);
 
-const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
-const totalAnswers = modelResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
-const avgResponseTime = totalAnswers > 0 ?
-(modelResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
+            userResultsHTML += `
+            <div class="quiz-separator">
+                <div class="quiz-title">Quiz ${quizCounter}: ${modelName} (${attempts.length} attempt${attempts.length > 1 ? 's' : ''})</div>`;
 
-// Get the timestamp of the last answer for this quiz
-const lastAnswerTime = modelResults.length > 0 ?
-new Date(modelResults[modelResults.length-1].timestamp).toLocaleString() : 'N/A';
+            // Show each attempt
+            attempts.forEach((attemptResults, attemptIndex) => {
+                const correctAnswers = attemptResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
+                const totalAnswers = attemptResults.length;
+                const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+                const avgResponseTime = totalAnswers > 0 ?
+                    (attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+                const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+                const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
 
-userResultsHTML += `
-<div class="quiz-separator">
-<div class="quiz-title">Quiz ${quizCounter}: ${modelName}</div>
-<div class="user-result-stats">
-<div class="user-stat">
-<span class="user-stat-number">${correctAnswers}</span>
-<span class="user-stat-label">Correct</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
-<span class="user-stat-label">Incorrect</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${totalAnswers}</span>
-<span class="user-stat-label">Total</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${accuracy}%</span>
-<span class="user-stat-label">Accuracy</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number">${avgResponseTime}s</span>
-<span class="user-stat-label">Avg Time</span>
-</div>
-<div class="user-stat">
-<span class="user-stat-number ${passFailClass}">${passFail}</span>
-<span class="user-stat-label">Result</span>
-</div>
-</div>
-<div style="margin-top: 0.5rem; font-size: 0.8rem; color: #666;">
-Last answered: ${lastAnswerTime}
-</div>
-</div>`;
-quizCounter++;
-});
+                const attemptDate = attemptResults.length > 0 ?
+                    new Date(attemptResults[0].timestamp).toLocaleString() : 'N/A';
 
-userResultsHTML += `</div>`;
-}
+                userResultsHTML += `
+                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">
+                        ${attempts.length > 1 ? `Attempt ${attemptIndex + 1}` : 'Single Attempt'} 
+                        - ${attemptDate}
+                    </div>
+                    <div class="user-result-stats">
+                        <div class="user-stat">
+                            <span class="user-stat-number">${correctAnswers}</span>
+                            <span class="user-stat-label">Correct</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${totalAnswers - correctAnswers}</span>
+                            <span class="user-stat-label">Incorrect</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${totalAnswers}</span>
+                            <span class="user-stat-label">Total</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${accuracy}%</span>
+                            <span class="user-stat-label">Accuracy</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${avgResponseTime}s</span>
+                            <span class="user-stat-label">Avg Time</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number ${passFailClass}">${passFail}</span>
+                            <span class="user-stat-label">Result</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
 
-userResultsContainer.innerHTML = userResultsHTML;
+            userResultsHTML += `</div>`;
+            quizCounter++;
+        });
+
+        userResultsHTML += `</div>`;
+    }
+
+    userResultsContainer.innerHTML = userResultsHTML;
 }
 
 // Delete user by code
@@ -3867,3 +3923,4 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
