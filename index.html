@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kahoot FS</title>
+<title>Kahoot FS - Quiz Platform</title>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -1018,6 +1018,44 @@ background: #f8f9fa;
 border-radius: 5px;
 }
 
+/* Rank Display Styles */
+.rank-display {
+position: fixed;
+top: 100px;
+right: 20px;
+background: rgba(255,255,255,0.95);
+padding: 15px;
+border-radius: 10px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+border-left: 4px solid #6e8efb;
+z-index: 1000;
+min-width: 200px;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+transition: all 0.3s ease;
+}
+
+.rank-display.celebrate {
+animation: pulse 1s infinite;
+border-left-color: #ffd700 !important;
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
+}
+
+/* Final Rank Display */
+.final-rank-section {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 25px;
+border-radius: 15px;
+margin: 20px 0;
+text-align: center;
+box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 .container {
@@ -1127,6 +1165,14 @@ flex-direction: column;
 margin: 5% auto;
 width: 95%;
 padding: 1rem;
+}
+
+.rank-display {
+position: relative;
+top: auto;
+right: auto;
+margin: 1rem 0;
+width: 100%;
 }
 }
 
@@ -1402,7 +1448,7 @@ font-size: 1.1rem;
 <div class="export-buttons">
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
-<button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results</button>
+<button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results (First Attempt Only)</button>
 <button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
@@ -1474,6 +1520,9 @@ font-size: 1.1rem;
 <ol>
 <li><strong>Admin control:</strong> Full control over quiz</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
+<li><strong>Real-time Ranking:</strong> See live rankings during quiz</li>
+<li><strong>First Attempt Export:</strong> Download only first attempts in bulk</li>
+<li><strong>Individual Export:</strong> Export all attempts for specific users</li>
 </ol>
 </div>
 
@@ -1484,6 +1533,8 @@ font-size: 1.1rem;
 <li>✅ Results download for players</li>
 <li>✅ Enhanced answer feedback</li>
 <li>✅ Pass/Fail status (50% threshold)</li>
+<li>✅ Real-time ranking system</li>
+<li>✅ First attempt download option</li>
 </ul>
 </div>
 </div>
@@ -1637,6 +1688,10 @@ total: 0,
 responseTimes: [],
 accuracy: 0
 };
+
+// Real-time ranking system
+let playerRankings = {};
+let rankingUpdateInterval = null;
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -1916,8 +1971,7 @@ alert('Error exporting data.');
 });
 }
 
-// Download all individual user results with improved format - SEPARATED BY QUIZ/MODEL
-// Download all individual user results with improved format - SHOWING ALL QUIZ ATTEMPTS
+// Download all individual user results - FIRST ATTEMPT ONLY
 function downloadAllUserResults() {
     database.ref('quizResults').once('value')
     .then((snapshot) => {
@@ -1929,7 +1983,6 @@ function downloadAllUserResults() {
 
         const allResults = Object.values(results);
 
-        // Check if there are any results at all
         if (allResults.length === 0) {
             alert('No results to export.');
             return;
@@ -1956,7 +2009,6 @@ function downloadAllUserResults() {
             }
         });
 
-        // Check if we have any valid user results
         if (Object.keys(resultsByUserAndQuiz).length === 0) {
             alert('No valid user results to export.');
             return;
@@ -1965,7 +2017,7 @@ function downloadAllUserResults() {
         // Create a clean workbook with separate sheets
         const workbook = XLSX.utils.book_new();
 
-        // Sheet 1: All Users Combined - ONE ROW PER USER PER QUIZ ATTEMPT
+        // Sheet 1: All Users Combined - FIRST ATTEMPT ONLY
         const allUsersData = [];
 
         // Header row for All Users Combined sheet
@@ -1973,7 +2025,7 @@ function downloadAllUserResults() {
             'Player Name',
             'Code', 
             'Quiz Model',
-            'Attempt Date',
+            'First Attempt Date',
             'Number of Questions Answered',
             'Correct Answers',
             'Wrong Answers',
@@ -1982,46 +2034,46 @@ function downloadAllUserResults() {
             'Pass/Fail'
         ]);
 
-        // Process each user and each quiz attempt
+        // Process each user and each quiz attempt - TAKE FIRST ATTEMPT ONLY
         Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
-            // Safely find user
             const user = users.find(u => u && u.code === playerCode);
             const userName = user ? user.name : `Unknown User (${playerCode})`;
 
             // Process each quiz the user took
             Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
-                // Safely find model
                 const model = quizModels.find(m => m && m.id === modelId);
                 const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
 
-                // Group results by attempt (different timestamps indicate different attempts)
+                // Group results by attempt
                 const attempts = groupResultsByAttempt(quizResults);
 
-                // Create a row for EACH ATTEMPT
-                attempts.forEach((attemptResults, attemptIndex) => {
-                    // Calculate statistics for this specific attempt
-                    const totalQuestions = attemptResults.length;
-                    const correctAnswers = attemptResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+                // TAKE ONLY THE FIRST ATTEMPT
+                if (attempts.length > 0) {
+                    const firstAttempt = attempts[0];
+                    
+                    // Calculate statistics for FIRST ATTEMPT only
+                    const totalQuestions = firstAttempt.length;
+                    const correctAnswers = firstAttempt.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
                     const wrongAnswers = totalQuestions - correctAnswers;
                     const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
 
-                    // Calculate average response time for this attempt
-                    const totalResponseTime = attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+                    // Calculate average response time for FIRST ATTEMPT
+                    const totalResponseTime = firstAttempt.reduce((sum, r) => sum + (r.responseTime || 0), 0);
                     const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
 
-                    // Determine pass/fail (50% threshold) for this attempt
+                    // Determine pass/fail for FIRST ATTEMPT
                     const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-                    // Get attempt date from the first result
-                    const attemptDate = attemptResults.length > 0 ? 
-                        new Date(attemptResults[0].timestamp).toLocaleDateString() : 'Unknown Date';
+                    // Get FIRST ATTEMPT date
+                    const attemptDate = firstAttempt.length > 0 ? 
+                        new Date(firstAttempt[0].timestamp).toLocaleDateString() : 'Unknown Date';
 
-                    // Add ONE ROW for this user for this specific quiz attempt
+                    // Add ONE ROW for this user's FIRST ATTEMPT
                     allUsersData.push([
                         userName,
                         playerCode,
                         modelName,
-                        attemptDate + (attempts.length > 1 ? ` (Attempt ${attemptIndex + 1})` : ''),
+                        attemptDate,
                         totalQuestions,
                         correctAnswers,
                         wrongAnswers,
@@ -2029,19 +2081,18 @@ function downloadAllUserResults() {
                         avgResponseTime,
                         passFail
                     ]);
-                });
+                }
             });
         });
 
         // Only create the "All Users Combined" sheet if we have data
-        if (allUsersData.length > 1) { // More than just headers
+        if (allUsersData.length > 1) {
             const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
-            XLSX.utils.book_append_sheet(workbook, allUsersSheet, "All Users Combined");
+            XLSX.utils.book_append_sheet(workbook, allUsersSheet, "First Attempts Only");
         }
 
-        // Sheet 2: Individual User Sheets (SEPARATED BY QUIZ AND ATTEMPT)
+        // Sheet 2: Individual User Sheets (FIRST ATTEMPT ONLY)
         Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
-            // Safely find user
             const user = users.find(u => u && u.code === playerCode);
             const userName = user ? user.name : `Unknown User (${playerCode})`;
 
@@ -2050,25 +2101,24 @@ function downloadAllUserResults() {
 
             // Process each quiz the user took
             Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
-                // Safely find model
                 const model = quizModels.find(m => m && m.id === modelId);
                 const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
 
                 // Group results by attempt
                 const attempts = groupResultsByAttempt(quizResults);
 
-                // Create a separate section for each attempt
-                attempts.forEach((attemptResults, attemptIndex) => {
-                    // Add quiz title for this attempt
-                    userSheetData.push([`QUIZ ${quizCounter}: ${modelName}`]);
-                    if (attempts.length > 1) {
-                        userSheetData.push([`ATTEMPT ${attemptIndex + 1}`]);
-                    }
-                    userSheetData.push([`USER: ${userName} (${playerCode})`]);
-                    userSheetData.push([`DATE: ${new Date(attemptResults[0].timestamp).toLocaleString()}`]);
-                    userSheetData.push([]); // Empty row
+                // TAKE ONLY THE FIRST ATTEMPT
+                if (attempts.length > 0) {
+                    const firstAttempt = attempts[0];
 
-                    // Add header row for this attempt
+                    // Add quiz title for FIRST ATTEMPT
+                    userSheetData.push([`QUIZ ${quizCounter}: ${modelName}`]);
+                    userSheetData.push([`FIRST ATTEMPT ONLY`]);
+                    userSheetData.push([`USER: ${userName} (${playerCode})`]);
+                    userSheetData.push([`DATE: ${new Date(firstAttempt[0].timestamp).toLocaleString()}`]);
+                    userSheetData.push([]);
+
+                    // Add header row for FIRST ATTEMPT
                     userSheetData.push([
                         'Question Number',
                         'Question Text', 
@@ -2080,8 +2130,8 @@ function downloadAllUserResults() {
                         'Result'
                     ]);
 
-                    // Add user results for this attempt
-                    attemptResults.forEach((result, index) => {
+                    // Add user results for FIRST ATTEMPT
+                    firstAttempt.forEach((result, index) => {
                         if (result) {
                             const isCorrect = result.selectedAnswer === result.correctAnswer;
 
@@ -2098,18 +2148,18 @@ function downloadAllUserResults() {
                         }
                     });
 
-                    // Add summary section for this attempt
-                    const correctAnswers = attemptResults.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
-                    const totalAnswers = attemptResults.length;
+                    // Add summary section for FIRST ATTEMPT
+                    const correctAnswers = firstAttempt.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
+                    const totalAnswers = firstAttempt.length;
                     const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
                     const avgResponseTime = totalAnswers > 0 ?
-                        (attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
+                        (firstAttempt.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
                     const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-                    userSheetData.push([]); // Empty row
-                    userSheetData.push(['ATTEMPT SUMMARY', '', '', '', '', '', '', '']);
+                    userSheetData.push([]);
+                    userSheetData.push(['FIRST ATTEMPT SUMMARY', '', '', '', '', '', '', '']);
                     userSheetData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
-                    userSheetData.push(['Attempt:', attempts.length > 1 ? `Attempt ${attemptIndex + 1}` : 'Single Attempt', '', '', '', '', '', '']);
+                    userSheetData.push(['Attempt:', 'First Attempt', '', '', '', '', '', '']);
                     userSheetData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
                     userSheetData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
                     userSheetData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
@@ -2117,47 +2167,41 @@ function downloadAllUserResults() {
                     userSheetData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
                     userSheetData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
 
-                    // Add separator between attempts (except for the last one)
-                    if (attemptIndex < attempts.length - 1) {
-                        userSheetData.push([]);
-                        userSheetData.push(['--- NEXT ATTEMPT ---', '', '', '', '', '', '', '']);
-                        userSheetData.push([]);
-                    } else if (quizCounter < Object.keys(userQuizzes).length) {
+                    // Add separator between quizzes
+                    if (quizCounter < Object.keys(userQuizzes).length) {
                         userSheetData.push([]);
                         userSheetData.push(['--- NEXT QUIZ ---', '', '', '', '', '', '', '']);
                         userSheetData.push([]);
                     }
 
                     quizCounter++;
-                });
+                }
             });
 
-            // Create worksheet for this user
+            // Create worksheet for this user (FIRST ATTEMPT ONLY)
             if (userSheetData.length > 0) {
                 const worksheet = XLSX.utils.aoa_to_sheet(userSheetData);
                 
-                // Create sheet name
-                let sheetName = `${userName} (${playerCode})`;
-                sheetName = sheetName.substring(0, 31); // Excel sheet name limit
-                sheetName = sheetName.replace(/[\\/*\[\]?:]/g, ''); // Remove invalid characters
+                let sheetName = `${userName} (${playerCode}) - First Attempt`;
+                sheetName = sheetName.substring(0, 31);
+                sheetName = sheetName.replace(/[\\/*\[\]?:]/g, '');
                 
                 XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
             }
         });
 
-        // Check if we have any sheets in the workbook
         if (workbook.SheetNames.length === 0) {
             alert('No valid data to export.');
             return;
         }
 
         // Download the Excel file
-        XLSX.writeFile(workbook, `all-users-quiz-results-${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `first-attempt-results-${new Date().toISOString().split('T')[0]}.xlsx`);
 
-        alert('All individual user results downloaded successfully! Now showing ALL quiz attempts for each user.');
+        alert('First attempt results downloaded successfully! Use individual Export buttons for other attempts.');
     })
     .catch((error) => {
-        console.error("Error exporting all user results:", error);
+        console.error("Error exporting first attempt results:", error);
         alert('Error exporting data: ' + error.message);
     });
 }
@@ -2378,7 +2422,6 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 });
 }
 
-// Load individual user results - SEPARATED BY QUIZ
 // Load individual user results - SHOWING ALL ATTEMPTS
 function loadIndividualUserResults(resultsArray) {
     const userResultsContainer = document.getElementById('user-results-container');
@@ -2411,7 +2454,7 @@ function loadIndividualUserResults(resultsArray) {
                     <br><small>Total Quizzes Taken: ${Object.keys(userQuizzes).length}</small>
                 </div>
                 <div>
-                    <button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export</button>
+                    <button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export All Attempts</button>
                     <button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
                     <button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
                 </div>
@@ -3424,6 +3467,7 @@ quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Not started';
 quizStatus.style.color = '#ff9800';
 quizActive = false;
+stopRankingSystem(); // Stop ranking before quiz starts
 } else if (now >= quizStartTime && now <= quizEndTime) {
 var timeLeft = Math.floor((quizEndTime - now) / 1000);
 var minutes = Math.floor(timeLeft / 60);
@@ -3433,11 +3477,13 @@ quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Active';
 quizStatus.style.color = '#4caf50';
 quizActive = true;
+// Ranking system will start when players join
 } else {
 quizTimer.textContent = 'Quiz ended';
 quizStatus.textContent = 'Ended';
 quizStatus.style.color = '#f44336';
 quizActive = false;
+stopRankingSystem(); // Stop ranking after quiz ends
 }
 }
 
@@ -3609,68 +3655,102 @@ showPlayerResults();
 }
 }
 
-// Show player results at the end of quiz
+// Show player results at the end of quiz with final rank
 function showPlayerResults() {
-// Mark quiz as completed immediately when user finishes last question
-setStoredValue('quizCompleted', 'true');
-removeStoredValue('quizProgress');
-removeStoredValue('quizStarted');
+    // Stop ranking updates
+    stopRankingSystem();
+    
+    // Mark quiz as completed immediately when user finishes last question
+    setStoredValue('quizCompleted', 'true');
+    removeStoredValue('quizProgress');
+    removeStoredValue('quizStarted');
 
-var avgResponseTime = playerResults.responseTimes.length > 0
-? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
-: 0;
+    var avgResponseTime = playerResults.responseTimes.length > 0
+        ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+        : 0;
 
-// Find user name
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+    // Find user name
+    const user = users.find(u => u.code === playerCode);
+    const userName = user ? user.name : 'Unknown User';
 
-// Calculate pass/fail (50% or higher to pass)
-const accuracy = playerResults.accuracy;
-const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
+    // Calculate pass/fail (50% or higher to pass)
+    const accuracy = playerResults.accuracy;
+    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+    const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
 
-document.getElementById('player-question').innerHTML = `
-<div class="player-results">
-<h2>🎉 Quiz Completed! 🎉</h2>
-<p>Thank you for participating, ${userName}!</p>
+    // Get final rank
+    const currentPlayerRank = playerRankings[playerCode];
+    const finalRank = currentPlayerRank ? currentPlayerRank.rank : 'N/A';
+    const totalPlayers = Object.keys(playerRankings).length;
 
-<div class="result-stats">
-<div class="result-stat">
-<span class="result-number result-correct">${playerResults.correct}</span>
-<span class="result-label">Correct Answers</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-incorrect">${playerResults.incorrect}</span>
-<span class="result-label">Incorrect Answers</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
-<span class="result-label">Accuracy</span>
-</div>
-<div class="result-stat">
-<span class="result-number result-time">${avgResponseTime}s</span>
-<span class="result-label">Avg Response Time</span>
-</div>
-<div class="result-stat">
-<span class="result-number ${passFailClass}">${passFail}</span>
-<span class="result-label">Final Result</span>
-</div>
-</div>
+    // Remove live rank display
+    const liveRankDisplay = document.getElementById('current-rank-display');
+    if (liveRankDisplay) {
+        liveRankDisplay.remove();
+    }
 
-<button class="download-btn" onclick="downloadPlayerResults()">
-📥 Download My Results
-</button>
+    document.getElementById('player-question').innerHTML = `
+        <div class="player-results">
+            <h2>🎉 Quiz Completed! 🎉</h2>
+            <p>Thank you for participating, ${userName}!</p>
 
-<div class="session-warning">
-<h3>⚠️ Quiz Completed</h3>
-<p>You have successfully completed this quiz.</p>
-<p><strong>Note:</strong> You cannot retake this quiz.</p>
-</div>
-</div>
-`;
+            <!-- Final Rank Display -->
+            <div class="final-rank-section">
+                <div style="font-size: 1.2rem; margin-bottom: 10px; opacity: 0.9;">
+                    Your Final Rank
+                </div>
+                <div style="font-size: 3.5rem; font-weight: bold; margin: 10px 0;">
+                    #${finalRank}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.8;">
+                    out of ${totalPlayers} players
+                </div>
+                ${finalRank <= 3 ? `
+                <div style="margin-top: 15px; font-size: 1.5rem;">
+                    ${finalRank === 1 ? '🥇 GOLD MEDAL!' : ''}
+                    ${finalRank === 2 ? '🥈 SILVER MEDAL!' : ''}
+                    ${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
+                </div>
+                ` : ''}
+            </div>
 
-document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').textContent = "";
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="result-number result-correct">${playerResults.correct}</span>
+                    <span class="result-label">Correct Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-incorrect">${playerResults.incorrect}</span>
+                    <span class="result-label">Incorrect Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
+                    <span class="result-label">Accuracy</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-time">${avgResponseTime}s</span>
+                    <span class="result-label">Avg Response Time</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number ${passFailClass}">${passFail}</span>
+                    <span class="result-label">Final Result</span>
+                </div>
+            </div>
+
+            <button class="download-btn" onclick="downloadPlayerResults()">
+                📥 Download My Results
+            </button>
+
+            <div class="session-warning">
+                <h3>⚠️ Quiz Completed</h3>
+                <p>You have successfully completed this quiz.</p>
+                <p><strong>Note:</strong> You cannot retake this quiz.</p>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('player-answers').innerHTML = "";
+    document.getElementById('countdown').textContent = "";
 }
 
 // Download player results as CSV
@@ -3793,6 +3873,155 @@ answersDiv.appendChild(gridContainer);
 startCountdown();
 }
 
+// Real-time ranking system
+// Start tracking player rankings
+function startRankingSystem() {
+    // Clear any existing interval
+    if (rankingUpdateInterval) {
+        clearInterval(rankingUpdateInterval);
+    }
+    
+    // Update rankings every 2 seconds during quiz
+    rankingUpdateInterval = setInterval(updatePlayerRankings, 2000);
+}
+
+// Stop ranking system
+function stopRankingSystem() {
+    if (rankingUpdateInterval) {
+        clearInterval(rankingUpdateInterval);
+        rankingUpdateInterval = null;
+    }
+}
+
+// Update player rankings based on speed and accuracy
+function updatePlayerRankings() {
+    database.ref('quizResults').once('value')
+    .then((snapshot) => {
+        const results = snapshot.val();
+        if (!results) return;
+
+        const allResults = Object.values(results);
+        const currentTime = Date.now();
+        
+        // Filter results from the last 5 minutes for active players
+        const recentResults = allResults.filter(result => 
+            currentTime - new Date(result.timestamp).getTime() < 5 * 60 * 1000
+        );
+
+        // Calculate scores for each player
+        const playerScores = {};
+        
+        recentResults.forEach(result => {
+            if (!playerScores[result.playerCode]) {
+                playerScores[result.playerCode] = {
+                    correct: 0,
+                    totalTime: 0,
+                    questions: 0,
+                    lastActivity: new Date(result.timestamp).getTime(),
+                    playerName: result.playerName
+                };
+            }
+            
+            const player = playerScores[result.playerCode];
+            player.questions++;
+            
+            if (result.selectedAnswer === result.correctAnswer) {
+                player.correct++;
+                // Faster correct answers get higher scores
+                const speedBonus = Math.max(0, 15 - result.responseTime);
+                player.totalTime += result.responseTime;
+            }
+            
+            player.lastActivity = Math.max(player.lastActivity, new Date(result.timestamp).getTime());
+        });
+
+        // Calculate ranking score (accuracy + speed)
+        const rankedPlayers = Object.entries(playerScores).map(([playerCode, data]) => {
+            const accuracy = data.questions > 0 ? (data.correct / data.questions) * 100 : 0;
+            const avgTime = data.correct > 0 ? (data.totalTime / data.correct) : 0;
+            const speedScore = Math.max(0, 100 - (avgTime * 10)); // Lower time = higher score
+            const activityRecency = (currentTime - data.lastActivity) < 60000 ? 50 : 0; // Bonus for recent activity
+            
+            return {
+                playerCode,
+                playerName: data.playerName,
+                score: (accuracy * 0.6) + (speedScore * 0.3) + (activityRecency * 0.1),
+                correct: data.correct,
+                questions: data.questions,
+                accuracy: accuracy,
+                avgTime: avgTime
+            };
+        });
+
+        // Sort by score (descending)
+        rankedPlayers.sort((a, b) => b.score - a.score);
+        
+        // Update global rankings
+        playerRankings = {};
+        rankedPlayers.forEach((player, index) => {
+            playerRankings[player.playerCode] = {
+                rank: index + 1,
+                ...player
+            };
+        });
+
+        // Update ranking display for current player
+        updateCurrentPlayerRankDisplay();
+    })
+    .catch((error) => {
+        console.error("Error updating rankings:", error);
+    });
+}
+
+// Update current player's rank display
+function updateCurrentPlayerRankDisplay() {
+    if (!playerCode || !quizActive) return;
+    
+    const currentPlayerRank = playerRankings[playerCode];
+    const rankDisplay = document.getElementById('current-rank-display');
+    
+    if (!rankDisplay) {
+        // Create rank display if it doesn't exist
+        const newRankDisplay = document.createElement('div');
+        newRankDisplay.id = 'current-rank-display';
+        newRankDisplay.className = 'rank-display';
+        document.body.appendChild(newRankDisplay);
+    }
+    
+    const displayElement = document.getElementById('current-rank-display');
+    
+    if (currentPlayerRank) {
+        const user = users.find(u => u.code === playerCode);
+        const userName = user ? user.name : 'You';
+        
+        displayElement.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #4caf50; text-align: center;">
+                #${currentPlayerRank.rank}
+            </div>
+            <div style="font-size: 0.9rem; text-align: center; margin-bottom: 8px;">
+                ${userName}
+            </div>
+            <div style="font-size: 0.8rem; color: #666;">
+                📊 ${currentPlayerRank.correct}/${currentPlayerRank.questions} correct
+            </div>
+            <div style="font-size: 0.8rem; color: #666;">
+                ⚡ Avg: ${currentPlayerRank.avgTime ? currentPlayerRank.avgTime.toFixed(1) + 's' : 'N/A'}
+            </div>
+            <div style="font-size: 0.8rem; color: #2196f3; margin-top: 5px;">
+                Total Players: ${Object.keys(playerRankings).length}
+            </div>
+        `;
+    } else {
+        displayElement.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
+            <div style="text-align: center; color: #666; font-size: 0.9rem;">
+                Answer questions to see your rank!
+            </div>
+        `;
+    }
+}
+
 // Initialize the application
 document.getElementById("joinBtn").onclick = function() {
 if (!quizActive) {
@@ -3849,6 +4078,9 @@ var progress = JSON.parse(savedProgress);
 currentIndex = progress.currentIndex || 0;
 playerResults = progress.playerResults || playerResults;
 }
+
+// START RANKING SYSTEM WHEN PLAYER JOINS
+startRankingSystem();
 
 currentIndex = 0;
 document.getElementById("player-code").style.display = "none";
@@ -3918,9 +4150,8 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Model Management Initialized");
+console.log("Enhanced Kahoot FS with Model Management and Ranking System Initialized");
 });
 </script>
 </body>
 </html>
-
