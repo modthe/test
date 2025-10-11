@@ -43,30 +43,60 @@ color: white;
 padding: 1.5rem;
 text-align: center;
 position: relative;
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+}
+
+.header-content {
+display: flex;
+justify-content: space-between;
+align-items: center;
+width: 100%;
+flex-wrap: wrap;
+}
+
+.header-title {
+flex: 1;
+text-align: center;
 }
 
 .quiz-timer {
-position: absolute;
-top: 10px;
-right: 20px;
 background: rgba(255, 255, 255, 0.2);
-padding: 5px 10px;
+padding: 8px 15px;
 border-radius: 20px;
 font-weight: bold;
 font-size: 0.9rem;
 display: flex;
 align-items: center;
-gap: 10px;
+gap: 8px;
+min-width: 180px;
+justify-content: center;
 }
 
 .player-count {
 background: rgba(255, 255, 255, 0.3);
-padding: 3px 8px;
-border-radius: 10px;
-font-size: 0.8rem;
+padding: 8px 15px;
+border-radius: 20px;
+font-weight: bold;
+font-size: 0.9rem;
 display: flex;
 align-items: center;
-gap: 5px;
+gap: 8px;
+min-width: 180px;
+justify-content: center;
+}
+
+.player-count.active {
+background: rgba(76, 175, 80, 0.3);
+animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
 }
 
 h1 {
@@ -263,6 +293,19 @@ gap: 15px;
 padding: 1.2rem;
 min-height: 80px;
 font-size: 1rem;
+}
+
+header {
+padding: 1rem;
+}
+
+.header-content {
+flex-direction: column;
+gap: 10px;
+}
+
+.quiz-timer, .player-count {
+min-width: 100%;
 }
 }
 
@@ -1205,12 +1248,6 @@ font-size: 0.8rem;
 padding: 1rem;
 }
 
-.quiz-timer {
-position: static;
-margin-top: 10px;
-display: inline-block;
-}
-
 .admin-controls {
 flex-direction: column;
 }
@@ -1341,12 +1378,16 @@ font-size: 1.1rem;
 <body>
 <div class="container">
 <header>
+<div class="header-content">
+<div class="quiz-timer" id="quiz-timer">
+⏱️ Quiz: Not started
+</div>
+<div class="header-title">
 <h1>Kahoot FS</h1>
 <p class="subtitle">Answer questions within the time limit</p>
-<div class="quiz-timer" id="quiz-timer">
-<span>Quiz: Not started</span>
+</div>
 <div class="player-count" id="player-count">
-👤 <span id="current-player-count">0</span>
+👤 <span id="current-player-count">0</span> Players
 </div>
 </div>
 </header>
@@ -1999,9 +2040,18 @@ if (data) {
 const activePlayerCount = Object.keys(data).length;
 document.getElementById('current-player-count').textContent = activePlayerCount;
 document.getElementById('dashboard-player-count').textContent = activePlayerCount;
+  
+// Add visual feedback when players are active
+const playerCountElement = document.getElementById('player-count');
+if (activePlayerCount > 0) {
+playerCountElement.classList.add('active');
+} else {
+playerCountElement.classList.remove('active');
+}
 } else {
 document.getElementById('current-player-count').textContent = '0';
 document.getElementById('dashboard-player-count').textContent = '0';
+document.getElementById('player-count').classList.remove('active');
 }
 });
 }
@@ -3842,7 +3892,7 @@ var hours = Math.floor(timeUntilStart / 3600);
 var minutes = Math.floor((timeUntilStart % 3600) / 60);
 var seconds = timeUntilStart % 60;
 
-quizTimer.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+quizTimer.textContent = `⏱️ Starts in: ${hours}h ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Not started';
 quizStatus.style.color = '#ff9800';
 quizActive = false;
@@ -3852,13 +3902,13 @@ var timeLeft = Math.floor((quizEndTime - now) / 1000);
 var minutes = Math.floor(timeLeft / 60);
 var seconds = timeLeft % 60;
 
-quizTimer.textContent = `Time left: ${minutes}m ${seconds}s`;
+quizTimer.textContent = `⏱️ Time left: ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Active';
 quizStatus.style.color = '#4caf50';
 quizActive = true;
 // Ranking system will start when players join
 } else {
-quizTimer.textContent = 'Quiz ended';
+quizTimer.textContent = '⏱️ Quiz ended';
 quizStatus.textContent = 'Ended';
 quizStatus.style.color = '#f44336';
 quizActive = false;
