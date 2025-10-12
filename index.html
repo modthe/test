@@ -1373,6 +1373,126 @@ h3 {
 font-size: 1.1rem;
 }
 }
+
+/* Celebration and Encouragement Styles */
+.celebration-message {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: rgba(76, 175, 80, 0.95);
+color: white;
+padding: 2rem;
+border-radius: 15px;
+font-size: 2rem;
+font-weight: bold;
+text-align: center;
+z-index: 2000;
+box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+animation: celebrationAnimation 2s ease-out forwards;
+}
+
+.encouragement-message {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: rgba(244, 67, 54, 0.95);
+color: white;
+padding: 2rem;
+border-radius: 15px;
+font-size: 1.8rem;
+font-weight: bold;
+text-align: center;
+z-index: 2000;
+box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+animation: encouragementAnimation 2s ease-out forwards;
+}
+
+@keyframes celebrationAnimation {
+0% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.5);
+}
+20% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1.2);
+}
+40% {
+transform: translate(-50%, -50%) scale(1);
+}
+80% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1);
+}
+100% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(1.5);
+}
+}
+
+@keyframes encouragementAnimation {
+0% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.5);
+}
+20% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1.1);
+}
+40% {
+transform: translate(-50%, -50%) scale(1);
+}
+80% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1);
+}
+100% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(1.2);
+}
+}
+
+.confetti {
+position: fixed;
+width: 10px;
+height: 10px;
+background-color: #f00;
+animation: confetti-fall 5s linear forwards;
+z-index: 1999;
+}
+
+@keyframes confetti-fall {
+0% {
+transform: translateY(-100px) rotate(0deg);
+opacity: 1;
+}
+100% {
+transform: translateY(100vh) rotate(360deg);
+opacity: 0;
+}
+}
+
+/* Celebration particles */
+.particle {
+position: fixed;
+width: 8px;
+height: 8px;
+border-radius: 50%;
+animation: particle-explode 1.5s ease-out forwards;
+z-index: 1999;
+}
+
+@keyframes particle-explode {
+0% {
+transform: translate(0, 0) scale(1);
+opacity: 1;
+}
+100% {
+transform: translate(var(--tx), var(--ty)) scale(0);
+opacity: 0;
+}
+}
 </style>
 </head>
 <body>
@@ -4281,8 +4401,12 @@ button.classList.add('other-option');
 // TRACK RESULTS
 if (selected === correct) {
 playerResults.correct++;
+// Show celebration message and animation
+showCelebrationMessage();
 } else {
 playerResults.incorrect++;
+// Show encouragement message
+showEncouragementMessage();
 }
 playerResults.total++;
 playerResults.responseTimes.push(responseTime);
@@ -4303,6 +4427,98 @@ gridContainer.appendChild(btn);
 
 answersDiv.appendChild(gridContainer);
 startCountdown();
+}
+
+// NEW: Show celebration message and animation for correct answers
+function showCelebrationMessage() {
+    // Create celebration message
+    const celebration = document.createElement('div');
+    celebration.className = 'celebration-message';
+    celebration.textContent = '🎉 Correct! 🎉';
+    document.body.appendChild(celebration);
+    
+    // Create confetti
+    createConfetti();
+    
+    // Create particles
+    createParticles();
+    
+    // Remove message after animation
+    setTimeout(() => {
+        celebration.remove();
+    }, 2000);
+}
+
+// NEW: Show encouragement message for wrong answers
+function showEncouragementMessage() {
+    const encouragementMessages = [
+        "Don't give up! You can do it! 💪",
+        "Keep trying! You're learning! 📚",
+        "Nice try! Next one will be better! 🌟",
+        "You're getting closer! Keep going! 🔥",
+        "Learning happens one step at a time! 🚶‍♂️"
+    ];
+    
+    const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+    
+    // Create encouragement message
+    const encouragement = document.createElement('div');
+    encouragement.className = 'encouragement-message';
+    encouragement.textContent = randomMessage;
+    document.body.appendChild(encouragement);
+    
+    // Remove message after animation
+    setTimeout(() => {
+        encouragement.remove();
+    }, 2000);
+}
+
+// NEW: Create confetti animation
+function createConfetti() {
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        document.body.appendChild(confetti);
+        
+        // Remove confetti after animation
+        setTimeout(() => {
+            confetti.remove();
+        }, 5000);
+    }
+}
+
+// NEW: Create particle explosion animation
+function createParticles() {
+    const particleColors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+    
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.backgroundColor = particleColors[Math.floor(Math.random() * particleColors.length)];
+        particle.style.left = '50%';
+        particle.style.top = '50%';
+        
+        // Random direction and distance
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 100 + Math.random() * 200;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        
+        particle.style.setProperty('--tx', tx + 'px');
+        particle.style.setProperty('--ty', ty + 'px');
+        
+        document.body.appendChild(particle);
+        
+        // Remove particle after animation
+        setTimeout(() => {
+            particle.remove();
+        }, 1500);
+    }
 }
 
 // Real-time ranking system
@@ -4592,5 +4808,3 @@ console.log("Enhanced Kahoot FS with Model Management and Ranking System Initial
 </script>
 </body>
 </html>
-
-
