@@ -9,8 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Confetti Library -->
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
 * {
 margin: 0;
@@ -104,7 +102,6 @@ animation: pulse 2s infinite;
 h1 {
 font-size: 2rem;
 margin-bottom: 0.5rem;
-color: white; /* Changed to white as requested */
 }
 
 .subtitle {
@@ -285,145 +282,6 @@ opacity: 0.6;
 background: #f0f0f0;
 }
 
-/* NEW INTERACTIVE FEATURES - Celebration Styles */
-.celebration {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-z-index: 2000;
-display: flex;
-justify-content: center;
-align-items: center;
-background: rgba(0,0,0,0.7);
-animation: fadeIn 0.5s ease;
-}
-
-.celebration-content {
-background: white;
-padding: 2rem;
-border-radius: 15px;
-text-align: center;
-box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-max-width: 500px;
-animation: popIn 0.5s ease;
-}
-
-@keyframes popIn {
-0% { transform: scale(0.5); opacity: 0; }
-100% { transform: scale(1); opacity: 1; }
-}
-
-.celebration-title {
-font-size: 2.5rem;
-margin-bottom: 1rem;
-color: #4caf50;
-font-weight: bold;
-}
-
-.celebration-message {
-font-size: 1.2rem;
-margin-bottom: 1.5rem;
-color: #333;
-}
-
-.encouragement {
-position: fixed;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-background: rgba(255,255,255,0.95);
-padding: 1.5rem;
-border-radius: 10px;
-text-align: center;
-box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-z-index: 1500;
-animation: slideUp 0.5s ease;
-max-width: 400px;
-}
-
-@keyframes slideUp {
-0% { transform: translate(-50%, -30%); opacity: 0; }
-100% { transform: translate(-50%, -50%); opacity: 1; }
-}
-
-.encouragement-title {
-font-size: 1.8rem;
-margin-bottom: 0.5rem;
-font-weight: bold;
-}
-
-.encouragement-message {
-font-size: 1.1rem;
-margin-bottom: 1rem;
-}
-
-.encouragement.correct {
-border-left: 5px solid #4caf50;
-}
-
-.encouragement.incorrect {
-border-left: 5px solid #f44336;
-}
-
-/* NEW INTERACTIVE FEATURES - Enhanced Rank Display */
-.rank-display {
-position: fixed;
-top: 100px;
-right: 20px;
-background: rgba(255,255,255,0.95);
-padding: 15px;
-border-radius: 10px;
-box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-border-left: 4px solid #6e8efb;
-z-index: 1000;
-min-width: 200px;
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-transition: all 0.3s ease;
-}
-
-.rank-display.celebrate {
-animation: pulse 1s infinite;
-border-left-color: #ffd700 !important;
-}
-
-/* NEW INTERACTIVE FEATURES - Final Rank Display */
-.final-rank-section {
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-color: white;
-padding: 25px;
-border-radius: 15px;
-margin: 20px 0;
-text-align: center;
-box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
-
-/* NEW INTERACTIVE FEATURES - Progress Animation */
-.question-progress {
-display: flex;
-justify-content: space-between;
-margin-bottom: 1.5rem;
-background: #EDF2F7;
-padding: 10px;
-border-radius: 10px;
-}
-
-.progress-item {
-flex: 1;
-text-align: center;
-padding: 10px;
-font-weight: 600;
-color: var(--text-light);
-transition: all 0.3s ease;
-}
-
-.progress-item.active {
-color: #6e8efb;
-border-bottom: 3px solid #6e8efb;
-transform: scale(1.05);
-}
-
 /* Responsive design for mobile */
 @media (max-width: 768px) {
 .answers-grid {
@@ -448,14 +306,6 @@ gap: 10px;
 
 .quiz-timer, .player-count {
 min-width: 100%;
-}
-
-.rank-display {
-position: relative;
-top: auto;
-right: auto;
-margin: 1rem 0;
-width: 100%;
 }
 }
 
@@ -1224,6 +1074,44 @@ background: #f8f9fa;
 border-radius: 5px;
 }
 
+/* Rank Display Styles */
+.rank-display {
+position: fixed;
+top: 100px;
+right: 20px;
+background: rgba(255,255,255,0.95);
+padding: 15px;
+border-radius: 10px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+border-left: 4px solid #6e8efb;
+z-index: 1000;
+min-width: 200px;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+transition: all 0.3s ease;
+}
+
+.rank-display.celebrate {
+animation: pulse 1s infinite;
+border-left-color: #ffd700 !important;
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
+}
+
+/* Final Rank Display */
+.final-rank-section {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 25px;
+border-radius: 15px;
+margin: 20px 0;
+text-align: center;
+box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
 /* Question View Modal */
 .question-modal {
 display: none;
@@ -1520,13 +1408,6 @@ font-size: 1.1rem;
 </div>
 
 <div class="card">
-<!-- NEW: Added progress indicator -->
-<div class="question-progress">
-<div class="progress-item active">Join</div>
-<div class="progress-item">Play</div>
-<div class="progress-item">Results</div>
-</div>
-
 <input id="player-code" placeholder="Enter your access code">
 <button id="joinBtn">Join Game</button>
 
@@ -1908,415 +1789,6 @@ font-size: 1.1rem;
 </div>
 
 <script>
-// NEW INTERACTIVE FEATURES - Celebration messages
-const celebrationMessages = [
-    "Amazing! You're a quiz master! 🎉",
-    "Brilliant! That was the right answer! ✨",
-    "Fantastic! You're on fire! 🔥",
-    "Outstanding! You nailed it! 💪",
-    "Excellent! You're crushing it! 🚀",
-    "Superb! You're unstoppable! ⚡",
-    "Perfect! You're a genius! 🧠",
-    "Impressive! You're on a roll! 🎯",
-    "Awesome! You're killing it! 💥",
-    "Phenomenal! You're unstoppable! 🌟"
-];
-
-// NEW INTERACTIVE FEATURES - Encouragement messages
-const encouragementMessages = [
-    "Don't give up! You'll get the next one! 💪",
-    "Almost there! Keep going! 🚀",
-    "Nice try! You're learning! 📚",
-    "Good effort! The next one is yours! ✨",
-    "You're getting closer! Keep it up! 🔥",
-    "Don't worry! Every expert was once a beginner! 🌟",
-    "Keep pushing! You're improving! 💫",
-    "Stay focused! You've got this! 🎯",
-    "Learning happens one question at a time! 📖",
-    "Every mistake is a step toward mastery! 🧠"
-];
-
-// NEW INTERACTIVE FEATURES - Fast response messages
-const fastResponseMessages = [
-    "Lightning fast! ⚡",
-    "Incredible speed! 🏃‍♂️",
-    "Super quick! 🚀",
-    "Blazing fast! 🔥",
-    "Speed demon! 👹",
-    "Rapid response! 💨",
-    "Quick as a flash! ⚡",
-    "Speed champion! 🥇",
-    "Faster than light! ✨",
-    "Speed wizard! 🧙‍♂️"
-];
-
-// NEW INTERACTIVE FEATURES - Show celebration for correct answer
-function showCelebration(responseTime, isFast = false) {
-    // Remove any existing celebration
-    const existingCelebration = document.querySelector('.celebration');
-    if (existingCelebration) {
-        existingCelebration.remove();
-    }
-
-    // Create celebration element
-    const celebration = document.createElement('div');
-    celebration.className = 'celebration';
-
-    // Select random celebration message
-    const randomMessage = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
-    const fastMessage = isFast ? fastResponseMessages[Math.floor(Math.random() * fastResponseMessages.length)] : '';
-
-    celebration.innerHTML = `
-        <div class="celebration-content">
-            <div class="celebration-title">🎉 Correct! 🎉</div>
-            <div class="celebration-message">${randomMessage}</div>
-            ${isFast ? `<div style="font-size: 1.5rem; color: #FFD700; margin-bottom: 1rem;">${fastMessage}</div>` : ''}
-            <div style="font-size: 1rem; color: #666;">Response time: ${responseTime.toFixed(2)} seconds</div>
-            <button onclick="this.closest('.celebration').remove()" style="margin-top: 1rem; padding: 0.8rem 1.5rem; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">Continue</button>
-        </div>
-    `;
-
-    document.body.appendChild(celebration);
-
-    // Trigger confetti
-    confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 }
-    });
-
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (celebration.parentNode) {
-            celebration.remove();
-        }
-    }, 3000);
-}
-
-// NEW INTERACTIVE FEATURES - Show encouragement for incorrect answer
-function showEncouragement() {
-    // Remove any existing encouragement
-    const existingEncouragement = document.querySelector('.encouragement');
-    if (existingEncouragement) {
-        existingEncouragement.remove();
-    }
-
-    // Create encouragement element
-    const encouragement = document.createElement('div');
-    encouragement.className = 'encouragement incorrect';
-
-    // Select random encouragement message
-    const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
-
-    encouragement.innerHTML = `
-        <div class="encouragement-title">Keep Going! 💪</div>
-        <div class="encouragement-message">${randomMessage}</div>
-        <button onclick="this.closest('.encouragement').remove()" style="padding: 0.5rem 1rem; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">OK</button>
-    `;
-
-    document.body.appendChild(encouragement);
-
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (encouragement.parentNode) {
-            encouragement.remove();
-        }
-    }, 3000);
-}
-
-// NEW INTERACTIVE FEATURES - Enhanced answer selection with instant feedback
-function enhanceAnswerSelection() {
-    // This function is integrated into the existing answer selection logic
-    // The instant color feedback is already implemented in the CSS
-    // This adds the celebration/encouragement features
-}
-
-// NEW INTERACTIVE FEATURES - Update progress indicator
-function updateProgressIndicator(stage) {
-    const progressItems = document.querySelectorAll('.progress-item');
-    progressItems.forEach((item, index) => {
-        if (index === stage) {
-            item.classList.add('active');
-        } else {
-            item.classList.remove('active');
-        }
-    });
-}
-
-// NEW INTERACTIVE FEATURES - Enhanced player question display with animations
-function showEnhancedPlayerQuestion() {
-    // Get visible questions based on active model
-    var visibleQuestions = getVisibleQuestions();
-
-    if (currentIndex >= visibleQuestions.length) {
-        showPlayerResults();
-        return;
-    }
-
-    var q = visibleQuestions[currentIndex];
-
-    // Update progress indicator
-    updateProgressIndicator(1); // Playing stage
-
-    document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + " of " + visibleQuestions.length + ":</h3><p>" + q.question + "</p>";
-
-    var answersDiv = document.getElementById("player-answers");
-    answersDiv.innerHTML = "<h3>Select your answer:</h3>";
-
-    // Create grid container
-    var gridContainer = document.createElement("div");
-    gridContainer.className = "answers-grid";
-
-    questionStartTime = Date.now();
-
-    q.answers.forEach(a => {
-        var btn = document.createElement("button");
-        btn.className = "answer-btn";
-        btn.innerHTML = a;
-        btn.onclick = function() {
-            if (!quizActive) {
-                alert("The quiz is not currently active. Please check the quiz schedule.");
-                return;
-            }
-
-            var selected = a;
-            var correct = q.correct;
-            var responseTime = (Date.now() - questionStartTime) / 1000;
-
-            clearInterval(countdownInterval);
-
-            // INSTANT COLOR FEEDBACK - No lag
-            var allButtons = document.querySelectorAll('.answer-btn');
-            allButtons.forEach(button => {
-                button.disabled = true;
-                button.style.pointerEvents = 'none';
-
-                // Remove any existing classes first
-                button.classList.remove('correct', 'incorrect', 'other-option');
-
-                if (button.innerHTML === correct) {
-                    // Correct answer - show green immediately
-                    button.classList.add('correct');
-                } else if (button.innerHTML === selected) {
-                    // User's wrong selection - show red immediately
-                    button.classList.add('incorrect');
-                } else {
-                    // Other options - gray out
-                    button.classList.add('other-option');
-                }
-            });
-
-            // TRACK RESULTS
-            if (selected === correct) {
-                playerResults.correct++;
-                // Show celebration for correct answer
-                const isFast = responseTime < 5; // Consider fast if answered in less than 5 seconds
-                showCelebration(responseTime, isFast);
-            } else {
-                playerResults.incorrect++;
-                // Show encouragement for incorrect answer
-                showEncouragement();
-            }
-            playerResults.total++;
-            playerResults.responseTimes.push(responseTime);
-            playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
-
-            // Find user name
-            const user = users.find(u => u.code === playerCode);
-            const userName = user ? user.name : 'Unknown User';
-
-            saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
-            saveQuizProgress();
-
-            // Start countdown for next question
-            startNextQuestionCountdown();
-        };
-        gridContainer.appendChild(btn);
-    });
-
-    answersDiv.appendChild(gridContainer);
-    startCountdown();
-}
-
-// NEW INTERACTIVE FEATURES - Enhanced final results display
-function showEnhancedPlayerResults() {
-    // Stop ranking updates
-    stopRankingSystem();
-    
-    // Mark quiz as completed immediately when user finishes last question
-    setStoredValue('quizCompleted', 'true');
-    removeStoredValue('quizProgress');
-    removeStoredValue('quizStarted');
-
-    // Track player leaving
-    trackActivePlayer(playerCode, 'leave');
-
-    var avgResponseTime = playerResults.responseTimes.length > 0
-        ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
-        : 0;
-
-    // Find user name
-    const user = users.find(u => u.code === playerCode);
-    const userName = user ? user.name : 'Unknown User';
-
-    // Calculate pass/fail (50% or higher to pass)
-    const accuracy = playerResults.accuracy;
-    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-    const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
-
-    // Get final rank
-    const currentPlayerRank = playerRankings[playerCode];
-    const finalRank = currentPlayerRank ? currentPlayerRank.rank : 'N/A';
-    const totalPlayers = Object.keys(playerRankings).length;
-
-    // Remove live rank display
-    const liveRankDisplay = document.getElementById('current-rank-display');
-    if (liveRankDisplay) {
-        liveRankDisplay.remove();
-    }
-
-    // Update progress indicator
-    updateProgressIndicator(2); // Results stage
-
-    document.getElementById('player-question').innerHTML = `
-        <div class="player-results">
-            <h2>🎉 Quiz Completed! 🎉</h2>
-            <p>Thank you for participating, ${userName}!</p>
-
-            <!-- Final Rank Display -->
-            <div class="final-rank-section">
-                <div style="font-size: 1.2rem; margin-bottom: 10px; opacity: 0.9;">
-                    Your Final Rank
-                </div>
-                <div style="font-size: 3.5rem; font-weight: bold; margin: 10px 0;">
-                    #${finalRank}
-                </div>
-                <div style="font-size: 1rem; opacity: 0.8;">
-                    out of ${totalPlayers} players
-                </div>
-                ${finalRank <= 3 ? `
-                <div style="margin-top: 15px; font-size: 1.5rem;">
-                    ${finalRank === 1 ? '🥇 GOLD MEDAL!' : ''}
-                    ${finalRank === 2 ? '🥈 SILVER MEDAL!' : ''}
-                    ${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
-                </div>
-                ` : ''}
-            </div>
-
-            <div class="result-stats">
-                <div class="result-stat">
-                    <span class="result-number result-correct">${playerResults.correct}</span>
-                    <span class="result-label">Correct Answers</span>
-                </div>
-                <div class="result-stat">
-                    <span class="result-number result-incorrect">${playerResults.incorrect}</span>
-                    <span class="result-label">Incorrect Answers</span>
-                </div>
-                <div class="result-stat">
-                    <span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
-                    <span class="result-label">Accuracy</span>
-                </div>
-                <div class="result-stat">
-                    <span class="result-number result-time">${avgResponseTime}s</span>
-                    <span class="result-label">Avg Response Time</span>
-                </div>
-                <div class="result-stat">
-                    <span class="result-number ${passFailClass}">${passFail}</span>
-                    <span class="result-label">Final Result</span>
-                </div>
-            </div>
-
-            <button class="download-btn" onclick="downloadPlayerResults()">
-                📥 Download My Results
-            </button>
-
-            <div class="session-warning">
-                <h3>⚠️ Quiz Completed</h3>
-                <p>You have successfully completed this quiz.</p>
-                <p><strong>Note:</strong> You cannot retake this quiz.</p>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('player-answers').innerHTML = "";
-    document.getElementById('countdown').textContent = "";
-}
-
-// NEW INTERACTIVE FEATURES - Enhanced join game with progress indicator
-function enhancedJoinGame() {
-    playerCode = document.getElementById("player-code").value.trim();
-    if (playerCode !== "") {
-        // Check if user code is valid and active
-        const user = users.find(u => u.code === playerCode);
-        if (!user) {
-            alert("Invalid access code. Please check your code and try again.");
-            return;
-        }
-
-        if (!user.active) {
-            alert("Your account is inactive. Please contact the quiz administrator.");
-            return;
-        }
-
-        // Mark quiz as started
-        setStoredValue('quizStarted', 'true');
-        setStoredValue('playerCode', playerCode);
-
-        // Track active player
-        trackActivePlayer(playerCode, 'join');
-
-        // Reset results when starting new quiz
-        playerResults = {
-            correct: 0,
-            incorrect: 0,
-            total: 0,
-            responseTimes: [],
-            accuracy: 0
-        };
-
-        // Restore progress if exists
-        var savedProgress = getStoredValue('quizProgress');
-        if (savedProgress) {
-            var progress = JSON.parse(savedProgress);
-            currentIndex = progress.currentIndex || 0;
-            playerResults = progress.playerResults || playerResults;
-        }
-
-        // START RANKING SYSTEM WHEN PLAYER JOINS
-        startRankingSystem();
-
-        currentIndex = 0;
-        document.getElementById("player-code").style.display = "none";
-        document.getElementById("joinBtn").style.display = "none";
-        
-        // Update progress indicator
-        updateProgressIndicator(0); // Join stage
-        
-        // Use enhanced question display
-        showEnhancedPlayerQuestion();
-    } else {
-        alert("Please enter your access code to join the game.");
-    }
-}
-
-// Replace the original showPlayerQuestion with enhanced version
-const originalShowPlayerQuestion = showPlayerQuestion;
-showPlayerQuestion = showEnhancedPlayerQuestion;
-
-// Replace the original showPlayerResults with enhanced version  
-const originalShowPlayerResults = showPlayerResults;
-showPlayerResults = showEnhancedPlayerResults;
-
-// Replace the original join button functionality
-document.getElementById("joinBtn").onclick = enhancedJoinGame;
-
-// Initialize interactive features when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Interactive features loaded: Celebration animations, Progress indicators, Enhanced feedback");
-});
-
-// ... (rest of your existing JavaScript code remains exactly the same) ...
-
 // Firebase configuration
 const firebaseConfig = {
 apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
@@ -4612,6 +4084,107 @@ showPlayerResults();
 }
 }
 
+// Show player results at the end of quiz with final rank
+function showPlayerResults() {
+    // Stop ranking updates
+    stopRankingSystem();
+    
+    // Mark quiz as completed immediately when user finishes last question
+    setStoredValue('quizCompleted', 'true');
+    removeStoredValue('quizProgress');
+    removeStoredValue('quizStarted');
+
+    // Track player leaving
+    trackActivePlayer(playerCode, 'leave');
+
+    var avgResponseTime = playerResults.responseTimes.length > 0
+        ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+        : 0;
+
+    // Find user name
+    const user = users.find(u => u.code === playerCode);
+    const userName = user ? user.name : 'Unknown User';
+
+    // Calculate pass/fail (50% or higher to pass)
+    const accuracy = playerResults.accuracy;
+    const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+    const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
+
+    // Get final rank
+    const currentPlayerRank = playerRankings[playerCode];
+    const finalRank = currentPlayerRank ? currentPlayerRank.rank : 'N/A';
+    const totalPlayers = Object.keys(playerRankings).length;
+
+    // Remove live rank display
+    const liveRankDisplay = document.getElementById('current-rank-display');
+    if (liveRankDisplay) {
+        liveRankDisplay.remove();
+    }
+
+    document.getElementById('player-question').innerHTML = `
+        <div class="player-results">
+            <h2>🎉 Quiz Completed! 🎉</h2>
+            <p>Thank you for participating, ${userName}!</p>
+
+            <!-- Final Rank Display -->
+            <div class="final-rank-section">
+                <div style="font-size: 1.2rem; margin-bottom: 10px; opacity: 0.9;">
+                    Your Final Rank
+                </div>
+                <div style="font-size: 3.5rem; font-weight: bold; margin: 10px 0;">
+                    #${finalRank}
+                </div>
+                <div style="font-size: 1rem; opacity: 0.8;">
+                    out of ${totalPlayers} players
+                </div>
+                ${finalRank <= 3 ? `
+                <div style="margin-top: 15px; font-size: 1.5rem;">
+                    ${finalRank === 1 ? '🥇 GOLD MEDAL!' : ''}
+                    ${finalRank === 2 ? '🥈 SILVER MEDAL!' : ''}
+                    ${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="result-number result-correct">${playerResults.correct}</span>
+                    <span class="result-label">Correct Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-incorrect">${playerResults.incorrect}</span>
+                    <span class="result-label">Incorrect Answers</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
+                    <span class="result-label">Accuracy</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number result-time">${avgResponseTime}s</span>
+                    <span class="result-label">Avg Response Time</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-number ${passFailClass}">${passFail}</span>
+                    <span class="result-label">Final Result</span>
+                </div>
+            </div>
+
+            <button class="download-btn" onclick="downloadPlayerResults()">
+                📥 Download My Results
+            </button>
+
+            <div class="session-warning">
+                <h3>⚠️ Quiz Completed</h3>
+                <p>You have successfully completed this quiz.</p>
+                <p><strong>Note:</strong> You cannot retake this quiz.</p>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('player-answers').innerHTML = "";
+    document.getElementById('countdown').textContent = "";
+}
+
 // Download player results as CSV
 function downloadPlayerResults() {
 var avgResponseTime = playerResults.responseTimes.length > 0
@@ -4639,6 +4212,97 @@ a.href = url;
 a.download = `quiz-results-${userName}-${new Date().toISOString().split('T')[0]}.csv`;
 a.click();
 window.URL.revokeObjectURL(url);
+}
+
+// Enhanced player view functions with grid layout and INSTANT COLOR FEEDBACK
+function showPlayerQuestion() {
+// Get visible questions based on active model
+var visibleQuestions = getVisibleQuestions();
+
+console.log("Current Index:", currentIndex, "Total Visible Questions:", visibleQuestions.length);
+
+if (currentIndex >= visibleQuestions.length) {
+console.log("End of quiz reached");
+showPlayerResults();
+return;
+}
+
+var q = visibleQuestions[currentIndex];
+console.log("Showing question:", q.question.substring(0, 50) + "...", "Model:", q.modelId);
+
+document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + " of " + visibleQuestions.length + ":</h3><p>" + q.question + "</p>";
+
+var answersDiv = document.getElementById("player-answers");
+answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+
+// Create grid container
+var gridContainer = document.createElement("div");
+gridContainer.className = "answers-grid";
+
+questionStartTime = Date.now();
+
+q.answers.forEach(a => {
+var btn = document.createElement("button");
+btn.className = "answer-btn";
+btn.innerHTML = a;
+btn.onclick = function() {
+if (!quizActive) {
+alert("The quiz is not currently active. Please check the quiz schedule.");
+return;
+}
+
+var selected = a;
+var correct = q.correct;
+var responseTime = (Date.now() - questionStartTime) / 1000;
+
+clearInterval(countdownInterval);
+
+// INSTANT COLOR FEEDBACK - No lag
+var allButtons = document.querySelectorAll('.answer-btn');
+allButtons.forEach(button => {
+button.disabled = true;
+button.style.pointerEvents = 'none';
+
+// Remove any existing classes first
+button.classList.remove('correct', 'incorrect', 'other-option');
+
+if (button.innerHTML === correct) {
+// Correct answer - show green immediately
+button.classList.add('correct');
+} else if (button.innerHTML === selected) {
+// User's wrong selection - show red immediately
+button.classList.add('incorrect');
+} else {
+// Other options - gray out
+button.classList.add('other-option');
+}
+});
+
+// TRACK RESULTS
+if (selected === correct) {
+playerResults.correct++;
+} else {
+playerResults.incorrect++;
+}
+playerResults.total++;
+playerResults.responseTimes.push(responseTime);
+playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
+
+// Find user name
+const user = users.find(u => u.code === playerCode);
+const userName = user ? user.name : 'Unknown User';
+
+saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
+saveQuizProgress();
+
+// Start countdown for next question
+startNextQuestionCountdown();
+};
+gridContainer.appendChild(btn);
+});
+
+answersDiv.appendChild(gridContainer);
+startCountdown();
 }
 
 // Real-time ranking system
@@ -4791,7 +4455,96 @@ function updateCurrentPlayerRankDisplay() {
 }
 
 // Initialize the application
-window.addEventListener('DOMContentLoaded', function() {
+document.getElementById("joinBtn").onclick = function() {
+if (!quizActive) {
+alert("The quiz is not currently active. Please check the quiz schedule.");
+return;
+}
+
+// Improved session state management to prevent retaking quiz
+if (getStoredValue('quizCompleted') === 'true') {
+alert("You have already completed this quiz. You cannot retake it.");
+return;
+}
+
+// Reset any incomplete quiz state
+if (getStoredValue('quizStarted') === 'true' && !getStoredValue('quizCompleted')) {
+if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
+// Clear the incomplete state if user doesn't want to continue
+removeStoredValue('quizStarted');
+removeStoredValue('quizProgress');
+}
+}
+
+playerCode = document.getElementById("player-code").value.trim();
+if (playerCode !== "") {
+// Check if user code is valid and active
+const user = users.find(u => u.code === playerCode);
+if (!user) {
+alert("Invalid access code. Please check your code and try again.");
+return;
+}
+
+if (!user.active) {
+alert("Your account is inactive. Please contact the quiz administrator.");
+return;
+}
+
+// Mark quiz as started
+setStoredValue('quizStarted', 'true');
+setStoredValue('playerCode', playerCode);
+
+// Track active player
+trackActivePlayer(playerCode, 'join');
+
+// Reset results when starting new quiz
+playerResults = {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0
+};
+
+// Restore progress if exists
+var savedProgress = getStoredValue('quizProgress');
+if (savedProgress) {
+var progress = JSON.parse(savedProgress);
+currentIndex = progress.currentIndex || 0;
+playerResults = progress.playerResults || playerResults;
+}
+
+// START RANKING SYSTEM WHEN PLAYER JOINS
+startRankingSystem();
+
+currentIndex = 0;
+document.getElementById("player-code").style.display = "none";
+document.getElementById("joinBtn").style.display = "none";
+showPlayerQuestion();
+} else {
+alert("Please enter your access code to join the game.");
+}
+};
+
+// Update quiz timer every second
+setInterval(updateQuizTimeInfo, 1000);
+updateQuizTimeInfo();
+
+// Improved session state management to prevent lag issues
+window.addEventListener('beforeunload', function (e) {
+if (getStoredValue('quizStarted') === 'true' && getStoredValue('quizCompleted') !== 'true') {
+// Save progress before leaving
+saveQuizProgress();
+// Track player leaving
+trackActivePlayer(playerCode, 'leave');
+e.preventDefault();
+e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
+return 'You have an ongoing quiz. Are you sure you want to leave?';
+}
+});
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('.tab-content').forEach(tab => {
 tab.classList.remove('active');
 });
@@ -4834,8 +4587,10 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Interactive Features Initialized");
+console.log("Enhanced Kahoot FS with Model Management and Ranking System Initialized");
 });
 </script>
 </body>
 </html>
+
+
