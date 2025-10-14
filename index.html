@@ -2257,29 +2257,87 @@ alert('Error exporting data.');
 }
 
 function exportToCSV() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('No results to export.');
-return;
+    database.ref('quizResults').once('value')
+    .then((snapshot) => {
+        const results = snapshot.val();
+        if (!results) {
+            alert('No results to export.');
+            return;
+        }
+
+        const data = Object.values(results);
+        
+        // Create CSV with proper formatting
+        const csvContent = generateCSV(data);
+        
+        // Create and trigger download
+        downloadCSV(csvContent, 'quiz-results.csv');
+        
+        alert('CSV file downloaded successfully!');
+    })
+    .catch((error) => {
+        console.error("Error exporting to CSV:", error);
+        alert('Error exporting data: ' + error.message);
+    });
 }
 
-const data = Object.values(results);
-const csv = convertToCSV(data);
-const blob = new Blob([csv], { type: 'text/csv' });
-const url = window.URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = 'quiz-results.csv';
-a.click();
-window.URL.revokeObjectURL(url);
-alert('CSV file downloaded successfully!');
-})
-.catch((error) => {
-console.error("Error exporting to CSV:", error);
-alert('Error exporting data.');
-});
+function generateCSV(data) {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    
+    // Start with UTF-8 BOM for Excel compatibility
+    let csv = '\uFEFF';
+    
+    // Add headers
+    csv += headers.map(header => escapeCSVField(header)).join(',') + '\r\n';
+    
+    // Add data rows
+    data.forEach(row => {
+        const rowData = headers.map(header => escapeCSVField(row[header]));
+        csv += rowData.join(',') + '\r\n';
+    });
+    
+    return csv;
+}
+
+function escapeCSVField(field) {
+    if (field === null || field === undefined) {
+        return '';
+    }
+    
+    const stringField = String(field);
+    
+    // Escape fields containing commas, quotes, or newlines
+    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n') || stringField.includes('\r')) {
+        return `"${stringField.replace(/"/g, '""')}"`;
+    }
+    
+    return stringField;
+}
+
+function downloadCSV(csvContent, filename) {
+    // Create blob with proper MIME type
+    const blob = new Blob([csvContent], { 
+        type: 'text/csv;charset=utf-8;' 
+    });
+    
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    // Set download attributes
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    URL.revokeObjectURL(url);
 }
 
 // Download all individual user results - FIRST ATTEMPT ONLY
@@ -4592,5 +4650,6 @@ console.log("Enhanced Kahoot FS with Model Management and Ranking System Initial
 </script>
 </body>
 </html>
+
 
 
