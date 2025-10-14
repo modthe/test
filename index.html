@@ -1587,7 +1587,6 @@
                         <button class="quick-nav-btn" onclick="scrollToSection('user-management')">المستخدمين</button>
                         <button class="quick-nav-btn" onclick="scrollToSection('question-management')">الأسئلة</button>
                         <button class="quick-nav-btn" onclick="scrollToSection('quiz-results')">النتائج</button>
-                        <button class="quick-nav-btn" onclick="scrollToSection('news-events-management')">النشرة والإعلانات</button>
                     </div>
 
                     <!-- Active Model Display -->
@@ -1860,6 +1859,7 @@
                     <div class="news-events-tabs">
                         <div class="news-events-tab active" onclick="switchNewsEventsTab('news')">النشرة اليومية</div>
                         <div class="news-events-tab" onclick="switchNewsEventsTab('events')">الفعاليات</div>
+                        <div class="news-events-tab" onclick="switchNewsEventsTab('add')">إضافة جديد</div>
                     </div>
 
                     <!-- News Content -->
@@ -1875,6 +1875,44 @@
                         <h3>الفعاليات القادمة</h3>
                         <div id="events-container">
                             <!-- Event items will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Add News/Event Content -->
+                    <div id="add-content" class="news-events-content">
+                        <div class="add-news-event">
+                            <h4>إضافة خبر جديد أو فعالية</h4>
+                            <div class="form-group">
+                                <label for="item-type">النوع:</label>
+                                <select id="item-type">
+                                    <option value="news">خبر</option>
+                                    <option value="event">فعالية</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="item-title">العنوان:</label>
+                                <input type="text" id="item-title" placeholder="أدخل العنوان">
+                            </div>
+                            <div class="form-group">
+                                <label for="item-content">المحتوى/الوصف:</label>
+                                <textarea id="item-content" placeholder="أدخل المحتوى أو الوصف"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="item-date">التاريخ:</label>
+                                    <input type="date" id="item-date">
+                                </div>
+                                <div class="form-group" id="event-time-group" style="display: none;">
+                                    <label for="event-time">الوقت:</label>
+                                    <input type="time" id="event-time">
+                                </div>
+                            </div>
+                            <div class="form-group" id="event-location-group" style="display: none;">
+                                <label for="event-location">المكان:</label>
+                                <input type="text" id="event-location" placeholder="أدخل مكان الفعالية">
+                            </div>
+                            <button onclick="addNewsEvent()">إضافة</button>
+                            <div id="news-event-status" class="url-status">أضف خبراً جديداً أو فعالية للموظفين</div>
                         </div>
                     </div>
                 </div>
@@ -2119,8 +2157,6 @@
                 loadQuizModels();
                 updateActiveModelDisplay();
                 updateDashboard();
-                // Load news and events for host management
-                loadHostNewsAndEvents();
             } else if (tabName === 'news-events') {
                 loadNewsAndEvents();
             }
@@ -2138,6 +2174,15 @@
             });
 
             event.target.classList.add('active');
+
+            // Show/hide form fields based on selection
+            if (tabName === 'add') {
+                document.getElementById('item-type').addEventListener('change', function() {
+                    const isEvent = this.value === 'event';
+                    document.getElementById('event-time-group').style.display = isEvent ? 'block' : 'none';
+                    document.getElementById('event-location-group').style.display = isEvent ? 'block' : 'none';
+                });
+            }
         }
 
         // Switch between host news/events tabs
@@ -2551,6 +2596,66 @@
             }
         }
 
+        // Add new news or event from public tab
+        function addNewsEvent() {
+            const type = document.getElementById('item-type').value;
+            const title = document.getElementById('item-title').value;
+            const content = document.getElementById('item-content').value;
+            const date = document.getElementById('item-date').value;
+            const time = document.getElementById('event-time').value;
+            const location = document.getElementById('event-location').value;
+
+            if (!title || !content || !date) {
+                document.getElementById('news-event-status').textContent = 'يرجى ملء جميع الحقول المطلوبة';
+                document.getElementById('news-event-status').className = 'url-status error';
+                return;
+            }
+
+            const newItem = {
+                id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                title: title,
+                date: date,
+                timestamp: new Date().toISOString()
+            };
+
+            if (type === 'news') {
+                newItem.content = content;
+                database.ref('news/' + newItem.id).set(newItem)
+                .then(() => {
+                    document.getElementById('news-event-status').textContent = 'تمت إضافة الخبر بنجاح!';
+                    document.getElementById('news-event-status').className = 'url-status success';
+                    clearNewsEventForm();
+                })
+                .catch((error) => {
+                    document.getElementById('news-event-status').textContent = 'خطأ في إضافة الخبر: ' + error.message;
+                    document.getElementById('news-event-status').className = 'url-status error';
+                });
+            } else {
+                newItem.description = content;
+                if (time) newItem.time = time;
+                if (location) newItem.location = location;
+                database.ref('events/' + newItem.id).set(newItem)
+                .then(() => {
+                    document.getElementById('news-event-status').textContent = 'تمت إضافة الفعالية بنجاح!';
+                    document.getElementById('news-event-status').className = 'url-status success';
+                    clearNewsEventForm();
+                })
+                .catch((error) => {
+                    document.getElementById('news-event-status').textContent = 'خطأ في إضافة الفعالية: ' + error.message;
+                    document.getElementById('news-event-status').className = 'url-status error';
+                });
+            }
+        }
+
+        // Clear news/event form
+        function clearNewsEventForm() {
+            document.getElementById('item-title').value = '';
+            document.getElementById('item-content').value = '';
+            document.getElementById('item-date').value = '';
+            document.getElementById('event-time').value = '';
+            document.getElementById('event-location').value = '';
+        }
+
         // Update dashboard with current stats
         function updateDashboard() {
             // Update quiz status
@@ -2728,65 +2833,7 @@
             }
         }
 
-        // Export functions
-        function exportToExcel() {
-            database.ref('quizResults').once('value')
-            .then((snapshot) => {
-                const results = snapshot.val();
-                if (!results) {
-                    alert('لا توجد نتائج للتصدير.');
-                    return;
-                }
-
-                const data = Object.values(results);
-                const worksheet = XLSX.utils.json_to_sheet(data);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "نتائج الاختبار");
-                XLSX.writeFile(workbook, 'نتائج-الاختبار.xlsx');
-                alert('تم تنزيل ملف Excel بنجاح!');
-            })
-            .catch((error) => {
-                console.error("Error exporting to Excel:", error);
-                alert('خطأ في تصدير البيانات.');
-            });
-        }
-
-        function exportToCSV() {
-            database.ref('quizResults').once('value')
-            .then((snapshot) => {
-                const results = snapshot.val();
-                if (!results) {
-                    alert('لا توجد نتائج للتصدير.');
-                    return;
-                }
-
-                const data = Object.values(results);
-                const csv = convertToCSV(data);
-                
-                // Use proper encoding for Arabic characters
-                const BOM = '\uFEFF';
-                const blob = new Blob([BOM + csv], { 
-                    type: 'text/csv; charset=utf-8' 
-                });
-                
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'نتائج-الاختبار-' + new Date().toISOString().split('T')[0] + '.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                alert('تم تنزيل ملف CSV بنجاح!');
-            })
-            .catch((error) => {
-                console.error("Error exporting to CSV:", error);
-                alert('خطأ في تصدير البيانات.');
-            });
-        }
-
-        // Download all individual user results (first attempt only)
+        // ========== FIX 1: Download all individual users from first attempt ==========
         function downloadAllUserResults() {
             database.ref('quizResults').once('value')
             .then((snapshot) => {
@@ -2854,6 +2901,42 @@
             });
         }
 
+        // ========== FIX 2: Fixed CSV encoding for Arabic characters ==========
+        function exportToCSV() {
+            database.ref('quizResults').once('value')
+            .then((snapshot) => {
+                const results = snapshot.val();
+                if (!results) {
+                    alert('لا توجد نتائج للتصدير.');
+                    return;
+                }
+
+                const data = Object.values(results);
+                const csv = convertToCSV(data);
+                
+                // Use proper encoding for Arabic characters
+                const BOM = '\uFEFF';
+                const blob = new Blob([BOM + csv], { 
+                    type: 'text/csv; charset=utf-8' 
+                });
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'نتائج-الاختبار-' + new Date().toISOString().split('T')[0] + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                alert('تم تنزيل ملف CSV بنجاح!');
+            })
+            .catch((error) => {
+                console.error("Error exporting to CSV:", error);
+                alert('خطأ في تصدير البيانات.');
+            });
+        }
+
         function convertToCSV(data) {
             if (data.length === 0) return '';
 
@@ -2882,6 +2965,28 @@
             }
 
             return csvRows.join('\n');
+        }
+
+        function exportToExcel() {
+            database.ref('quizResults').once('value')
+            .then((snapshot) => {
+                const results = snapshot.val();
+                if (!results) {
+                    alert('لا توجد نتائج للتصدير.');
+                    return;
+                }
+
+                const data = Object.values(results);
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "نتائج الاختبار");
+                XLSX.writeFile(workbook, 'نتائج-الاختبار.xlsx');
+                alert('تم تنزيل ملف Excel بنجاح!');
+            })
+            .catch((error) => {
+                console.error("Error exporting to Excel:", error);
+                alert('خطأ في تصدير البيانات.');
+            });
         }
 
         // Delete all quiz results
@@ -2996,391 +3101,268 @@
         }
 
         // Quiz Models Functions
+                // إنشاء نموذج اختبار جديد
         function addQuizModel() {
-            var modelName = document.getElementById('model-name').value.trim();
-
+            const modelName = document.getElementById('model-name').value.trim();
+            
             if (!modelName) {
-                document.getElementById('model-status').textContent = 'الرجاء إدخال اسم النموذج';
+                document.getElementById('model-status').textContent = 'يرجى إدخال اسم النموذج';
                 document.getElementById('model-status').className = 'url-status error';
                 return;
             }
 
-            // Check if model name already exists
-            if (quizModels.some(m => m.name.toLowerCase() === modelName.toLowerCase())) {
+            // التحقق من عدم تكرار اسم النموذج
+            if (quizModels.some(model => model.name === modelName)) {
                 document.getElementById('model-status').textContent = 'اسم النموذج موجود مسبقاً';
                 document.getElementById('model-status').className = 'url-status error';
                 return;
             }
 
-            var newModel = {
+            const newModel = {
                 id: 'model-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                 name: modelName,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                questionCount: 0
             };
 
             quizModels.push(newModel);
             saveQuizModelsToFirebase();
+            document.getElementById('model-name').value = '';
 
             document.getElementById('model-status').textContent = 'تم إنشاء النموذج بنجاح!';
             document.getElementById('model-status').className = 'url-status success';
 
-            document.getElementById('model-name').value = '';
-
-            setTimeout(() => {
-                document.getElementById('model-status').textContent = 'أنشئ نماذج اختبار لتنظيم الأسئلة';
-                document.getElementById('model-status').className = 'url-status';
-            }, 3000);
+            // تحديث قائمة النماذج في إدارة الأسئلة
+            updateQuestionModelSelector();
         }
 
+        // عرض نماذج الاختبار
         function displayQuizModels() {
-            var container = document.getElementById('models-container');
-            var modelSelect = document.getElementById('question-model');
-
+            const container = document.getElementById('models-container');
             container.innerHTML = '';
-            modelSelect.innerHTML = '<option value="">-- اختر نموذجًا --</option>';
 
             if (quizModels.length === 0) {
-                container.innerHTML = '<p>لا توجد نماذج بعد.</p>';
+                container.innerHTML = '<p>لا توجد نماذج حالياً. قم بإنشاء نموذج أولاً.</p>';
                 return;
             }
 
-            quizModels.forEach((model, index) => {
+            quizModels.forEach(model => {
                 const questionCount = questions.filter(q => q.modelId === model.id).length;
-
-                // Add to models container as clickable items
-                var modelItem = document.createElement('div');
-                modelItem.className = 'model-item';
-                modelItem.onclick = function() {
-                    filterQuestionsByModel(model.id);
-                };
-
-                // Check if this model is the active one
                 const isActive = activeQuizModel === model.id;
 
-                modelItem.innerHTML = `
-                <div class="model-info">
-                    <div class="model-name">${model.name} ${isActive ? '⭐' : ''}</div>
-                    <div class="model-count">${questionCount} أسئلة</div>
-                </div>
-                <div class="model-controls">
-                    ${isActive ?
-                        `<button class="model-btn deselect" onclick="event.stopPropagation(); deselectQuizModel()">إلغاء التحديد</button>` :
-                        `<button class="model-btn select" onclick="event.stopPropagation(); selectQuizModel('${model.id}')">تحديد</button>`
-                    }
-                    <button class="model-btn delete" onclick="event.stopPropagation(); deleteQuizModel(${index})">حذف</button>
-                    <button class="model-btn" onclick="event.stopPropagation(); viewModelQuestions('${model.id}')" style="background: #2196f3;">عرض</button>
-                </div>
+                const modelElement = document.createElement('div');
+                modelElement.className = `model-item ${isActive ? 'active' : ''}`;
+                modelElement.innerHTML = `
+                    <div class="model-info" onclick="viewModelQuestions('${model.id}')">
+                        <div class="model-name">${model.name}</div>
+                        <div class="model-count">${questionCount} أسئلة</div>
+                    </div>
+                    <div class="model-controls">
+                        ${!isActive ? 
+                            `<button class="model-btn select" onclick="setActiveModel('${model.id}')">تحديد</button>` : 
+                            `<button class="model-btn selected" disabled>محدد</button>`
+                        }
+                        <button class="model-btn delete" onclick="deleteQuizModel('${model.id}')">حذف</button>
+                        <button class="model-btn" onclick="exportModelQuestions('${model.id}')" style="background: #2196f3;">تصدير</button>
+                    </div>
                 `;
-                container.appendChild(modelItem);
-
-                // Add to model select dropdown
-                var option = document.createElement('option');
-                option.value = model.id;
-                option.textContent = model.name;
-                modelSelect.appendChild(option);
+                container.appendChild(modelElement);
             });
         }
 
-        // View questions in a model
+        // عرض أسئلة النموذج
         function viewModelQuestions(modelId) {
+            currentModelFilter = modelId;
+            const model = quizModels.find(m => m.id === modelId);
+            document.getElementById('current-model-display').textContent = `- ${model.name}`;
+            displayQuestions();
+        }
+
+        // عرض جميع الأسئلة
+        function viewAllQuestions() {
+            currentModelFilter = null;
+            document.getElementById('current-model-display').textContent = '- جميع الأسئلة';
+            displayQuestions();
+        }
+
+        // تعيين النموذج النشط
+        function setActiveModel(modelId) {
+            activeQuizModel = modelId;
+            saveActiveQuizModel(modelId);
+            updateActiveModelDisplay();
+            displayQuizModels();
+            
+            document.getElementById('model-status').textContent = 'تم تعيين النموذج النشط بنجاح!';
+            document.getElementById('model-status').className = 'url-status success';
+        }
+
+        // حذف نموذج الاختبار
+        function deleteQuizModel(modelId) {
+            if (!confirm('هل أنت متأكد من حذف هذا النموذج؟ سيتم إزالة النموذج من الأسئلة المرتبطة به.')) {
+                return;
+            }
+
+            // إزالة النموذج من الأسئلة المرتبطة
+            questions.forEach(question => {
+                if (question.modelId === modelId) {
+                    question.modelId = null;
+                }
+            });
+
+            // حذف النموذج
+            quizModels = quizModels.filter(model => model.id !== modelId);
+            
+            // إذا كان النموذج النشط هو الذي تم حذفه، قم بإلغاء التحديد
+            if (activeQuizModel === modelId) {
+                activeQuizModel = null;
+                saveActiveQuizModel(null);
+            }
+
+            saveQuizModelsToFirebase();
+            saveQuestionsToFirebase();
+            displayQuizModels();
+            updateActiveModelDisplay();
+        }
+
+        // تصدير أسئلة النموذج
+        function exportModelQuestions(modelId) {
             const model = quizModels.find(m => m.id === modelId);
             const modelQuestions = questions.filter(q => q.modelId === modelId);
             
             if (modelQuestions.length === 0) {
-                alert(`لا توجد أسئلة في النموذج "${model.name}".`);
+                alert('لا توجد أسئلة في هذا النموذج للتصدير.');
                 return;
             }
 
-            // Build the modal content
-            let modalContent = `
-            <h3>الأسئلة في "${model.name}"</h3>
-            <p>إجمالي الأسئلة: ${modelQuestions.length}</p>
-            <div class="question-modal-answers">
-            `;
+            const data = modelQuestions.map((q, index) => ({
+                'رقم السؤال': index + 1,
+                'النموذج': model.name,
+                'السؤال': q.question,
+                'الإجابة 1': q.answers[0],
+                'الإجابة 2': q.answers[1],
+                'الإجابة 3': q.answers[2],
+                'الإجابة 4': q.answers[3],
+                'الإجابة الصحيحة': q.correctAnswer,
+                'الحالة': q.hidden ? 'مخفي' : 'نشط'
+            }));
 
-            modelQuestions.forEach((q, index) => {
-                const correctIndex = q.answers.indexOf(q.correct);
-                modalContent += `
-                <div class="answer-item">
-                    <strong>السؤال ${index + 1}:</strong> ${q.question}
-                    <div style="margin-top: 10px;">
-                        ${q.answers.map((answer, i) => `
-                        <div class="answer-item ${i === correctIndex ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
-                            ${i === correctIndex ? '✅ ' : '❌ '} ${answer}
-                        </div>
-                        `).join('')}
-                    </div>
-                </div>
-                `;
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "أسئلة النموذج");
+            XLSX.writeFile(workbook, `أسئلة-${model.name}-${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            alert(`تم تصدير ${modelQuestions.length} سؤال بنجاح!`);
+        }
+
+        // تحديث محدد النموذج في إدارة الأسئلة
+        function updateQuestionModelSelector() {
+            const selector = document.getElementById('question-model');
+            selector.innerHTML = '<option value="">-- اختر نموذجًا --</option>';
+            
+            quizModels.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name;
+                selector.appendChild(option);
             });
-
-            modalContent += `</div>`;
-
-            document.getElementById('question-modal-body').innerHTML = modalContent;
-            document.getElementById('questionViewModal').style.display = 'block';
         }
 
-        // View all questions
-        function viewAllQuestions() {
-            if (questions.length === 0) {
-                alert('لا توجد أسئلة متاحة.');
-                return;
-            }
-
-            // Build the modal content
-            let modalContent = `
-            <h3>جميع الأسئلة</h3>
-            <p>إجمالي الأسئلة: ${questions.length}</p>
-            <div class="question-modal-answers">
-            `;
-
-            questions.forEach((q, index) => {
-                const model = quizModels.find(m => m.id === q.modelId);
-                const modelName = model ? model.name : 'لا يوجد نموذج';
-                const correctIndex = q.answers.indexOf(q.correct);
-                
-                modalContent += `
-                <div class="answer-item">
-                    <strong>السؤال ${index + 1} (${modelName}):</strong> ${q.question}
-                    <div style="margin-top: 10px;">
-                        ${q.answers.map((answer, i) => `
-                        <div class="answer-item ${i === correctIndex ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
-                            ${i === correctIndex ? '✅ ' : '❌ '} ${answer}
-                        </div>
-                        `).join('')}
-                    </div>
-                </div>
-                `;
-            });
-
-            modalContent += `</div>`;
-
-            document.getElementById('question-modal-body').innerHTML = modalContent;
-            document.getElementById('questionViewModal').style.display = 'block';
-        }
-
-        // Close question view modal
-        function closeQuestionView() {
-            document.getElementById('questionViewModal').style.display = 'none';
-        }
-
-        function deleteQuizModel(index) {
-            if (confirm('هل أنت متأكد من حذف هذا النموذج؟ سيتم حذف جميع الأسئلة المرتبطة به.')) {
-                const modelId = quizModels[index].id;
-                
-                // Remove questions associated with this model
-                questions = questions.filter(q => q.modelId !== modelId);
-                
-                // If this was the active model, clear it
-                if (activeQuizModel === modelId) {
-                    activeQuizModel = null;
-                    saveActiveQuizModel(null);
+        // أدوات استعادة النماذج المفقودة
+        function recoverMissingModels() {
+            let recovered = 0;
+            
+            questions.forEach(question => {
+                if (question.modelId && !quizModels.some(model => model.id === question.modelId)) {
+                    // إنشاء نموذج مفقود
+                    const newModel = {
+                        id: question.modelId,
+                        name: `نموذج مستعاد ${recovered + 1}`,
+                        createdAt: new Date().toISOString(),
+                        questionCount: 0
+                    };
+                    quizModels.push(newModel);
+                    recovered++;
                 }
-                
-                // Remove the model
-                quizModels.splice(index, 1);
-                
-                // Save changes
+            });
+
+            if (recovered > 0) {
                 saveQuizModelsToFirebase();
-                saveQuestionsToFirebase();
-                
-                document.getElementById('model-status').textContent = 'تم حذف النموذج بنجاح!';
-                document.getElementById('model-status').className = 'url-status success';
+                displayQuizModels();
+                updateQuestionModelSelector();
+                alert(`تم استعادة ${recovered} نموذج مفقود!`);
+            } else {
+                alert('لا توجد نماذج مفقودة للاستعادة.');
             }
         }
 
-        function selectQuizModel(modelId) {
-            activeQuizModel = modelId;
-            saveActiveQuizModel(modelId);
-            displayQuizModels();
-            updateActiveModelDisplay();
-            updateDashboard();
-            
-            document.getElementById('model-status').textContent = 'تم تحديد النموذج النشط بنجاح!';
-            document.getElementById('model-status').className = 'url-status success';
-        }
+        // التحقق من جميع النماذج
+        function validateAllModels() {
+            let valid = true;
+            let issues = [];
 
-        function deselectQuizModel() {
-            activeQuizModel = null;
-            saveActiveQuizModel(null);
-            displayQuizModels();
-            updateActiveModelDisplay();
-            updateDashboard();
-            
-            document.getElementById('model-status').textContent = 'تم إلغاء تحديد النموذج النشط!';
-            document.getElementById('model-status').className = 'url-status success';
-        }
-
-        function filterQuestionsByModel(modelId) {
-            currentModelFilter = modelId;
-            displayQuestions();
-        }
-
-        // Question Management Functions
-        function addQuestion() {
-            var question = document.getElementById('question-text').value.trim();
-            var answers = [
-                document.getElementById('answer-1').value.trim(),
-                document.getElementById('answer-2').value.trim(),
-                document.getElementById('answer-3').value.trim(),
-                document.getElementById('answer-4').value.trim()
-            ];
-            var correct = document.querySelector('input[name="correct-answer"]:checked').value;
-            var modelId = document.getElementById('question-model').value;
-
-            // Validate inputs
-            if (!question) {
-                document.getElementById('question-status').textContent = 'الرجاء إدخال السؤال';
-                document.getElementById('question-status').className = 'url-status error';
-                return;
-            }
-
-            for (var i = 0; i < answers.length; i++) {
-                if (!answers[i]) {
-                    document.getElementById('question-status').textContent = 'الرجاء إدخال جميع الإجابات';
-                    document.getElementById('question-status').className = 'url-status error';
-                    return;
+            quizModels.forEach(model => {
+                const modelQuestions = questions.filter(q => q.modelId === model.id);
+                if (modelQuestions.length === 0) {
+                    issues.push(`النموذج "${model.name}" لا يحتوي على أسئلة`);
                 }
-            }
-
-            if (!correct) {
-                document.getElementById('question-status').textContent = 'الرجاء اختيار الإجابة الصحيحة';
-                document.getElementById('question-status').className = 'url-status error';
-                return;
-            }
-
-            if (!modelId) {
-                document.getElementById('question-status').textContent = 'الرجاء اختيار النموذج';
-                document.getElementById('question-status').className = 'url-status error';
-                return;
-            }
-
-            // Create new question
-            var newQuestion = {
-                id: 'q-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                question: question,
-                answers: answers,
-                correct: answers[parseInt(correct)],
-                modelId: modelId,
-                createdAt: new Date().toISOString()
-            };
-
-            questions.push(newQuestion);
-            saveQuestionsToFirebase();
-
-            // Clear form
-            document.getElementById('question-text').value = '';
-            document.getElementById('answer-1').value = '';
-            document.getElementById('answer-2').value = '';
-            document.getElementById('answer-3').value = '';
-            document.getElementById('answer-4').value = '';
-            document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
-
-            document.getElementById('question-status').textContent = 'تم إضافة السؤال بنجاح!';
-            document.getElementById('question-status').className = 'url-status success';
-        }
-
-        function displayQuestions() {
-            var container = document.getElementById('questions-container');
-            container.innerHTML = '';
-
-            var filteredQuestions = questions;
-            if (currentModelFilter) {
-                filteredQuestions = questions.filter(q => q.modelId === currentModelFilter);
-            }
-
-            if (filteredQuestions.length === 0) {
-                container.innerHTML = '<p>لا توجد أسئلة ' + 
-                    (currentModelFilter ? 'في هذا النموذج' : '') + 
-                    '.</p>';
-                return;
-            }
-
-            filteredQuestions.forEach((q, index) => {
-                var questionDiv = document.createElement('div');
-                questionDiv.className = 'question-item';
-                
-                const model = quizModels.find(m => m.id === q.modelId);
-                const modelName = model ? model.name : 'لا يوجد نموذج';
-                
-                questionDiv.innerHTML = `
-                    <div class="question-header">
-                        <strong>السؤال ${currentModelFilter ? (index + 1) : (questions.indexOf(q) + 1)}</strong>
-                        <span class="question-model">${modelName}</span>
-                    </div>
-                    <div class="question-text">${q.question}</div>
-                    <div class="answers">
-                        ${q.answers.map((answer, i) => `
-                            <div class="answer ${answer === q.correct ? 'correct' : ''}">
-                                ${i + 1}. ${answer}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="question-actions">
-                        <button class="btn-small edit" onclick="editQuestion(${questions.indexOf(q)})">تعديل</button>
-                        <button class="btn-small delete" onclick="deleteQuestion(${questions.indexOf(q)})">حذف</button>
-                    </div>
-                `;
-                container.appendChild(questionDiv);
             });
-        }
 
-        function editQuestion(index) {
-            var q = questions[index];
-            
-            document.getElementById('question-text').value = q.question;
-            document.getElementById('answer-1').value = q.answers[0];
-            document.getElementById('answer-2').value = q.answers[1];
-            document.getElementById('answer-3').value = q.answers[2];
-            document.getElementById('answer-4').value = q.answers[3];
-            document.getElementById('question-model').value = q.modelId || '';
-            
-            var correctIndex = q.answers.indexOf(q.correct);
-            document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
-                radio.checked = (i === correctIndex);
+            questions.forEach((question, index) => {
+                if (question.modelId && !quizModels.some(model => model.id === question.modelId)) {
+                    issues.push(`السؤال ${index + 1} مرتبط بنموذج غير موجود`);
+                    valid = false;
+                }
             });
-            
-            // Remove the question being edited
-            questions.splice(index, 1);
-            saveQuestionsToFirebase();
-            
-            document.getElementById('question-status').textContent = 'يمكنك تعديل السؤال الآن';
-            document.getElementById('question-status').className = 'url-status';
-        }
 
-        function deleteQuestion(index) {
-            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
-                questions.splice(index, 1);
-                saveQuestionsToFirebase();
-                
-                document.getElementById('question-status').textContent = 'تم حذف السؤال بنجاح!';
-                document.getElementById('question-status').className = 'url-status success';
+            if (issues.length > 0) {
+                alert('تم العثور على المشكلات التالية:\n\n' + issues.join('\n'));
+            } else {
+                alert('جميع النماذج والأسئلة سليمة!');
             }
         }
 
-        // User Management Functions
+        // تصحيح النماذج والأسئلة
+        function debugModelQuestions() {
+            console.log('=== تصحيح النماذج والأسئلة ===');
+            console.log('عدد النماذج:', quizModels.length);
+            console.log('عدد الأسئلة:', questions.length);
+            console.log('النموذج النشط:', activeQuizModel);
+            
+            quizModels.forEach(model => {
+                const modelQuestions = questions.filter(q => q.modelId === model.id);
+                console.log(`النموذج "${model.name}": ${modelQuestions.length} أسئلة`);
+            });
+
+            const orphanedQuestions = questions.filter(q => q.modelId && !quizModels.some(m => m.id === q.modelId));
+            console.log('الأسئلة المفقودة النموذج:', orphanedQuestions.length);
+
+            alert('تم تصحيح النماذج والأسئلة. راجع وحدة تحكم المطور للتفاصيل.');
+        }
+
+        // إدارة المستخدمين
         function addUser() {
-            var name = document.getElementById('user-name').value.trim();
-            var code = document.getElementById('user-code').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+            const userCode = document.getElementById('user-code').value.trim();
 
-            if (!name || !code) {
-                document.getElementById('user-status').textContent = 'الرجاء إدخال الاسم والرمز';
+            if (!userName || !userCode) {
+                document.getElementById('user-status').textContent = 'يرجى ملء جميع الحقول';
                 document.getElementById('user-status').className = 'url-status error';
                 return;
             }
 
-            // Check if code already exists
-            if (users.some(u => u.code === code)) {
-                document.getElementById('user-status').textContent = 'الرمز مستخدم مسبقاً';
+            // التحقق من عدم تكرار رمز المستخدم
+            if (users.some(user => user.code === userCode)) {
+                document.getElementById('user-status').textContent = 'رمز المستخدم موجود مسبقاً';
                 document.getElementById('user-status').className = 'url-status error';
                 return;
             }
 
-            var newUser = {
+            const newUser = {
                 id: 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                name: name,
-                code: code,
-                createdAt: new Date().toISOString()
+                name: userName,
+                code: userCode,
+                createdAt: new Date().toISOString(),
+                active: true
             };
 
             users.push(newUser);
@@ -3393,195 +3375,496 @@
             document.getElementById('user-status').className = 'url-status success';
         }
 
+        // عرض المستخدمين
         function displayUsers() {
-            var container = document.getElementById('users-container');
+            const container = document.getElementById('users-container');
             container.innerHTML = '';
 
             if (users.length === 0) {
-                container.innerHTML = '<p>لا توجد مستخدمين بعد.</p>';
+                container.innerHTML = '<p>لا يوجد مستخدمون حالياً.</p>';
                 return;
             }
 
-            users.forEach((user, index) => {
-                var userDiv = document.createElement('div');
-                userDiv.className = 'user-item';
-                userDiv.innerHTML = `
+            users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.className = 'user-item';
+                userElement.innerHTML = `
                     <div class="user-info">
-                        <strong>${user.name}</strong>
-                        <span class="user-code">${user.code}</span>
+                        <div class="user-name">${user.name}</div>
+                        <div class="user-code">رمز الدخول: ${user.code}</div>
                     </div>
-                    <div class="user-actions">
-                        <button class="btn-small delete" onclick="deleteUser(${index})">حذف</button>
+                    <div class="user-controls">
+                        <span class="user-status ${user.active ? 'status-active' : 'status-inactive'}">
+                            ${user.active ? 'نشط' : 'غير نشط'}
+                        </span>
+                        <button class="user-btn toggle" onclick="toggleUserActive('${user.id}')">
+                            ${user.active ? 'إلغاء' : 'تفعيل'}
+                        </button>
+                        <button class="user-btn delete" onclick="deleteUser('${user.id}')">حذف</button>
+                        <button class="user-btn export" onclick="exportUserResults('${user.code}')">نتائج</button>
+                        <button class="user-btn delete-results" onclick="deleteUserResults('${user.code}')">حذف النتائج</button>
                     </div>
                 `;
-                container.appendChild(userDiv);
+                container.appendChild(userElement);
             });
         }
 
-        function deleteUser(index) {
-            if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
-                users.splice(index, 1);
+        // تحميل المستخدمين
+        function loadUsers() {
+            database.ref('users').once('value')
+            .then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    users = Object.values(data);
+                    displayUsers();
+                }
+            });
+        }
+
+        // تبديل حالة المستخدم
+        function toggleUserActive(userId) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.active = !user.active;
                 saveUsersToFirebase();
-                
-                document.getElementById('user-status').textContent = 'تم حذف المستخدم بنجاح!';
-                document.getElementById('user-status').className = 'url-status success';
+                displayUsers();
             }
         }
 
-        // Quiz Time Management Functions
-        function setQuizTime() {
-            var startTime = document.getElementById('host-quiz-date').value;
-            var hour = parseInt(document.getElementById('host-start-hour').value);
-            var minute = parseInt(document.getElementById('host-start-minute').value);
-            var ampm = document.getElementById('host-start-ampm').value;
-            var duration = document.getElementById('host-quiz-duration').value;
+        // حذف المستخدم
+        function deleteUser(userId) {
+            if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+                return;
+            }
 
-            if (!startTime || isNaN(hour) || isNaN(minute) || !duration) {
-                document.getElementById('host-time-status').textContent = 'الرجاء ملء جميع الحقول بشكل صحيح';
+            users = users.filter(user => user.id !== userId);
+            saveUsersToFirebase();
+            displayUsers();
+        }
+
+        // تصدير نتائج مستخدم معين
+        function exportUserResults(userCode) {
+            selectedUserForExport = userCode;
+            database.ref('quizResults').once('value')
+            .then((snapshot) => {
+                const results = snapshot.val();
+                if (!results) {
+                    alert('لا توجد نتائج لهذا المستخدم.');
+                    return;
+                }
+
+                const userResults = Object.values(results).filter(r => r.playerCode === userCode);
+                
+                if (userResults.length === 0) {
+                    alert('لا توجد نتائج لهذا المستخدم.');
+                    return;
+                }
+
+                const user = users.find(u => u.code === userCode);
+                const userName = user ? user.name : userCode;
+
+                const data = userResults.map((result, index) => ({
+                    'رقم المحاولة': index + 1,
+                    'اسم المشارك': result.playerName,
+                    'رمز المشارك': result.playerCode,
+                    'السؤال': result.question,
+                    'الإجابة المختارة': result.selectedAnswer,
+                    'الإجابة الصحيحة': result.correctAnswer,
+                    'وقت الاستجابة': result.responseTime + ' ثانية',
+                    'الحالة': result.status,
+                    'التاريخ': new Date(result.timestamp).toLocaleString('ar-EG'),
+                    'الجهاز': result.deviceType,
+                    'النموذج': result.modelId || 'لا يوجد نموذج'
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "نتائج المستخدم");
+                XLSX.writeFile(workbook, `نتائج-${userName}-${new Date().toISOString().split('T')[0]}.xlsx`);
+                
+                alert(`تم تصدير ${userResults.length} نتيجة لـ ${userName} بنجاح!`);
+            })
+            .catch((error) => {
+                console.error("Error exporting user results:", error);
+                alert('خطأ في تصدير النتائج.');
+            });
+        }
+
+        // حذف نتائج مستخدم معين
+        function deleteUserResults(userCode) {
+            if (!confirm(`هل أنت متأكد من حذف جميع نتائج المستخدم ${userCode}؟`)) {
+                return;
+            }
+
+            database.ref('quizResults').once('value')
+            .then((snapshot) => {
+                const results = snapshot.val();
+                if (!results) {
+                    alert('لا توجد نتائج لهذا المستخدم.');
+                    return;
+                }
+
+                const updates = {};
+                Object.keys(results).forEach(key => {
+                    if (results[key].playerCode === userCode) {
+                        updates[key] = null;
+                    }
+                });
+
+                database.ref('quizResults').update(updates)
+                .then(() => {
+                    alert('تم حذف جميع نتائج المستخدم بنجاح!');
+                    loadQuizResults();
+                })
+                .catch((error) => {
+                    console.error("Error deleting user results:", error);
+                    alert('خطأ في حذف النتائج.');
+                });
+            });
+        }
+
+        // إدارة الأسئلة
+        function addQuestion() {
+            const questionText = document.getElementById('question-text').value.trim();
+            const modelId = document.getElementById('question-model').value;
+            const answer1 = document.getElementById('answer-1').value.trim();
+            const answer2 = document.getElementById('answer-2').value.trim();
+            const answer3 = document.getElementById('answer-3').value.trim();
+            const answer4 = document.getElementById('answer-4').value.trim();
+            const correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
+
+            if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
+                document.getElementById('question-status').textContent = 'يرجى ملء جميع الحقول';
+                document.getElementById('question-status').className = 'url-status error';
+                return;
+            }
+
+            const newQuestion = {
+                id: 'question-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                question: questionText,
+                answers: [answer1, answer2, answer3, answer4],
+                correctAnswer: [answer1, answer2, answer3, answer4][correctAnswerIndex],
+                correctAnswerIndex: correctAnswerIndex,
+                modelId: modelId || null,
+                hidden: false,
+                createdAt: new Date().toISOString()
+            };
+
+            questions.push(newQuestion);
+            saveQuestionsToFirebase();
+
+            // مسح الحقول
+            document.getElementById('question-text').value = '';
+            document.getElementById('answer-1').value = '';
+            document.getElementById('answer-2').value = '';
+            document.getElementById('answer-3').value = '';
+            document.getElementById('answer-4').value = '';
+
+            document.getElementById('question-status').textContent = 'تم إضافة السؤال بنجاح!';
+            document.getElementById('question-status').className = 'url-status success';
+        }
+
+        // عرض الأسئلة
+        function displayQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            let filteredQuestions = questions;
+            if (currentModelFilter) {
+                filteredQuestions = questions.filter(q => q.modelId === currentModelFilter);
+            }
+
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = '<p>لا توجد أسئلة ' + (currentModelFilter ? 'في هذا النموذج' : '') + '.</p>';
+                return;
+            }
+
+            filteredQuestions.forEach((question, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = `question-item ${question.hidden ? 'hidden' : ''}`;
+                
+                const modelName = question.modelId ? 
+                    quizModels.find(m => m.id === question.modelId)?.name : 'لا يوجد نموذج';
+
+                questionElement.innerHTML = `
+                    <div class="question-content">
+                        <strong>السؤال ${currentModelFilter ? '' : (index + 1 + ' - ')}:</strong> 
+                        ${question.question}
+                        ${question.hidden ? '<span class="status-badge status-hidden">مخفي</span>' : '<span class="status-badge status-visible">نشط</span>'}
+                        <br>
+                        <small>النموذج: ${modelName}</small>
+                        <div class="response-time">تم الإنشاء: ${new Date(question.createdAt).toLocaleString('ar-EG')}</div>
+                    </div>
+                    <div class="admin-controls">
+                        <button class="admin-btn edit" onclick="editQuestion('${question.id}')">تعديل</button>
+                        <button class="admin-btn toggle ${question.hidden ? '' : 'hidden'}" onclick="toggleQuestionVisibility('${question.id}')">
+                            ${question.hidden ? 'إظهار' : 'إخفاء'}
+                        </button>
+                        <button class="admin-btn delete" onclick="deleteQuestion('${question.id}')">حذف</button>
+                        <button class="admin-btn" onclick="viewQuestionDetails('${question.id}')" style="background: #2196f3;">عرض</button>
+                    </div>
+                `;
+                container.appendChild(questionElement);
+            });
+        }
+
+        // تحرير السؤال
+        function editQuestion(questionId) {
+            const question = questions.find(q => q.id === questionId);
+            if (!question) return;
+
+            // في تطبيق حقيقي، قد تريد إنشاء نموذج تحرير
+            const newQuestionText = prompt('عدل نص السؤال:', question.question);
+            if (newQuestionText !== null) {
+                question.question = newQuestionText;
+                saveQuestionsToFirebase();
+                displayQuestions();
+            }
+        }
+
+        // تبديل رؤية السؤال
+        function toggleQuestionVisibility(questionId) {
+            const question = questions.find(q => q.id === questionId);
+            if (question) {
+                question.hidden = !question.hidden;
+                saveQuestionsToFirebase();
+                displayQuestions();
+            }
+        }
+
+        // حذف السؤال
+        function deleteQuestion(questionId) {
+            if (!confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+                return;
+            }
+
+            questions = questions.filter(q => q.id !== questionId);
+            saveQuestionsToFirebase();
+            displayQuestions();
+        }
+
+        // عرض تفاصيل السؤال في نافذة منبثقة
+        function viewQuestionDetails(questionId) {
+            const question = questions.find(q => q.id === questionId);
+            if (!question) return;
+
+            const modelName = question.modelId ? 
+                quizModels.find(m => m.id === question.modelId)?.name : 'لا يوجد نموذج';
+
+            const modalBody = document.getElementById('question-modal-body');
+            modalBody.innerHTML = `
+                <div class="question-details">
+                    <h4>نص السؤال:</h4>
+                    <p>${question.question}</p>
+                    
+                    <h4>خيارات الإجابة:</h4>
+                    <div class="question-modal-answers">
+                        ${question.answers.map((answer, index) => `
+                            <div class="answer-item ${index === question.correctAnswerIndex ? 'correct' : ''}">
+                                <strong>الإجابة ${index + 1}:</strong> ${answer}
+                                ${index === question.correctAnswerIndex ? ' ✓ (الإجابة الصحيحة)' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="question-meta">
+                        <p><strong>النموذج:</strong> ${modelName}</p>
+                        <p><strong>الحالة:</strong> ${question.hidden ? 'مخفي' : 'نشط'}</p>
+                        <p><strong>تم الإنشاء:</strong> ${new Date(question.createdAt).toLocaleString('ar-EG')}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('questionViewModal').style.display = 'block';
+        }
+
+        // إغلاق نافذة عرض السؤال
+        function closeQuestionView() {
+            document.getElementById('questionViewModal').style.display = 'none';
+        }
+
+        // إدارة وقت الاختبار
+        function saveHostQuizTime() {
+            const date = document.getElementById('host-quiz-date').value;
+            const startHour = parseInt(document.getElementById('host-start-hour').value);
+            const startMinute = parseInt(document.getElementById('host-start-minute').value);
+            const startAmPm = document.getElementById('host-start-ampm').value;
+            const duration = parseInt(document.getElementById('host-quiz-duration').value);
+
+            if (!date) {
+                document.getElementById('host-time-status').textContent = 'يرجى اختيار تاريخ الاختبار';
                 document.getElementById('host-time-status').className = 'url-status error';
                 return;
             }
 
-            if (ampm === 'PM' && hour < 12) hour += 12;
-            else if (ampm === 'AM' && hour === 12) hour = 0;
+            // تحويل الوقت إلى 24 ساعة
+            let startHour24 = startHour;
+            if (startAmPm === 'PM' && startHour24 !== 12) {
+                startHour24 += 12;
+            } else if (startAmPm === 'AM' && startHour24 === 12) {
+                startHour24 = 0;
+            }
 
-            var startDate = new Date(startTime);
-            startDate.setHours(hour, minute, 0, 0);
-            var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
+            // إنشاء كائن تاريخ
+            const startDate = new Date(date);
+            startDate.setHours(startHour24, startMinute, 0, 0);
+
+            // حساب وقت الانتهاء
+            const endDate = new Date(startDate.getTime() + duration * 60 * 1000);
 
             quizStartTime = startDate.getTime();
             quizEndTime = endDate.getTime();
 
             saveQuizTimeToFirebase(quizStartTime, quizEndTime);
             updateQuizTimeInfo();
-            updateDashboard();
-
-            setTimeout(() => {
-                document.getElementById('host-time-status').textContent = 'تم حفظ تكوين وقت الاختبار';
-                document.getElementById('host-time-status').className = 'url-status';
-            }, 3000);
         }
 
+        // تحميل إعدادات الوقت
         function loadHostTimeSettings() {
-            // Set current values in the form
-            if (quizStartTime) {
-                const startDate = new Date(quizStartTime);
-                document.getElementById('host-quiz-date').value = startDate.toISOString().slice(0, 10);
-                
-                let hours = startDate.getHours();
-                let minutes = startDate.getMinutes();
-                let ampm = 'AM';
-                
-                if (hours >= 12) {
-                    ampm = 'PM';
-                    if (hours > 12) hours -= 12;
-                }
-                if (hours === 0) hours = 12;
-                
-                document.getElementById('host-start-hour').value = hours;
-                document.getElementById('host-start-minute').value = minutes;
-                document.getElementById('host-start-ampm').value = ampm;
+            const startDate = new Date(quizStartTime);
+            const endDate = new Date(quizEndTime);
+
+            // تعبئة الحقول بالقيم الحالية
+            document.getElementById('host-quiz-date').value = startDate.toISOString().split('T')[0];
+            
+            let startHour = startDate.getHours();
+            let startAmPm = 'AM';
+            if (startHour >= 12) {
+                startAmPm = 'PM';
+                if (startHour > 12) startHour -= 12;
             }
+            if (startHour === 0) startHour = 12;
+
+            document.getElementById('host-start-hour').value = startHour;
+            document.getElementById('host-start-minute').value = startDate.getMinutes();
+            document.getElementById('host-start-ampm').value = startAmPm;
+
+            // حساب المدة
+            const duration = Math.round((quizEndTime - quizStartTime) / (60 * 1000));
+            document.getElementById('host-quiz-duration').value = duration;
         }
 
+        // تحديث معلومات وقت الاختبار
         function updateQuizTimeInfo() {
-            const now = new Date().getTime();
             const start = new Date(quizStartTime);
             const end = new Date(quizEndTime);
+            const now = new Date();
 
-            // Update player display
-            const playerTimeInfo = document.getElementById('quiz-time-info');
-            if (playerTimeInfo) {
-                if (now < quizStartTime) {
-                    const timeUntilStart = quizStartTime - now;
-                    const hours = Math.floor(timeUntilStart / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
-                    playerTimeInfo.innerHTML = `الاختبار سيبدأ بعد: ${hours} ساعة و ${minutes} دقيقة`;
-                    playerTimeInfo.className = 'time-info waiting';
-                } else if (now >= quizStartTime && now <= quizEndTime) {
-                    const timeUntilEnd = quizEndTime - now;
-                    const hours = Math.floor(timeUntilEnd / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
-                    playerTimeInfo.innerHTML = `الوقت المتبقي: ${hours} ساعة و ${minutes} دقيقة`;
-                    playerTimeInfo.className = 'time-info active';
-                } else {
-                    playerTimeInfo.innerHTML = 'انتهى وقت الاختبار';
-                    playerTimeInfo.className = 'time-info ended';
-                }
+            const timeRange = start.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'}) + 
+                            ' - ' + end.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'});
+            
+            document.getElementById('quiz-time-range').textContent = timeRange;
+
+            let statusText = '';
+            if (now < start) {
+                statusText = 'لم يبدأ بعد';
+            } else if (now >= start && now <= end) {
+                statusText = 'نشط الآن';
+            } else {
+                statusText = 'انتهى';
             }
 
-            // Update host display
-            const hostTimeInfo = document.getElementById('host-time-info');
-            if (hostTimeInfo) {
-                hostTimeInfo.innerHTML = `
-                    وقت البداية: ${start.toLocaleString('ar-EG')}<br>
-                    وقت النهاية: ${end.toLocaleString('ar-EG')}
-                `;
+            document.getElementById('quiz-status-text').textContent = statusText;
+        }
+
+        // التحقق من صلاحية المسؤول
+        function verifyAdmin() {
+            const enteredCode = document.getElementById('admin-code').value;
+            
+            if (enteredCode === adminCode) {
+                document.getElementById('admin-features').style.display = 'block';
+                document.getElementById('admin-status').textContent = 'تم التحقق بنجاح! الوصول الإداري مفعل.';
+                document.getElementById('admin-status').className = 'url-status success';
+                
+                // تحميل البيانات الإدارية
+                loadHostTimeSettings();
+                loadUsers();
+                loadQuizModels();
+                updateQuestionModelSelector();
+                updateActiveModelDisplay();
+                updateDashboard();
+            } else {
+                document.getElementById('admin-status').textContent = 'رمز المسؤول غير صحيح!';
+                document.getElementById('admin-status').className = 'url-status error';
             }
         }
 
-        // Player Functions
-        function startPlayerQuiz() {
+        // تغيير كلمة مرور المسؤول
+        function changeAdminPassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (currentPassword !== adminCode) {
+                document.getElementById('password-status').textContent = 'كلمة المرور الحالية غير صحيحة!';
+                document.getElementById('password-status').className = 'url-status error';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                document.getElementById('password-status').textContent = 'كلمات المرور غير متطابقة!';
+                document.getElementById('password-status').className = 'url-status error';
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                document.getElementById('password-status').textContent = 'كلمة المرور يجب أن تكون 4 أحرف على الأقل!';
+                document.getElementById('password-status').className = 'url-status error';
+                return;
+            }
+
+            adminCode = newPassword;
+            saveAdminPassword(newPassword);
+
+            document.getElementById('password-status').textContent = 'تم تغيير كلمة المرور بنجاح!';
+            document.getElementById('password-status').className = 'url-status success';
+
+            // مسح الحقول
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
+
+        // وظائف المشارك
+        document.getElementById('joinBtn').addEventListener('click', joinQuiz);
+
+        function joinQuiz() {
             playerCode = document.getElementById('player-code').value.trim();
             
             if (!playerCode) {
-                document.getElementById('player-status').textContent = 'الرجاء إدخال رمز المشاركة';
-                document.getElementById('player-status').className = 'player-status error';
+                alert('يرجى إدخال رمز الدخول');
                 return;
             }
 
-            // Check if user exists
-            const user = users.find(u => u.code === playerCode);
+            // التحقق من صلاحية رمز المستخدم
+            const user = users.find(u => u.code === playerCode && u.active);
             if (!user) {
-                document.getElementById('player-status').textContent = 'رمز المشاركة غير صحيح';
-                document.getElementById('player-status').className = 'player-status error';
+                alert('رمز الدخول غير صحيح أو المستخدم غير مفعل!');
                 return;
             }
 
-            // Check quiz timing
+            // التحقق من وقت الاختبار
             const now = new Date().getTime();
             if (now < quizStartTime) {
-                document.getElementById('player-status').textContent = 'الاختبار لم يبدأ بعد';
-                document.getElementById('player-status').className = 'player-status error';
+                alert('الاختبار لم يبدأ بعد. يبدأ في: ' + new Date(quizStartTime).toLocaleString('ar-EG'));
                 return;
             }
 
             if (now > quizEndTime) {
-                document.getElementById('player-status').textContent = 'انتهى وقت الاختبار';
-                document.getElementById('player-status').className = 'player-status error';
+                alert('انتهى وقت الاختبار.');
                 return;
             }
 
-            // Check if quiz has questions
-            let availableQuestions = questions;
-            if (activeQuizModel) {
-                availableQuestions = questions.filter(q => q.modelId === activeQuizModel);
-            }
+            // حفظ رمز المشارك وبدء الجلسة
+            setStoredValue('playerCode', playerCode);
+            setStoredValue('quizStarted', 'true');
+            setStoredValue('quizCompleted', 'false');
+            setStoredValue('currentQuestionIndex', '0');
 
-            if (availableQuestions.length === 0) {
-                document.getElementById('player-status').textContent = 'لا توجد أسئلة متاحة حالياً';
-                document.getElementById('player-status').className = 'player-status error';
-                return;
-            }
-
-            // Store player session
-            storeValue('playerCode', playerCode);
-            storeValue('quizStarted', 'true');
-            storeValue('quizCompleted', 'false');
-            storeValue('currentQuestionIndex', '0');
-            storeValue('playerResults', JSON.stringify({
-                correct: 0,
-                incorrect: 0,
-                total: 0,
-                responseTimes: [],
-                accuracy: 0
-            }));
-
-            // Track active player
+            // تتبع المشارك النشط
             trackActivePlayer(playerCode, 'join');
 
-            // Initialize player session
-            currentIndex = 0;
+            // إعادة تعيين النتائج
             playerResults = {
                 correct: 0,
                 incorrect: 0,
@@ -3590,419 +3873,254 @@
                 accuracy: 0
             };
 
-            document.getElementById('player-status').textContent = `مرحباً ${user.name}! جاهز للبدء؟`;
-            document.getElementById('player-status').className = 'player-status success';
-
-            // Show quiz interface
-            document.getElementById('player-login').style.display = 'none';
-            document.getElementById('player-quiz').style.display = 'block';
-
-            // Start the quiz
+            // بدء الاختبار
+            currentIndex = 0;
             showPlayerQuestion();
+
+            document.getElementById('joinBtn').disabled = true;
+            document.getElementById('player-code').disabled = true;
         }
 
         function showPlayerQuestion() {
-            // Get available questions based on active model
-            let availableQuestions = questions;
+            // الحصول على الأسئلة المناسبة بناءً على النموذج النشط
+            let availableQuestions = questions.filter(q => !q.hidden);
+            
             if (activeQuizModel) {
-                availableQuestions = questions.filter(q => q.modelId === activeQuizModel);
+                availableQuestions = availableQuestions.filter(q => q.modelId === activeQuizModel);
             }
 
             if (availableQuestions.length === 0) {
-                document.getElementById('player-status').textContent = 'لا توجد أسئلة متاحة حالياً';
-                document.getElementById('player-status').className = 'player-status error';
+                document.getElementById('player-question').innerHTML = '<p>لا توجد أسئلة متاحة حالياً.</p>';
                 return;
             }
 
-            // Check if we've completed all questions
             if (currentIndex >= availableQuestions.length) {
-                completePlayerQuiz();
+                endQuiz();
                 return;
             }
 
-            const currentQuestion = availableQuestions[currentIndex];
-            
-            // Display question
-            document.getElementById('player-question').textContent = currentQuestion.question;
-            
-            // Display answers
+            const question = availableQuestions[currentIndex];
+            document.getElementById('player-question').innerHTML = `
+                <h3>السؤال ${currentIndex + 1} من ${availableQuestions.length}</h3>
+                <p>${question.question}</p>
+            `;
+
+            // عرض خيارات الإجابة
             const answersContainer = document.getElementById('player-answers');
             answersContainer.innerHTML = '';
-            
-            currentQuestion.answers.forEach((answer, index) => {
-                const answerButton = document.createElement('button');
-                answerButton.className = 'answer-btn';
-                answerButton.textContent = answer;
-                answerButton.onclick = () => selectAnswer(answer, currentQuestion);
-                answersContainer.appendChild(answerButton);
+
+            question.answers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = answer;
+                button.onclick = () => selectAnswer(answer, question.correctAnswer, question.correctAnswerIndex, question.modelId);
+                answersContainer.appendChild(button);
             });
 
-            // Update progress
-            document.getElementById('player-progress').textContent = 
-                `السؤال ${currentIndex + 1} من ${availableQuestions.length}`;
-
-            // Reset and start timer
-            resetTimer();
-            startTimer();
-
-            // Store question start time for response time calculation
+            // بدء العد التنازلي للسؤال
+            timeLeft = 25;
             questionStartTime = new Date().getTime();
+            startCountdown();
         }
 
-        function selectAnswer(selectedAnswer, question) {
-            // Calculate response time
-            const responseTime = (new Date().getTime() - questionStartTime) / 1000;
+        function startCountdown() {
+            clearInterval(countdownInterval);
             
-            // Stop timer
-            stopTimer();
-            
-            // Check if answer is correct
-            const isCorrect = selectedAnswer === question.correct;
-            
-            // Update player results
+            countdownInterval = setInterval(() => {
+                document.getElementById('countdown').textContent = `⏱️ ${timeLeft} ثانية`;
+                timeLeft--;
+
+                if (timeLeft < 0) {
+                    clearInterval(countdownInterval);
+                    // الانتقال التلقائي للسؤال التالي عند انتهاء الوقت
+                    currentIndex++;
+                    showPlayerQuestion();
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(selectedAnswer, correctAnswer, correctIndex, modelId) {
+            clearInterval(countdownInterval);
+
+            const endTime = new Date().getTime();
+            const responseTime = ((endTime - questionStartTime) / 1000).toFixed(2);
+
+            // تحديث النتائج
             playerResults.total++;
+            playerResults.responseTimes.push(parseFloat(responseTime));
+
+            const isCorrect = selectedAnswer === correctAnswer;
             if (isCorrect) {
                 playerResults.correct++;
             } else {
                 playerResults.incorrect++;
             }
-            playerResults.responseTimes.push(responseTime);
-            playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
-            // Get user info
+            playerResults.accuracy = (playerResults.correct / playerResults.total * 100).toFixed(1);
+
+            // حفظ النتيجة في Firebase
             const user = users.find(u => u.code === playerCode);
-            const userName = user ? user.name : 'غير معروف';
-
-            // Save to Firebase
             saveToFirebase(
                 playerCode,
-                userName,
-                question.question,
+                user ? user.name : 'غير معروف',
+                questions[currentIndex]?.question || 'سؤال غير معروف',
                 selectedAnswer,
-                question.correct,
+                correctAnswer,
                 responseTime,
                 isCorrect ? 'صحيح' : 'خاطئ',
-                question.modelId
+                modelId
             );
 
-            // Store updated results
-            storeValue('playerResults', JSON.stringify(playerResults));
+            // تحديث التصنيف
+            updatePlayerRanking();
 
-            // Show feedback
-            const feedback = document.getElementById('player-feedback');
-            feedback.textContent = isCorrect ? 'إجابة صحيحة! ✅' : 'إجابة خاطئة! ❌';
-            feedback.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
-            
-            // Move to next question after a short delay
-            setTimeout(() => {
-                currentIndex++;
-                storeValue('currentQuestionIndex', currentIndex.toString());
-                showPlayerQuestion();
-            }, 1500);
-        }
-
-        function completePlayerQuiz() {
-            // Mark quiz as completed
-            storeValue('quizCompleted', 'true');
-            
-            // Stop tracking active player
-            trackActivePlayer(playerCode, 'leave');
-            
-            // Show results
-            document.getElementById('player-quiz').style.display = 'none';
-            document.getElementById('player-results').style.display = 'block';
-            
-            // Display final results
-            document.getElementById('final-score').textContent = 
-                `${playerResults.correct} من ${playerResults.total}`;
-            document.getElementById('final-accuracy').textContent = 
-                `${playerResults.accuracy.toFixed(1)}%`;
-            document.getElementById('final-time').textContent = 
-                `${(playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)} ثانية في المتوسط`;
-        }
-
-        function resetPlayerQuiz() {
-            // Clear stored session
-            clearStoredSession();
-            
-            // Stop tracking active player
-            trackActivePlayer(playerCode, 'leave');
-            
-            // Reset UI
-            document.getElementById('player-results').style.display = 'none';
-            document.getElementById('player-login').style.display = 'block';
-            document.getElementById('player-code').value = '';
-            document.getElementById('player-status').textContent = 'ادخل رمز المشاركة للبدء';
-            document.getElementById('player-status').className = 'player-status';
-        }
-
-        // Timer Functions
-        function startTimer() {
-            timeLeft = 25;
-            updateTimerDisplay();
-            
-            countdownInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                
-                if (timeLeft <= 0) {
-                    timeUp();
+            // عرض التغذية الراجعة
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            answerButtons.forEach((button, index) => {
+                button.disabled = true;
+                if (index === correctIndex) {
+                    button.classList.add('correct');
+                } else if (button.textContent === selectedAnswer && !isCorrect) {
+                    button.classList.add('incorrect');
+                } else {
+                    button.classList.add('other-option');
                 }
-            }, 1000);
-        }
+            });
 
-        function stopTimer() {
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-        }
-
-        function resetTimer() {
-            stopTimer();
-            timeLeft = 25;
-            updateTimerDisplay();
-        }
-
-        function updateTimerDisplay() {
-            const timerElement = document.getElementById('player-timer');
-            if (timerElement) {
-                timerElement.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
-                timerElement.className = timeLeft <= 5 ? 'timer warning' : 'timer';
-            }
-        }
-
-        function timeUp() {
-            stopTimer();
-            
-            // Get current question
-            let availableQuestions = questions;
-            if (activeQuizModel) {
-                availableQuestions = questions.filter(q => q.modelId === activeQuizModel);
-            }
-            
-            const currentQuestion = availableQuestions[currentIndex];
-            
-            // Record timeout as incorrect answer
-            playerResults.total++;
-            playerResults.incorrect++;
-            playerResults.responseTimes.push(25); // Max time
-            playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
-
-            // Get user info
-            const user = users.find(u => u.code === playerCode);
-            const userName = user ? user.name : 'غير معروف';
-
-            // Save to Firebase
-            saveToFirebase(
-                playerCode,
-                userName,
-                currentQuestion.question,
-                'انتهى الوقت',
-                currentQuestion.correct,
-                25,
-                'انتهى الوقت',
-                currentQuestion.modelId
-            );
-
-            // Store updated results
-            storeValue('playerResults', JSON.stringify(playerResults));
-
-            // Show timeout feedback
-            const feedback = document.getElementById('player-feedback');
-            feedback.textContent = 'انتهى الوقت! ⏰';
-            feedback.className = 'feedback timeout';
-            
-            // Move to next question after a short delay
+            // الانتقال للسؤال التالي بعد تأخير
             setTimeout(() => {
                 currentIndex++;
-                storeValue('currentQuestionIndex', currentIndex.toString());
                 showPlayerQuestion();
-            }, 1500);
+            }, 2000);
         }
 
-        // Storage helper functions with fallback for incognito mode
-        function storeValue(key, value) {
-            // Try sessionStorage first
+        function endQuiz() {
+            setStoredValue('quizCompleted', 'true');
+            trackActivePlayer(playerCode, 'leave');
+
+            const finalHTML = `
+                <div class="player-results">
+                    <h2>🎉 انتهى الاختبار!</h2>
+                    <div class="result-stats">
+                        <div class="result-stat">
+                            <span class="result-number result-correct">${playerResults.correct}</span>
+                            <span class="result-label">إجابات صحيحة</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="result-number result-incorrect">${playerResults.incorrect}</span>
+                            <span class="result-label">إجابات خاطئة</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="result-number result-accuracy">${playerResults.accuracy}%</span>
+                            <span class="result-label">الدقة</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="result-number result-time">
+                                ${(playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length || 0).toFixed(2)}ث
+                            </span>
+                            <span class="result-label">متوسط وقت الإجابة</span>
+                        </div>
+                    </div>
+                    
+                    ${playerResults.accuracy >= 50 ? 
+                        '<div class="setup-complete"><h3>✅ نجحت في الاختبار!</h3><p>مستوى الدقة ممتاز!</p></div>' :
+                        '<div class="session-warning"><h3>❌ لم تنجح في الاختبار</h3><p>تحتاج إلى تحقيق 50% على الأقل للنجاح</p></div>'
+                    }
+                    
+                    <button class="download-btn" onclick="downloadPlayerResults()">📥 تنزيل نتائجي</button>
+                </div>
+            `;
+
+            document.getElementById('player-question').innerHTML = finalHTML;
+            document.getElementById('countdown').textContent = '';
+            document.getElementById('player-answers').innerHTML = '';
+
+            // إعادة تعيين عناصر التحكم
+            document.getElementById('joinBtn').disabled = false;
+            document.getElementById('player-code').disabled = false;
+        }
+
+        function downloadPlayerResults() {
+            const user = users.find(u => u.code === playerCode);
+            const data = [{
+                'اسم المشارك': user ? user.name : 'غير معروف',
+                'رمز المشارك': playerCode,
+                'الإجابات الصحيحة': playerResults.correct,
+                'الإجابات الخاطئة': playerResults.incorrect,
+                'إجمالي الأسئلة': playerResults.total,
+                'نسبة الدقة': playerResults.accuracy + '%',
+                'متوسط وقت الإجابة': (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length || 0).toFixed(2) + ' ثانية',
+                'تاريخ الاختبار': new Date().toLocaleString('ar-EG'),
+                'الجهاز': /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'جوال' : 'كمبيوتر',
+                'الحالة': playerResults.accuracy >= 50 ? 'ناجح' : 'غير ناجح'
+            }];
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "نتائجي");
+            XLSX.writeFile(workbook, `نتائج-${playerCode}-${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            alert('تم تنزيل نتائجك بنجاح!');
+        }
+
+        // نظام التصنيف
+        function updatePlayerRanking() {
+            if (!playerCode) return;
+
+            const rankingData = {
+                playerCode: playerCode,
+                playerName: users.find(u => u.code === playerCode)?.name || 'غير معروف',
+                correctAnswers: playerResults.correct,
+                totalQuestions: playerResults.total,
+                accuracy: parseFloat(playerResults.accuracy),
+                avgResponseTime: playerResults.responseTimes.length > 0 ? 
+                    playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length : 0,
+                lastUpdate: new Date().toISOString()
+            };
+
+            database.ref('playerRankings/' + playerCode).set(rankingData);
+        }
+
+        // وظائف مساعدة للتخزين
+        function setStoredValue(key, value) {
+            // المحاولة في sessionStorage أولاً
             try {
                 sessionStorage.setItem(key, value);
-                return;
             } catch (e) {
-                // sessionStorage failed, try localStorage
-                try {
-                    localStorage.setItem(key, value);
-                    return;
-                } catch (e2) {
-                    // Both storage methods failed (incognito mode)
-                    console.warn('Both storage methods failed, using memory fallback');
-                    // In a real implementation, you might use a memory fallback
-                }
+                // إذا فشل، استخدم localStorage
+                localStorage.setItem(key, value);
             }
         }
 
         function getStoredValue(key) {
-            // Try sessionStorage first
+            // المحاولة في sessionStorage أولاً
             try {
                 return sessionStorage.getItem(key);
             } catch (e) {
-                // sessionStorage failed, try localStorage
-                try {
-                    return localStorage.getItem(key);
-                } catch (e2) {
-                    // Both storage methods failed
-                    console.warn('Both storage methods failed, using memory fallback');
-                    return null;
-                }
+                // إذا فشل، استخدم localStorage
+                return localStorage.getItem(key);
             }
         }
 
-        function clearStoredSession() {
-            // Clear both storage methods
-            try {
-                sessionStorage.removeItem('playerCode');
-                sessionStorage.removeItem('quizStarted');
-                sessionStorage.removeItem('quizCompleted');
-                sessionStorage.removeItem('currentQuestionIndex');
-                sessionStorage.removeItem('playerResults');
-            } catch (e) {
-                // Ignore errors
-            }
-            
-            try {
-                localStorage.removeItem('playerCode');
-                localStorage.removeItem('quizStarted');
-                localStorage.removeItem('quizCompleted');
-                localStorage.removeItem('currentQuestionIndex');
-                localStorage.removeItem('playerResults');
-            } catch (e) {
-                // Ignore errors
+        // إغلاق النماذج المنبثقة عند النقر خارجها
+        window.onclick = function(event) {
+            const questionModal = document.getElementById('questionViewModal');
+            if (event.target === questionModal) {
+                closeQuestionView();
             }
         }
 
-        // Admin Functions
-        function verifyAdmin() {
-            const enteredCode = document.getElementById('admin-code').value.trim();
-            
-            if (enteredCode === adminCode) {
-                document.getElementById('admin-login').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
-                document.getElementById('admin-status').textContent = 'تم الدخول بنجاح!';
-                document.getElementById('admin-status').className = 'url-status success';
-            } else {
-                document.getElementById('admin-status').textContent = 'كلمة المرور غير صحيحة';
-                document.getElementById('admin-status').className = 'url-status error';
-            }
-        }
-
-        function changeAdminPassword() {
-            const currentPassword = document.getElementById('current-password').value.trim();
-            const newPassword = document.getElementById('new-password').value.trim();
-            const confirmPassword = document.getElementById('confirm-password').value.trim();
-            
-            if (currentPassword !== adminCode) {
-                document.getElementById('password-status').textContent = 'كلمة المرور الحالية غير صحيحة';
-                document.getElementById('password-status').className = 'url-status error';
-                return;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                document.getElementById('password-status').textContent = 'كلمات المرور الجديدة غير متطابقة';
-                document.getElementById('password-status').className = 'url-status error';
-                return;
-            }
-            
-            if (newPassword.length < 4) {
-                document.getElementById('password-status').textContent = 'يجب أن تكون كلمة المرور الجديدة 4 أحرف على الأقل';
-                document.getElementById('password-status').className = 'url-status error';
-                return;
-            }
-            
-            adminCode = newPassword;
-            saveAdminPassword(newPassword);
-            
-            document.getElementById('password-status').textContent = 'تم تغيير كلمة المرور بنجاح!';
-            document.getElementById('password-status').className = 'url-status success';
-            
-            // Clear the form
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-        }
-
-        function saveHostQuizTime() {
-            setQuizTime();
-        }
-
-        // Initialize the application
-        function initApp() {
-            console.log("Initializing Quiz Application...");
-            
-            // Load data from Firebase
+        // التهيئة عند تحميل الصفحة
+        window.onload = function() {
             loadDataFromFirebase();
-            
-            // Set up periodic updates
-            setInterval(updateQuizTimeInfo, 60000); // Update every minute
-            setInterval(updateDashboard, 30000); // Update dashboard every 30 seconds
-            
-            // Check for existing player session
-            const savedPlayerCode = getStoredValue('playerCode');
-            const quizStarted = getStoredValue('quizStarted');
-            const quizCompleted = getStoredValue('quizCompleted');
-            
-            if (savedPlayerCode && quizStarted === 'true' && quizCompleted !== 'true') {
-                // Restore player session
-                playerCode = savedPlayerCode;
-                currentIndex = parseInt(getStoredValue('currentQuestionIndex') || '0');
-                const savedResults = getStoredValue('playerResults');
-                if (savedResults) {
-                    playerResults = JSON.parse(savedResults);
-                }
-                
-                // Show quiz interface
-                document.getElementById('player-login').style.display = 'none';
-                document.getElementById('player-quiz').style.display = 'block';
-                
-                // Continue quiz
-                showPlayerQuestion();
-            }
-            
-            // Update displays initially
             updateQuizTimeInfo();
-            updateDashboard();
             
-            console.log("Quiz Application initialized successfully");
-        }
-
-        // Set up the join button
-        document.getElementById('joinBtn').onclick = startPlayerQuiz;
-
-        // Start the application when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initApp();
-        });
-
-        // Handle page visibility changes to pause/resume timer
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                // Page is hidden, consider pausing the timer
-                console.log('Page hidden - consider implementing timer pause');
-            } else {
-                // Page is visible again
-                console.log('Page visible');
-            }
-        });
-
-        // Prevent leaving page during active quiz
-        window.addEventListener('beforeunload', function(e) {
-            const quizStarted = getStoredValue('quizStarted');
-            const quizCompleted = getStoredValue('quizCompleted');
+            // تحديث العد التنازلي للاختبار
+            setInterval(updateQuizTimeInfo, 60000);
             
-            if (quizStarted === 'true' && quizCompleted !== 'true') {
-                e.preventDefault();
-                e.returnValue = 'لديك اختبار نشط. إذا غادرت الآن، قد تفقد تقدمك. هل أنت متأكد أنك تريد المغادرة؟';
-                return e.returnValue;
-            }
-        });
+            // تحميل النماذج في محدد الأسئلة
+            updateQuestionModelSelector();
+        };
     </script>
 </body>
 </html>
