@@ -220,11 +220,18 @@
         }
 
         .answers-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 1.5rem 0;
-        }
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 1.5rem 0;
+}
+
+#player-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 1.5rem 0;
+}
 
         .answer-btn {
             display: flex;
@@ -3879,6 +3886,7 @@
 
             document.getElementById('joinBtn').disabled = true;
             document.getElementById('player-code').disabled = true;
+            startLiveRanking();
         }
 
         function showPlayerQuestion() {
@@ -4038,6 +4046,7 @@
             // إعادة تعيين عناصر التحكم
             document.getElementById('joinBtn').disabled = false;
             document.getElementById('player-code').disabled = false;
+            stopLiveRanking();
         }
 
         function downloadPlayerResults() {
@@ -4080,6 +4089,88 @@
 
             database.ref('playerRankings/' + playerCode).set(rankingData);
         }
+        // Live ranking display
+function startLiveRanking() {
+    // Create ranking display element if it doesn't exist
+    if (!document.getElementById('live-ranking')) {
+        const rankingElement = document.createElement('div');
+        rankingElement.id = 'live-ranking';
+        rankingElement.className = 'rank-display';
+        rankingElement.innerHTML = `
+            <h4>🏆 التصنيف الحي</h4>
+            <div id="ranking-list"></div>
+        `;
+        document.body.appendChild(rankingElement);
+    }
+
+    // Update rankings every 5 seconds
+    rankingUpdateInterval = setInterval(updateLiveRankings, 5000);
+    updateLiveRankings(); // Initial call
+}
+
+function updateLiveRankings() {
+    if (!playerCode) return;
+
+    database.ref('playerRankings').once('value')
+    .then((snapshot) => {
+        const rankings = snapshot.val();
+        if (!rankings) return;
+
+        const rankingsArray = Object.values(rankings)
+            .filter(rank => rank.totalQuestions > 0)
+            .sort((a, b) => {
+                // Sort by accuracy (descending), then by response time (ascending)
+                if (b.accuracy !== a.accuracy) {
+                    return b.accuracy - a.accuracy;
+                }
+                return a.avgResponseTime - b.avgResponseTime;
+            });
+
+        const rankingList = document.getElementById('ranking-list');
+        if (!rankingList) return;
+
+        rankingList.innerHTML = '';
+
+        rankingsArray.slice(0, 5).forEach((rank, index) => {
+            const rankItem = document.createElement('div');
+            rankItem.style.padding = '5px';
+            rankItem.style.borderBottom = '1px solid #eee';
+            rankItem.style.fontSize = '0.8rem';
+            
+            const isCurrentPlayer = rank.playerCode === playerCode;
+            if (isCurrentPlayer) {
+                rankItem.style.background = '#e3f2fd';
+                rankItem.style.fontWeight = 'bold';
+            }
+
+            rankItem.innerHTML = `
+                ${index + 1}. ${rank.playerName}
+                <br><small>${rank.accuracy}% | ${rank.avgResponseTime.toFixed(1)}ث</small>
+            `;
+            
+            rankingList.appendChild(rankItem);
+        });
+
+        // Highlight current player's rank
+        const currentPlayerRank = rankingsArray.findIndex(rank => rank.playerCode === playerCode);
+        const rankingElement = document.getElementById('live-ranking');
+        if (currentPlayerRank !== -1 && rankingElement) {
+            rankingElement.classList.toggle('celebrate', currentPlayerRank < 3);
+        }
+    });
+}
+
+function stopLiveRanking() {
+    if (rankingUpdateInterval) {
+        clearInterval(rankingUpdateInterval);
+        rankingUpdateInterval = null;
+    }
+    
+    const rankingElement = document.getElementById('live-ranking');
+    if (rankingElement) {
+        rankingElement.remove();
+    }
+}
 
         // وظائف مساعدة للتخزين
         function setStoredValue(key, value) {
@@ -4124,3 +4215,4 @@
     </script>
 </body>
 </html>
+
