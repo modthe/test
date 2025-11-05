@@ -1074,33 +1074,6 @@ background: #f8f9fa;
 border-radius: 5px;
 }
 
-/* Rank Display Styles */
-.rank-display {
-position: fixed;
-top: 100px;
-right: 20px;
-background: rgba(255,255,255,0.95);
-padding: 15px;
-border-radius: 10px;
-box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-border-left: 4px solid #6e8efb;
-z-index: 1000;
-min-width: 200px;
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-transition: all 0.3s ease;
-}
-
-.rank-display.celebrate {
-animation: pulse 1s infinite;
-border-left-color: #ffd700 !important;
-}
-
-@keyframes pulse {
-0% { transform: scale(1); }
-50% { transform: scale(1.05); }
-100% { transform: scale(1); }
-}
-
 /* Final Rank Display */
 .final-rank-section {
 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1326,14 +1299,6 @@ padding: 1rem;
 margin: 10% auto;
 width: 95%;
 padding: 1rem;
-}
-
-.rank-display {
-position: relative;
-top: auto;
-right: auto;
-margin: 1rem 0;
-width: 100%;
 }
 
 .host-dashboard {
@@ -1919,10 +1884,6 @@ total: 0,
 responseTimes: [],
 accuracy: 0
 };
-
-// Real-time ranking system
-let playerRankings = {};
-let rankingUpdateInterval = null;
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -3954,7 +3915,6 @@ quizTimer.textContent = `⏱️ Starts in: ${hours}h ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Not started';
 quizStatus.style.color = '#ff9800';
 quizActive = false;
-stopRankingSystem(); // Stop ranking before quiz starts
 } else if (now >= quizStartTime && now <= quizEndTime) {
 var timeLeft = Math.floor((quizEndTime - now) / 1000);
 var minutes = Math.floor(timeLeft / 60);
@@ -3964,13 +3924,11 @@ quizTimer.textContent = `⏱️ Time left: ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Active';
 quizStatus.style.color = '#4caf50';
 quizActive = true;
-// Ranking system will start when players join
 } else {
 quizTimer.textContent = '⏱️ Quiz ended';
 quizStatus.textContent = 'Ended';
 quizStatus.style.color = '#f44336';
 quizActive = false;
-stopRankingSystem(); // Stop ranking after quiz ends
 }
 }
 
@@ -4142,11 +4100,8 @@ showPlayerResults();
 }
 }
 
-// Show player results at the end of quiz with final rank
+// Show player results at the end of quiz
 function showPlayerResults() {
-    // Stop ranking updates
-    stopRankingSystem();
-    
     // Mark quiz as completed immediately when user finishes last question
     setStoredValue('quizCompleted', 'true');
     removeStoredValue('quizProgress');
@@ -4168,41 +4123,10 @@ function showPlayerResults() {
     const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
     const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
 
-    // Get final rank
-    const currentPlayerRank = playerRankings[playerCode];
-    const finalRank = currentPlayerRank ? currentPlayerRank.rank : 'N/A';
-    const totalPlayers = Object.keys(playerRankings).length;
-
-    // Remove live rank display
-    const liveRankDisplay = document.getElementById('current-rank-display');
-    if (liveRankDisplay) {
-        liveRankDisplay.remove();
-    }
-
     document.getElementById('player-question').innerHTML = `
         <div class="player-results">
             <h2>🎉 Quiz Completed! 🎉</h2>
             <p>Thank you for participating, ${userName}!</p>
-
-            <!-- Final Rank Display -->
-            <div class="final-rank-section">
-                <div style="font-size: 1.2rem; margin-bottom: 10px; opacity: 0.9;">
-                    Your Final Rank
-                </div>
-                <div style="font-size: 3.5rem; font-weight: bold; margin: 10px 0;">
-                    #${finalRank}
-                </div>
-                <div style="font-size: 1rem; opacity: 0.8;">
-                    out of ${totalPlayers} players
-                </div>
-                ${finalRank <= 3 ? `
-                <div style="margin-top: 15px; font-size: 1.5rem;">
-                    ${finalRank === 1 ? '🥇 GOLD MEDAL!' : ''}
-                    ${finalRank === 2 ? '🥈 SILVER MEDAL!' : ''}
-                    ${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
-                </div>
-                ` : ''}
-            </div>
 
             <div class="result-stats">
                 <div class="result-stat">
@@ -4363,155 +4287,6 @@ answersDiv.appendChild(gridContainer);
 startCountdown();
 }
 
-// Real-time ranking system
-// Start tracking player rankings
-function startRankingSystem() {
-    // Clear any existing interval
-    if (rankingUpdateInterval) {
-        clearInterval(rankingUpdateInterval);
-    }
-    
-    // Update rankings every 2 seconds during quiz
-    rankingUpdateInterval = setInterval(updatePlayerRankings, 2000);
-}
-
-// Stop ranking system
-function stopRankingSystem() {
-    if (rankingUpdateInterval) {
-        clearInterval(rankingUpdateInterval);
-        rankingUpdateInterval = null;
-    }
-}
-
-// Update player rankings based on speed and accuracy
-function updatePlayerRankings() {
-    database.ref('quizResults').once('value')
-    .then((snapshot) => {
-        const results = snapshot.val();
-        if (!results) return;
-
-        const allResults = Object.values(results);
-        const currentTime = Date.now();
-        
-        // Filter results from the last 5 minutes for active players
-        const recentResults = allResults.filter(result => 
-            currentTime - new Date(result.timestamp).getTime() < 5 * 60 * 1000
-        );
-
-        // Calculate scores for each player
-        const playerScores = {};
-        
-        recentResults.forEach(result => {
-            if (!playerScores[result.playerCode]) {
-                playerScores[result.playerCode] = {
-                    correct: 0,
-                    totalTime: 0,
-                    questions: 0,
-                    lastActivity: new Date(result.timestamp).getTime(),
-                    playerName: result.playerName
-                };
-            }
-            
-            const player = playerScores[result.playerCode];
-            player.questions++;
-            
-            if (result.selectedAnswer === result.correctAnswer) {
-                player.correct++;
-                // Faster correct answers get higher scores
-                const speedBonus = Math.max(0, 15 - result.responseTime);
-                player.totalTime += result.responseTime;
-            }
-            
-            player.lastActivity = Math.max(player.lastActivity, new Date(result.timestamp).getTime());
-        });
-
-        // Calculate ranking score (accuracy + speed)
-        const rankedPlayers = Object.entries(playerScores).map(([playerCode, data]) => {
-            const accuracy = data.questions > 0 ? (data.correct / data.questions) * 100 : 0;
-            const avgTime = data.correct > 0 ? (data.totalTime / data.correct) : 0;
-            const speedScore = Math.max(0, 100 - (avgTime * 10)); // Lower time = higher score
-            const activityRecency = (currentTime - data.lastActivity) < 60000 ? 50 : 0; // Bonus for recent activity
-            
-            return {
-                playerCode,
-                playerName: data.playerName,
-                score: (accuracy * 0.6) + (speedScore * 0.3) + (activityRecency * 0.1),
-                correct: data.correct,
-                questions: data.questions,
-                accuracy: accuracy,
-                avgTime: avgTime
-            };
-        });
-
-        // Sort by score (descending)
-        rankedPlayers.sort((a, b) => b.score - a.score);
-        
-        // Update global rankings
-        playerRankings = {};
-        rankedPlayers.forEach((player, index) => {
-            playerRankings[player.playerCode] = {
-                rank: index + 1,
-                ...player
-            };
-        });
-
-        // Update ranking display for current player
-        updateCurrentPlayerRankDisplay();
-    })
-    .catch((error) => {
-        console.error("Error updating rankings:", error);
-    });
-}
-
-// Update current player's rank display
-function updateCurrentPlayerRankDisplay() {
-    if (!playerCode || !quizActive) return;
-    
-    const currentPlayerRank = playerRankings[playerCode];
-    const rankDisplay = document.getElementById('current-rank-display');
-    
-    if (!rankDisplay) {
-        // Create rank display if it doesn't exist
-        const newRankDisplay = document.createElement('div');
-        newRankDisplay.id = 'current-rank-display';
-        newRankDisplay.className = 'rank-display';
-        document.body.appendChild(newRankDisplay);
-    }
-    
-    const displayElement = document.getElementById('current-rank-display');
-    
-    if (currentPlayerRank) {
-        const user = users.find(u => u.code === playerCode);
-        const userName = user ? user.name : 'You';
-        
-        displayElement.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #4caf50; text-align: center;">
-                #${currentPlayerRank.rank}
-            </div>
-            <div style="font-size: 0.9rem; text-align: center; margin-bottom: 8px;">
-                ${userName}
-            </div>
-            <div style="font-size: 0.8rem; color: #666;">
-                📊 ${currentPlayerRank.correct}/${currentPlayerRank.questions} correct
-            </div>
-            <div style="font-size: 0.8rem; color: #666;">
-                ⚡ Avg: ${currentPlayerRank.avgTime ? currentPlayerRank.avgTime.toFixed(1) + 's' : 'N/A'}
-            </div>
-            <div style="font-size: 0.8rem; color: #2196f3; margin-top: 5px;">
-                Total Players: ${Object.keys(playerRankings).length}
-            </div>
-        `;
-    } else {
-        displayElement.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
-            <div style="text-align: center; color: #666; font-size: 0.9rem;">
-                Answer questions to see your rank!
-            </div>
-        `;
-    }
-}
-
 // Initialize the application
 document.getElementById("joinBtn").onclick = function() {
 if (!quizActive) {
@@ -4571,9 +4346,6 @@ var progress = JSON.parse(savedProgress);
 currentIndex = progress.currentIndex || 0;
 playerResults = progress.playerResults || playerResults;
 }
-
-// START RANKING SYSTEM WHEN PLAYER JOINS
-startRankingSystem();
 
 currentIndex = 0;
 document.getElementById("player-code").style.display = "none";
@@ -4645,11 +4417,8 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Model Management and Ranking System Initialized");
+console.log("Enhanced Kahoot FS with Model Management Initialized");
 });
 </script>
 </body>
 </html>
-
-
-
