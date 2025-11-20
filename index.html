@@ -256,7 +256,7 @@ box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 /* INSTANT COLOR FEEDBACK - No lag */
-.answer-btn.correct {
+/*.answer-btn.correct {
 background-color: #4caf50 !important;
 color: white !important;
 border-color: #4caf50 !important;
@@ -270,17 +270,17 @@ color: white !important;
 border-color: #f44336 !important;
 transform: scale(1.03);
 box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
-}
+}*/
 
 .answer-btn:disabled {
 opacity: 0.7;
 pointer-events: none;
 }
 
-.answer-btn.other-option {
+/*.answer-btn.other-option {
 opacity: 0.6;
 background: #f0f0f0;
-}
+}*/
 
 /* Responsive design for mobile */
 @media (max-width: 768px) {
@@ -4228,8 +4228,8 @@ var btn = document.createElement("button");
 btn.className = "answer-btn";
 btn.innerHTML = a;
 btn.onclick = function() {
-if (!quizActive) {
-alert("The quiz is not currently active. Please check the quiz schedule.");
+if (!quizActive) { 
+alert("الاختبار غير نشط حالياً. يرجى التحقق من جدول الاختبار.");
 return;
 }
 
@@ -4239,28 +4239,26 @@ var responseTime = (Date.now() - questionStartTime) / 1000;
 
 clearInterval(countdownInterval);
 
-// INSTANT COLOR FEEDBACK - No lag
+// DISABLE ALL BUTTONS (no color feedback)
 var allButtons = document.querySelectorAll('.answer-btn');
 allButtons.forEach(button => {
 button.disabled = true;
 button.style.pointerEvents = 'none';
-
-// Remove any existing classes first
+// Remove any color classes if they exist
 button.classList.remove('correct', 'incorrect', 'other-option');
-
-if (button.innerHTML === correct) {
-// Correct answer - show green immediately
-button.classList.add('correct');
-} else if (button.innerHTML === selected) {
-// User's wrong selection - show red immediately
-button.classList.add('incorrect');
-} else {
-// Other options - gray out
-button.classList.add('other-option');
-}
+// Add a simple pressed effect
+button.style.opacity = '0.7';
+button.style.transform = 'scale(0.98)';
 });
 
-// TRACK RESULTS
+// Add current button pressed effect
+this.style.backgroundColor = '#e0e0e0';
+this.style.borderColor = '#6e8efb';
+
+// SHOW "ANSWER SAVED" MESSAGE
+showAnswerSavedMessage();
+
+// TRACK RESULTS (but don't show to user)
 if (selected === correct) {
 playerResults.correct++;
 } else {
@@ -4272,19 +4270,66 @@ playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
 // Find user name
 const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+const userName = user ? user.name : 'مستخدم غير معروف';
 
-saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
+saveToFirebase(playerCode, userName, q.question, selected, correct, responseTime, "تمت الإجابة", q.modelId);
 saveQuizProgress();
 
 // Start countdown for next question
 startNextQuestionCountdown();
 };
+
 gridContainer.appendChild(btn);
 });
 
 answersDiv.appendChild(gridContainer);
 startCountdown();
+}
+function showAnswerSavedMessage() {
+const messageDiv = document.createElement('div');
+messageDiv.id = 'answer-saved-message';
+messageDiv.style.cssText = `
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background: rgba(110, 142, 251, 0.95);
+color: white;
+padding: 20px 40px;
+border-radius: 10px;
+font-size: 1.5rem;
+font-weight: bold;
+text-align: center;
+z-index: 2000;
+box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+animation: messageFade 2s ease-in-out forwards;
+`;
+
+// Add CSS for animation
+if (!document.querySelector('#message-styles')) {
+const style = document.createElement('style');
+style.id = 'message-styles';
+style.textContent = `
+@keyframes messageFade {
+0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+40% { transform: translate(-50%, -50%) scale(1); }
+80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+`;
+document.head.appendChild(style);
+}
+
+messageDiv.textContent = 'تم حفظ إجابتك';
+document.body.appendChild(messageDiv);
+
+// Remove message after animation
+setTimeout(() => {
+if (document.getElementById('answer-saved-message')) {
+document.getElementById('answer-saved-message').remove();
+}
+}, 2000);
 }
 
 // Initialize the application
@@ -4422,4 +4467,5 @@ console.log("Enhanced Kahoot FS with Model Management Initialized");
 </script>
 </body>
 </html>
+
 
