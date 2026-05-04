@@ -18,8 +18,6 @@ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 body {
 background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-color: #333;
-line-height: 1.6;
 min-height: 100vh;
 padding: 20px;
 display: flex;
@@ -38,17 +36,9 @@ header {
 background: linear-gradient(135deg, #6e8efb, #a777e3);
 color: white;
 padding: 1.5rem;
-text-align: center;
 display: flex;
 justify-content: space-between;
 align-items: center;
-flex-wrap: wrap;
-}
-.header-content {
-display: flex;
-justify-content: space-between;
-align-items: center;
-width: 100%;
 flex-wrap: wrap;
 }
 .quiz-timer, .player-count {
@@ -60,17 +50,7 @@ font-size: 0.9rem;
 min-width: 180px;
 text-align: center;
 }
-.player-count.active {
-background: rgba(76,175,80,0.3);
-animation: pulse 2s infinite;
-}
-@keyframes pulse {
-0% { transform: scale(1); }
-50% { transform: scale(1.05); }
-100% { transform: scale(1); }
-}
 h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-.subtitle { font-size: 1rem; opacity: 0.9; }
 .tabs {
 display: flex;
 background: #f0f0f0;
@@ -89,10 +69,10 @@ white-space: nowrap;
 background: white;
 border-bottom: 3px solid #6e8efb;
 }
-.content { padding: 1.5rem; min-height: 500px; }
+.content { padding: 1.5rem; }
 .tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeIn 0.5s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .card {
 background: white;
 border-radius: 10px;
@@ -101,8 +81,6 @@ margin: 1.5rem 0;
 box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 border-right: 4px solid #6e8efb;
 }
-h2 { font-size: 1.6rem; color: #6e8efb; margin-bottom: 1rem; }
-h3 { font-size: 1.3rem; color: #a777e3; margin: 1.2rem 0 0.8rem; }
 input, button, select, textarea {
 padding: 0.8rem 1rem;
 margin: 0.5rem 0;
@@ -116,8 +94,8 @@ background: #6e8efb;
 color: white;
 border: none;
 cursor: pointer;
-transition: all 0.3s ease;
 font-weight: 600;
+transition: 0.2s;
 }
 button:hover { background: #5a7df9; transform: translateY(-2px); }
 .answers-grid {
@@ -127,38 +105,18 @@ gap: 20px;
 margin: 1.5rem 0;
 }
 .answer-btn {
-display: flex;
-align-items: center;
-justify-content: center;
-text-align: center;
 padding: 1.5rem;
 background: #f8f9fa;
-color: #333;
 border: 2px solid #ddd;
 border-radius: 10px;
 font-size: 1.1rem;
 font-weight: 500;
 cursor: pointer;
+text-align: center;
 }
 .answer-btn:hover { background: #e9ecef; border-color: #6e8efb; }
-.answer-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.instructions {
-background: #fff8e1;
-border-right: 4px solid #ffc107;
-padding: 1.2rem;
-margin-top: 1.5rem;
-border-radius: 4px;
-}
-.url-status {
-margin-top: 10px;
-padding: 8px;
-border-radius: 4px;
-text-align: center;
-font-size: 0.9rem;
-}
-.url-status.success { background: #d4edda; color: #155724; }
-.url-status.error { background: #f8d7da; color: #721c24; }
-.time-info, .time-config, .admin-section, .user-management, .quiz-model, .password-change, .active-model-display {
+.answer-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.instructions, .time-info, .admin-section, .user-management, .quiz-model {
 background: #f9f9f9;
 border-right: 4px solid #6e8efb;
 padding: 1rem;
@@ -166,13 +124,13 @@ margin: 1rem 0;
 border-radius: 8px;
 }
 .question-list {
-margin: 1rem 0;
 max-height: 300px;
 overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 5px;
 padding: 1rem;
 background: #f9f9f9;
+margin-top: 1rem;
 }
 .user-item, .model-item {
 display: flex;
@@ -182,19 +140,17 @@ padding: 0.8rem;
 border-bottom: 1px solid #eee;
 }
 .status-badge {
-display: inline-block;
 padding: 0.2rem 0.5rem;
 border-radius: 12px;
 font-size: 0.7rem;
 font-weight: bold;
-margin: 0 5px;
 }
 .status-active { background: #4caf50; color: white; }
 .status-inactive { background: #f44336; color: white; }
 .player-results {
 text-align: center;
 padding: 2rem;
-background: #f8f9fa;
+background: #e8f5e9;
 border-radius: 10px;
 margin: 1rem 0;
 }
@@ -206,74 +162,58 @@ margin: 2rem 0;
 }
 .result-stat {
 background: white;
-padding: 1.5rem;
+padding: 1rem;
 border-radius: 8px;
-box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-.result-number { font-size: 2.5rem; font-weight: bold; display: block; }
+.result-number { font-size: 2rem; font-weight: bold; display: block; }
 .result-correct { color: #4caf50; }
 .result-incorrect { color: #f44336; }
-.download-btn {
-background: #4caf50;
-padding: 1rem 2rem;
-font-size: 1.1rem;
-margin: 1rem;
-}
+.download-btn { background: #4caf50; padding: 0.8rem 1.5rem; font-size: 1rem; margin: 0.5rem; }
 .host-dashboard {
 display: grid;
-grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-gap: 1.5rem;
-margin-bottom: 2rem;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 1rem;
+margin-bottom: 1.5rem;
 }
 .dashboard-card {
 background: white;
-border-radius: 10px;
-padding: 1.5rem;
-box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-border-right: 4px solid #6e8efb;
+padding: 1rem;
+border-radius: 8px;
+box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+text-align: center;
 }
-.dashboard-stat { font-size: 2rem; font-weight: bold; color: #6e8efb; margin: 1rem 0; }
-.quick-nav {
-display: flex;
-flex-wrap: wrap;
-gap: 10px;
-margin: 1rem 0;
-}
+.quick-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 1rem 0; }
 .quick-nav-btn { background: #6e8efb; padding: 0.5rem 1rem; font-size: 0.8rem; }
-.modal, .question-modal {
+.modal {
 display: none;
 position: fixed;
-z-index: 1000;
-left: 0; top: 0;
+top: 0; left: 0;
 width: 100%; height: 100%;
 background: rgba(0,0,0,0.5);
+z-index: 1000;
+justify-content: center;
+align-items: center;
 }
-.modal-content, .question-modal-content {
+.modal-content {
 background: white;
-margin: 10% auto;
 padding: 2rem;
 border-radius: 10px;
-width: 90%;
-max-width: 800px;
+max-width: 80%;
+max-height: 80%;
+overflow: auto;
 }
 @media (max-width: 768px) {
 .answers-grid { grid-template-columns: 1fr; }
 .answer-btn { padding: 1rem; }
-.host-dashboard { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-<div class="header-content">
-<div class="quiz-timer" id="quiz-timer">⏱️ الاختبار: لم يبدأ</div>
-<div class="header-title">
-<h1>منصة الاختبارات</h1>
-<p class="subtitle">أجب بحرية – لا يوجد وقت محدد</p>
-</div>
-<div class="player-count" id="player-count">👤 <span id="current-player-count">0</span> مشارك</div>
-</div>
+<div class="quiz-timer" id="quizTimer">⏱️ جارٍ التحميل...</div>
+<div class="header-title"><h1>منصة الاختبارات</h1><p class="subtitle">أجب بحرية – لا يوجد وقت محدد</p></div>
+<div class="player-count" id="playerCount">👤 <span id="playerCountNum">0</span> مشارك</div>
 </header>
 
 <div class="tabs">
@@ -287,24 +227,23 @@ max-width: 800px;
 <div id="player" class="tab-content active">
 <h2>دخول الاختبار</h2>
 <div class="time-info">
-<p>الاختبار مجدول من <strong id="quiz-time-range"></strong></p>
-<p>الحالة: <span id="quiz-status-text">لم يبدأ</span></p>
+<p>الاختبار مجدول: <strong id="quizTimeRange"></strong></p>
+<p>الحالة: <span id="quizStatusText">--</span></p>
 </div>
 <div class="card">
-<input type="email" id="player-email" placeholder="أدخل بريدك الإلكتروني" dir="ltr">
-<button id="joinBtn">دخول الاختبار</button>
-<div id="player-question"></div>
-<div id="player-answers"></div>
+<input type="email" id="playerEmail" placeholder="أدخل بريدك الإلكتروني" dir="ltr">
+<button id="joinQuizBtn">دخول الاختبار</button>
+<div id="questionArea"></div>
+<div id="answersArea"></div>
 </div>
 <div class="instructions">
-<h3>تعليمات المشارك</h3>
+<h3>تعليمات</h3>
 <ol>
-<li>أدخل بريدك الإلكتروني (الذي سجله المشرف) ثم اضغط "دخول الاختبار".</li>
-<li>انتظر حتى يصبح الاختبار نشطاً (حسب الوقت المحدد من المشرف).</li>
+<li>أدخل بريدك الإلكتروني (المسجل من قبل المشرف) ثم اضغط "دخول الاختبار".</li>
+<li>انتظر حتى يصبح الاختبار نشطاً (حسب الوقت المحدد).</li>
 <li>اختر إجابتك لكل سؤال – لا يوجد حد زمني.</li>
 <li>بعد كل إجابة ينتقل السؤال التالي تلقائياً.</li>
-<li>في النهاية يمكنك تحميل ملف Excel يحتوي على كل أسئلتك وإجاباتك.</li>
-<li>لا يمكنك إعادة الاختبار بعد الانتهاء.</li>
+<li>في النهاية يمكنك تحميل ملف Excel بكل إجاباتك.</li>
 </ol>
 </div>
 </div>
@@ -314,107 +253,106 @@ max-width: 800px;
 <h2>لوحة تحكم المشرف</h2>
 <div class="admin-section">
 <h3>الدخول كمسؤول</h3>
-<div class="security-notice"><strong>كلمة المرور الافتراضية:</strong> adminHafsa</div>
-<input type="password" id="admin-code" placeholder="كلمة المرور">
+<input type="password" id="adminPass" placeholder="كلمة المرور">
 <button onclick="verifyAdmin()">دخول</button>
-<div id="admin-status" class="url-status"></div>
+<div id="adminStatus" class="instructions" style="margin-top:5px;"></div>
 </div>
-
-<div id="admin-features" style="display: none;">
-<!-- Dashboard -->
+<div id="adminPanel" style="display:none;">
 <div class="host-dashboard">
-<div class="dashboard-card"><h3>حالة الاختبار</h3><div class="dashboard-stat" id="dashboard-status">--</div><button onclick="scrollToSection('time-config')">ضبط الوقت</button></div>
-<div class="dashboard-card"><h3>المشاركون</h3><div class="dashboard-stat" id="dashboard-players">0</div><button onclick="scrollToSection('user-management')">إدارة المستخدمين</button></div>
-<div class="dashboard-card"><h3>الأسئلة</h3><div class="dashboard-stat" id="dashboard-questions">0</div><button onclick="scrollToSection('question-management')">إضافة أسئلة</button></div>
-<div class="dashboard-card"><h3>النموذج النشط</h3><div class="dashboard-stat" id="dashboard-model">لا يوجد</div><button onclick="scrollToSection('quiz-model')">تغيير</button></div>
+<div class="dashboard-card"><h4>حالة الاختبار</h4><div id="dashStatus">--</div><button onclick="scrollToElem('timeConfig')">ضبط الوقت</button></div>
+<div class="dashboard-card"><h4>المشاركون</h4><div id="dashPlayers">0</div><button onclick="scrollToElem('userMgmt')">إدارة المستخدمين</button></div>
+<div class="dashboard-card"><h4>الأسئلة</h4><div id="dashQuestions">0</div><button onclick="scrollToElem('questionMgmt')">إضافة أسئلة</button></div>
+<div class="dashboard-card"><h4>النموذج النشط</h4><div id="dashModel">لا يوجد</div><button onclick="scrollToElem('modelMgmt')">تغيير</button></div>
 </div>
-
 <div class="quick-nav">
-<button class="quick-nav-btn" onclick="scrollToSection('time-config')">توقيت الاختبار</button>
-<button class="quick-nav-btn" onclick="scrollToSection('user-management')">المستخدمون</button>
-<button class="quick-nav-btn" onclick="scrollToSection('question-management')">الأسئلة</button>
-<button class="quick-nav-btn" onclick="scrollToSection('quiz-model')">النماذج</button>
-<button class="quick-nav-btn" onclick="scrollToSection('quiz-results')">النتائج</button>
+<button class="quick-nav-btn" onclick="scrollToElem('timeConfig')">⏰ توقيت الاختبار</button>
+<button class="quick-nav-btn" onclick="scrollToElem('userMgmt')">👥 المستخدمون</button>
+<button class="quick-nav-btn" onclick="scrollToElem('questionMgmt')">📝 الأسئلة</button>
+<button class="quick-nav-btn" onclick="scrollToElem('modelMgmt')">📁 النماذج</button>
+<button class="quick-nav-btn" onclick="loadResultsTable()">📊 النتائج</button>
 </div>
 
 <!-- توقيت الاختبار -->
-<div id="time-config" class="time-config">
-<h3>توقيت الاختبار</h3>
-<input type="date" id="quiz-date"><br>
-<input type="number" id="start-hour" placeholder="ساعة (1-12)" min="1" max="12" value="12">
-<input type="number" id="start-minute" placeholder="دقيقة" min="0" max="59" value="0">
-<select id="start-ampm"><option value="AM">صباحاً</option><option value="PM" selected>مساءً</option></select><br>
-<select id="quiz-duration"><option value="15">15 دقيقة</option><option value="30" selected>30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">ساعة</option></select><br>
+<div id="timeConfig" class="admin-section">
+<h3>⏰ توقيت الاختبار</h3>
+<input type="date" id="quizDate"><br>
+<input type="number" id="startHour" placeholder="ساعة" value="12" min="1" max="12" style="width:80px;">
+<input type="number" id="startMinute" placeholder="دقيقة" value="0" min="0" max="59" style="width:80px;">
+<select id="startAmPm"><option value="AM">صباحاً</option><option value="PM" selected>مساءً</option></select><br>
+<select id="quizDuration">
+<option value="15">15 دقيقة</option><option value="30" selected>30 دقيقة</option>
+<option value="45">45 دقيقة</option><option value="60">ساعة</option>
+</select><br>
 <button onclick="saveQuizTime()">حفظ التوقيت</button>
-<div id="time-status" class="url-status"></div>
+<div id="timeStatus" class="instructions" style="margin-top:5px;"></div>
 </div>
 
-<!-- إدارة المستخدمين (بريد إلكتروني + اسم عربي) -->
-<div id="user-management" class="user-management">
-<h3>إدارة المستخدمين</h3>
-<input type="text" id="user-arabic-name" placeholder="الاسم العربي (مثال: أحمد محمد)">
-<input type="email" id="user-email" placeholder="البريد الإلكتروني">
+<!-- إدارة المستخدمين -->
+<div id="userMgmt" class="user-management">
+<h3>👥 إدارة المستخدمين (بريد إلكتروني + اسم عربي)</h3>
+<input type="text" id="userArabicName" placeholder="الاسم العربي (مثال: أحمد محمد)">
+<input type="email" id="userEmail" placeholder="البريد الإلكتروني">
 <button onclick="addUser()">إضافة مستخدم</button>
-<div id="user-status" class="url-status"></div>
-<div class="question-list"><h4>قائمة المستخدمين</h4><div id="users-list"></div></div>
+<div id="userStatus" class="instructions" style="margin-top:5px;"></div>
+<div class="question-list"><h4>قائمة المستخدمين</h4><div id="usersList"></div></div>
 </div>
 
 <!-- النماذج -->
-<div id="quiz-model" class="quiz-model">
-<h3>إدارة النماذج</h3>
-<input type="text" id="model-name" placeholder="اسم النموذج (مثال: علوم)">
+<div id="modelMgmt" class="quiz-model">
+<h3>📁 إدارة النماذج</h3>
+<input type="text" id="modelName" placeholder="اسم النموذج">
 <button onclick="addModel()">إنشاء نموذج</button>
-<div class="question-list"><h4>النماذج الحالية</h4><div id="models-list"></div></div>
+<div class="question-list"><h4>النماذج الحالية</h4><div id="modelsList"></div></div>
 </div>
 
 <!-- الأسئلة -->
-<div id="question-management" class="admin-section">
-<h3>إدارة الأسئلة</h3>
-<select id="question-model-select"><option value="">-- اختر النموذج --</option></select>
-<textarea id="question-text" placeholder="نص السؤال"></textarea>
-<div class="answer-option"><input type="text" id="ans1" placeholder="الخيار 1"><input type="radio" name="correct" value="0" checked> صحيح</div>
-<div class="answer-option"><input type="text" id="ans2" placeholder="الخيار 2"><input type="radio" name="correct" value="1"> صحيح</div>
-<div class="answer-option"><input type="text" id="ans3" placeholder="الخيار 3"><input type="radio" name="correct" value="2"> صحيح</div>
-<div class="answer-option"><input type="text" id="ans4" placeholder="الخيار 4"><input type="radio" name="correct" value="3"> صحيح</div>
+<div id="questionMgmt" class="admin-section">
+<h3>📝 إدارة الأسئلة</h3>
+<select id="questionModelSelect"><option value="">-- اختر النموذج --</option></select>
+<textarea id="questionText" rows="2" placeholder="نص السؤال"></textarea>
+<div><input type="text" id="ans1" placeholder="الخيار 1"><input type="radio" name="correctAns" value="0" checked> صحيح</div>
+<div><input type="text" id="ans2" placeholder="الخيار 2"><input type="radio" name="correctAns" value="1"> صحيح</div>
+<div><input type="text" id="ans3" placeholder="الخيار 3"><input type="radio" name="correctAns" value="2"> صحيح</div>
+<div><input type="text" id="ans4" placeholder="الخيار 4"><input type="radio" name="correctAns" value="3"> صحيح</div>
 <button onclick="addQuestion()">إضافة سؤال</button>
-<div id="question-status" class="url-status"></div>
-<div class="question-list"><h4>الأسئلة الحالية</h4><div id="questions-list"></div></div>
+<div id="questionStatus" class="instructions" style="margin-top:5px;"></div>
+<div class="question-list"><h4>الأسئلة الحالية</h4><div id="questionsList"></div></div>
 </div>
 
 <!-- النتائج -->
-<div id="quiz-results" class="admin-section">
-<h3>نتائج الاختبار</h3>
-<button onclick="exportAllResults()">📊 تصدير كل النتائج (Excel)</button>
+<div class="admin-section">
+<h3>📊 النتائج</h3>
+<button onclick="exportAllResults()">📥 تصدير كل النتائج (Excel)</button>
 <button onclick="deleteAllResults()" style="background:#f44336;">🗑️ حذف كل النتائج</button>
-<button onclick="loadResultsTable()">تحديث الجدول</button>
-<div id="results-table" class="question-list">اضغط تحديث لعرض النتائج</div>
+<button onclick="loadResultsTable()">🔄 تحديث الجدول</button>
+<div id="resultsTable" class="question-list">اضغط تحديث لعرض النتائج</div>
 </div>
 </div>
 </div>
 
-<!-- تبويب معلومات -->
+<!-- معلومات -->
 <div id="about" class="tab-content">
 <h2>معلومات النظام</h2>
 <div class="card">
-<h3>مميزات المنصة</h3>
+<h3>الميزات</h3>
 <ul>
 <li>✅ لا يوجد عد تنازلي – حرية الإجابة</li>
-<li>✅ تسجيل الدخول بالبريد الإلكتروني (بدون رمز)</li>
-<li>✅ أسماء المستخدمين بالعربية تظهر في النتائج</li>
-<li>✅ تحميل ملف Excel لكل مشارك (الأسئلة وإجاباته)</li>
+<li>✅ تسجيل الدخول بالبريد الإلكتروني</li>
+<li>✅ أسماء عربية في النتائج</li>
+<li>✅ تحميل Excel لكل مشارك (الأسئلة وإجاباته)</li>
 <li>✅ إدارة كاملة من المشرف</li>
-<li>✅ دعم Firebase لأكثر من 100 مستخدم متزامن</li>
+<li>✅ يدعم Firebase أكثر من 100 مستخدم</li>
 </ul>
 </div>
 </div>
 </div>
 </div>
 
-<!-- نماذج منبثقة -->
-<div id="questionModal" class="question-modal"><div class="question-modal-content"><div id="modalContent"></div><button onclick="closeModal()">إغلاق</button></div></div>
+<!-- نافذة منبثقة -->
+<div id="modal" class="modal"><div class="modal-content" id="modalContent"></div></div>
 
 <script>
-// -------------------- إعداد Firebase --------------------
+// -------------------- Firebase --------------------
 const firebaseConfig = {
 apiKey: "AIzaSyDnt-BAUsCbQMZ-PPALhp3_tsYqcHAKEZ8",
 authDomain: "thequizfs.firebaseapp.com",
@@ -431,8 +369,8 @@ const db = firebase.database();
 // -------------------- المتغيرات العامة --------------------
 let adminPassword = "adminHafsa";
 let questions = [];
-let users = []; // { email, arabicName, active }
-let quizModels = []; // { id, name }
+let users = [];
+let quizModels = [{ id: "default", name: "النموذج الافتراضي" }];
 let activeModelId = null;
 let quizStartTime = null, quizEndTime = null;
 let quizActive = false;
@@ -440,107 +378,260 @@ let quizActive = false;
 // بيانات المشارك الحالي
 let currentPlayerEmail = "";
 let currentPlayerName = "";
-let currentIndex = 0;
-let playerAnswers = []; // تخزين تفاصيل الإجابات لتصدير Excel للمستخدم
+let currentQuestionIndex = 0;
+let playerAnswersList = [];
 let playerStats = { correct: 0, incorrect: 0 };
+let quizCompletedFlag = false;
 
-// -------------------- دوال التهيئة الأساسية --------------------
-function loadAdminPassword() {
+// -------------------- دوال مساعدة --------------------
+function showStatus(elId, msg, isError) {
+let el = document.getElementById(elId);
+if(el) { el.innerHTML = msg; el.style.color = isError ? "red" : "green"; setTimeout(()=>el.innerHTML="",3000); }
+}
+
+function scrollToElem(id) { document.getElementById(id).scrollIntoView({ behavior: "smooth" }); }
+
+// -------------------- تحميل البيانات من Firebase --------------------
+function loadAllData() {
 db.ref('adminPassword').once('value').then(snap => { if(snap.val()) adminPassword = snap.val(); });
-}
-function saveAdminPassword(pw) { db.ref('adminPassword').set(pw); }
-
-// تحميل البيانات من Firebase
-function loadData() {
 db.ref('quizTime').on('value', snap => {
-if(snap.val()) { quizStartTime = snap.val().start; quizEndTime = snap.val().end; updateQuizStatus(); updateDashboard(); }
+if(snap.val()) { quizStartTime = snap.val().start; quizEndTime = snap.val().end; }
+else { setDefaultQuizTime(); }
+updateQuizUI();
+updateDashboardStats();
 });
-db.ref('questions').on('value', snap => { questions = snap.val() ? Object.values(snap.val()) : []; updateDashboard(); refreshQuestionsList(); });
-db.ref('users').on('value', snap => { users = snap.val() ? Object.values(snap.val()) : []; updateDashboard(); refreshUsersList(); });
-db.ref('quizModels').on('value', snap => { quizModels = snap.val() ? Object.values(snap.val()) : []; if(quizModels.length===0) quizModels.push({id:'default',name:'النموذج الافتراضي'}); refreshModelsList(); updateDashboard(); });
-db.ref('activeQuizModel').on('value', snap => { activeModelId = snap.val(); updateActiveModelDisplay(); updateDashboard(); });
-db.ref('activePlayers').on('value', snap => { let cnt = snap.val() ? Object.keys(snap.val()).length : 0; document.getElementById('current-player-count').innerText = cnt; document.getElementById('dashboard-players').innerText = cnt; });
+db.ref('questions').on('value', snap => { questions = snap.val() ? Object.values(snap.val()) : []; if(questions.length===0) addDefaultQuestion(); refreshQuestionsList(); updateDashboardStats(); });
+db.ref('users').on('value', snap => { users = snap.val() ? Object.values(snap.val()) : []; refreshUsersList(); updateDashboardStats(); });
+db.ref('quizModels').on('value', snap => { if(snap.val()) quizModels = Object.values(snap.val()); else saveModelsToDB(); refreshModelsList(); });
+db.ref('activeQuizModel').on('value', snap => { activeModelId = snap.val(); updateActiveModelDisplay(); updateDashboardStats(); });
+db.ref('activePlayers').on('value', snap => { let cnt = snap.val() ? Object.keys(snap.val()).length : 0; document.getElementById('playerCountNum').innerText = cnt; document.getElementById('dashPlayers').innerText = cnt; });
 }
 
-function updateDashboard() {
-let status = 'لم يبدأ';
-if(quizStartTime && Date.now() >= quizStartTime && Date.now() <= quizEndTime) status = 'نشط';
-else if(quizEndTime && Date.now() > quizEndTime) status = 'انتهى';
-document.getElementById('dashboard-status').innerText = status;
-document.getElementById('dashboard-questions').innerText = questions.length;
-let model = quizModels.find(m=>m.id===activeModelId);
-document.getElementById('dashboard-model').innerText = model ? model.name : 'لا يوجد';
-updateQuizStatus();
-}
-
-function updateQuizStatus() {
-let start = quizStartTime ? new Date(quizStartTime).toLocaleString('ar') : 'غير محدد';
-let end = quizEndTime ? new Date(quizEndTime).toLocaleString('ar') : 'غير محدد';
-document.getElementById('quiz-time-range').innerHTML = start + ' - ' + end;
+function setDefaultQuizTime() {
 let now = Date.now();
-let statusText = '', timerText = '';
-if(!quizStartTime || now < quizStartTime) {
-statusText = 'لم يبدأ';
-timerText = '⏱️ لم يبدأ';
+quizStartTime = now;
+quizEndTime = now + 60*60*1000; // 1 hour
+db.ref('quizTime').set({ start: quizStartTime, end: quizEndTime });
+}
+
+function addDefaultQuestion() {
+let defaultQ = {
+question: "سؤال تجريبي: ما هي عاصمة مصر؟",
+answers: ["القاهرة", "الإسكندرية", "الجيزة", "أسوان"],
+correct: "القاهرة",
+hidden: false,
+modelId: "default"
+};
+questions.push(defaultQ);
+db.ref('questions').set(questions);
+}
+
+function saveModelsToDB() { db.ref('quizModels').set(quizModels); }
+
+function getActiveQuestions() {
+let visible = questions.filter(q => !q.hidden);
+if(activeModelId) visible = visible.filter(q => q.modelId === activeModelId);
+return visible;
+}
+
+function updateQuizUI() {
+if(!quizStartTime || !quizEndTime) { document.getElementById('quizTimer').innerText = "⏱️ لم يحدد بعد"; document.getElementById('quizStatusText').innerText = "غير مجدول"; quizActive = false; return; }
+let now = Date.now();
+let startStr = new Date(quizStartTime).toLocaleString('ar');
+let endStr = new Date(quizEndTime).toLocaleString('ar');
+document.getElementById('quizTimeRange').innerHTML = `${startStr} - ${endStr}`;
+if(now < quizStartTime) {
+document.getElementById('quizTimer').innerHTML = `⏱️ يبدأ بعد ${Math.floor((quizStartTime-now)/60000)} دقيقة`;
+document.getElementById('quizStatusText').innerHTML = "لم يبدأ";
 quizActive = false;
 } else if(now <= quizEndTime) {
-statusText = 'نشط';
 let left = Math.floor((quizEndTime-now)/1000);
-timerText = `⏱️ متبقي: ${Math.floor(left/60)}د ${left%60}ث`;
+document.getElementById('quizTimer').innerHTML = `⏱️ متبقي ${Math.floor(left/60)}د ${left%60}ث`;
+document.getElementById('quizStatusText').innerHTML = "نشط";
 quizActive = true;
 } else {
-statusText = 'انتهى';
-timerText = '⏱️ انتهى';
+document.getElementById('quizTimer').innerHTML = "⏱️ انتهى";
+document.getElementById('quizStatusText').innerHTML = "انتهى";
 quizActive = false;
 }
-document.getElementById('quiz-status-text').innerText = statusText;
-document.getElementById('quiz-timer').innerText = timerText;
 }
-setInterval(updateQuizStatus, 1000);
+
+function updateDashboardStats() {
+let now = Date.now();
+let status = (now<quizStartTime)?"لم يبدأ":(now<=quizEndTime?"نشط":"انتهى");
+document.getElementById('dashStatus').innerText = status;
+document.getElementById('dashQuestions').innerText = questions.length;
+let model = quizModels.find(m=>m.id===activeModelId);
+document.getElementById('dashModel').innerText = model ? model.name : "لا يوجد";
+}
+
+// -------------------- دوال المشارك (اللاعب) --------------------
+function startQuizForPlayer(email, arabicName) {
+currentPlayerEmail = email;
+currentPlayerName = arabicName;
+currentQuestionIndex = 0;
+playerAnswersList = [];
+playerStats = { correct:0, incorrect:0 };
+sessionStorage.setItem('quizStarted', 'true');
+sessionStorage.setItem('playerEmail', email);
+sessionStorage.setItem('playerName', arabicName);
+// تسجيل الدخول في activePlayers
+db.ref('activePlayers/'+email).set({ name: arabicName, joinedAt: Date.now() });
+showNextQuestion();
+}
+
+function showNextQuestion() {
+let activeQs = getActiveQuestions();
+if(currentQuestionIndex >= activeQs.length) {
+endQuiz();
+return;
+}
+let q = activeQs[currentQuestionIndex];
+document.getElementById('questionArea').innerHTML = `<h3>السؤال ${currentQuestionIndex+1} من ${activeQs.length}</h3><p style="font-size:1.2rem;">${q.question}</p>`;
+let answersDiv = document.getElementById('answersArea');
+answersDiv.innerHTML = '<div class="answers-grid" id="answersGrid"></div>';
+let grid = document.getElementById('answersGrid');
+q.answers.forEach(ans => {
+let btn = document.createElement('button');
+btn.className = 'answer-btn';
+btn.innerText = ans;
+btn.onclick = () => handleAnswer(ans, q.correct, q.question);
+grid.appendChild(btn);
+});
+}
+
+function handleAnswer(selected, correct, questionText) {
+if(!quizActive) { alert("الاختبار غير نشط حالياً"); return; }
+if(quizCompletedFlag) return;
+// تعطيل الأزرار فوراً
+document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+let isCorrect = (selected === correct);
+if(isCorrect) playerStats.correct++;
+else playerStats.incorrect++;
+playerAnswersList.push({ question: questionText, userAnswer: selected, correctAnswer: correct, isCorrect: isCorrect });
+// حفظ في قاعدة البيانات
+db.ref('quizResults').push({
+playerEmail: currentPlayerEmail,
+playerName: currentPlayerName,
+question: questionText,
+userAnswer: selected,
+correctAnswer: correct,
+isCorrect: isCorrect,
+timestamp: Date.now()
+});
+// الانتقال للسؤال التالي فوراً
+currentQuestionIndex++;
+showNextQuestion();
+}
+
+function endQuiz() {
+quizCompletedFlag = true;
+sessionStorage.setItem('quizCompleted', 'true');
+db.ref('activePlayers/'+currentPlayerEmail).remove();
+let total = playerStats.correct + playerStats.incorrect;
+let accuracy = total ? ((playerStats.correct/total)*100).toFixed(1) : 0;
+let passFail = accuracy >= 50 ? "ناجح" : "راسب";
+let html = `
+<div class="player-results">
+<h2>🎉 انتهى الاختبار 🎉</h2>
+<p>شكراً لك يا ${currentPlayerName}</p>
+<div class="result-stats">
+<div class="result-stat"><span class="result-number result-correct">${playerStats.correct}</span><span>صحيحة</span></div>
+<div class="result-stat"><span class="result-number result-incorrect">${playerStats.incorrect}</span><span>خاطئة</span></div>
+<div class="result-stat"><span class="result-number">${accuracy}%</span><span>الدقة</span></div>
+<div class="result-stat"><span class="result-number">${passFail}</span><span>النتيجة</span></div>
+</div>
+<button class="download-btn" onclick="downloadPlayerExcel()">📥 تحميل نتائجي (Excel)</button>
+<div class="instructions"><p>✅ لا يمكنك إعادة الاختبار.</p></div>
+</div>`;
+document.getElementById('questionArea').innerHTML = html;
+document.getElementById('answersArea').innerHTML = '';
+}
+
+function downloadPlayerExcel() {
+let data = [["السؤال", "إجابة المشارك", "الإجابة الصحيحة", "النتيجة"]];
+playerAnswersList.forEach(a => {
+data.push([a.question, a.userAnswer, a.correctAnswer, a.isCorrect ? "صحيح" : "خاطئ"]);
+});
+let ws = XLSX.utils.aoa_to_sheet(data);
+let wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, `نتائج_${currentPlayerName}`);
+XLSX.writeFile(wb, `نتائج_${currentPlayerName}.xlsx`);
+}
+
+// استعادة جلسة سابقة
+function restoreSession() {
+if(sessionStorage.getItem('quizStarted') === 'true' && sessionStorage.getItem('quizCompleted') !== 'true') {
+let email = sessionStorage.getItem('playerEmail');
+let name = sessionStorage.getItem('playerName');
+if(email && name && users.some(u=>u.email===email)) {
+currentPlayerEmail = email;
+currentPlayerName = name;
+document.getElementById('playerEmail').disabled = true;
+document.getElementById('joinQuizBtn').disabled = true;
+// استعادة الأسئلة من Firebase سيتم تحميلها لاحقاً، ننتظر قليلاً
+setTimeout(() => {
+if(questions.length > 0 && !quizCompletedFlag) {
+currentQuestionIndex = 0;
+playerAnswersList = [];
+playerStats = { correct:0, incorrect:0 };
+showNextQuestion();
+}
+}, 1000);
+}
+}
+}
+
+// -------------------- دوال المشرف --------------------
+function verifyAdmin() {
+let pwd = document.getElementById('adminPass').value;
+if(pwd === adminPassword) {
+document.getElementById('adminPanel').style.display = 'block';
+document.getElementById('adminStatus').innerHTML = '<span style="color:green;">تم الدخول بنجاح</span>';
+document.querySelector('.admin-section:first-child').style.display = 'none';
+loadResultsTable();
+} else {
+document.getElementById('adminStatus').innerHTML = '<span style="color:red;">كلمة مرور خاطئة</span>';
+}
+}
 
 function saveQuizTime() {
-let date = document.getElementById('quiz-date').value;
-let hour = parseInt(document.getElementById('start-hour').value);
-let minute = parseInt(document.getElementById('start-minute').value);
-let ampm = document.getElementById('start-ampm').value;
-let duration = parseInt(document.getElementById('quiz-duration').value);
-if(!date || isNaN(hour) || isNaN(minute)) { showStatus('time-status','املأ الحقول','error'); return; }
-if(ampm==='PM' && hour<12) hour+=12;
-if(ampm==='AM' && hour===12) hour=0;
-let start = new Date(date); start.setHours(hour,minute,0,0);
+let date = document.getElementById('quizDate').value;
+let hour = parseInt(document.getElementById('startHour').value);
+let minute = parseInt(document.getElementById('startMinute').value);
+let ampm = document.getElementById('startAmPm').value;
+let duration = parseInt(document.getElementById('quizDuration').value);
+if(!date) { showStatus('timeStatus', 'أدخل التاريخ', true); return; }
+if(ampm === 'PM' && hour<12) hour+=12;
+if(ampm === 'AM' && hour===12) hour=0;
+let start = new Date(date); start.setHours(hour, minute, 0,0);
+if(isNaN(start.getTime())) { showStatus('timeStatus', 'تاريخ غير صالح', true); return; }
 let end = new Date(start.getTime() + duration*60000);
-quizStartTime = start.getTime(); quizEndTime = end.getTime();
+quizStartTime = start.getTime();
+quizEndTime = end.getTime();
 db.ref('quizTime').set({ start: quizStartTime, end: quizEndTime });
-showStatus('time-status','تم حفظ التوقيت','success');
-setTimeout(()=>document.getElementById('time-status').innerText='',2000);
+showStatus('timeStatus', 'تم حفظ التوقيت', false);
+updateQuizUI();
 }
 
-function showStatus(elId, msg, type) {
-let el = document.getElementById(elId);
-el.innerText = msg;
-el.className = 'url-status ' + (type==='success'?'success':'error');
-setTimeout(()=>{ el.innerText=''; el.className='url-status'; },3000);
-}
-
-// -------------------- إدارة المستخدمين (بريد إلكتروني + اسم عربي) --------------------
 function addUser() {
-let arabicName = document.getElementById('user-arabic-name').value.trim();
-let email = document.getElementById('user-email').value.trim();
-if(!arabicName || !email) { showStatus('user-status','املأ الاسم والبريد','error'); return; }
-if(users.some(u=>u.email===email)) { showStatus('user-status','البريد موجود مسبقاً','error'); return; }
-let newUser = { email: email, arabicName: arabicName, active: true };
-users.push(newUser);
+let arabicName = document.getElementById('userArabicName').value.trim();
+let email = document.getElementById('userEmail').value.trim();
+if(!arabicName || !email) { showStatus('userStatus', 'املأ الاسم والبريد', true); return; }
+if(users.some(u=>u.email===email)) { showStatus('userStatus', 'البريد موجود', true); return; }
+users.push({ email: email, arabicName: arabicName, active: true });
 db.ref('users').set(users);
-document.getElementById('user-arabic-name').value = '';
-document.getElementById('user-email').value = '';
+document.getElementById('userArabicName').value = '';
+document.getElementById('userEmail').value = '';
 refreshUsersList();
-showStatus('user-status','تمت إضافة المستخدم','success');
+showStatus('userStatus', 'تمت إضافة المستخدم', false);
 }
+
 function refreshUsersList() {
-let container = document.getElementById('users-list');
+let container = document.getElementById('usersList');
 if(!container) return;
 container.innerHTML = '';
-users.forEach((u,idx) => {
+users.forEach((u, idx) => {
 let div = document.createElement('div'); div.className='user-item';
 div.innerHTML = `<div><strong>${u.arabicName}</strong><br><small>${u.email}</small></div>
 <span class="status-badge ${u.active?'status-active':'status-inactive'}">${u.active?'نشط':'غير نشط'}</span>
@@ -552,27 +643,25 @@ container.appendChild(div);
 function toggleUserActive(idx) { users[idx].active = !users[idx].active; db.ref('users').set(users); refreshUsersList(); }
 function deleteUser(idx) { if(confirm('حذف المستخدم؟')){ users.splice(idx,1); db.ref('users').set(users); refreshUsersList(); } }
 
-// -------------------- النماذج --------------------
 function addModel() {
-let name = document.getElementById('model-name').value.trim();
-if(!name) { showStatus('model-status','أدخل اسم النموذج','error'); return; }
-if(quizModels.some(m=>m.name===name)) { showStatus('model-status','الاسم موجود','error'); return; }
-let newModel = { id: 'm'+Date.now()+Math.random().toString(36).substr(2,5), name: name };
-quizModels.push(newModel);
+let name = document.getElementById('modelName').value.trim();
+if(!name) { alert('أدخل اسم النموذج'); return; }
+if(quizModels.some(m=>m.name===name)) { alert('الاسم موجود'); return; }
+let newId = 'm'+Date.now()+Math.random().toString(36).substr(2,5);
+quizModels.push({ id: newId, name: name });
 db.ref('quizModels').set(quizModels);
-document.getElementById('model-name').value = '';
+document.getElementById('modelName').value = '';
 refreshModelsList();
-showStatus('model-status','تمت إضافة النموذج','success');
 }
 function refreshModelsList() {
-let container = document.getElementById('models-list');
-let select = document.getElementById('question-model-select');
+let container = document.getElementById('modelsList');
+let select = document.getElementById('questionModelSelect');
 if(container) container.innerHTML = '';
 if(select) select.innerHTML = '<option value="">-- اختر نموذجاً --</option>';
-quizModels.forEach((m,idx) => {
+quizModels.forEach((m, idx) => {
 if(container) {
 let div = document.createElement('div'); div.className='model-item';
-let isActive = (activeModelId===m.id);
+let isActive = (activeModelId === m.id);
 div.innerHTML = `<div><strong>${m.name}</strong> (${questions.filter(q=>q.modelId===m.id).length} سؤال)</div>
 <div><button onclick="selectModel('${m.id}')">${isActive?'إلغاء':'اختيار'}</button>
 <button onclick="deleteModel(${idx})">حذف</button>
@@ -586,57 +675,48 @@ select.appendChild(opt);
 });
 }
 function selectModel(id) {
-if(activeModelId===id) { activeModelId=null; db.ref('activeQuizModel').set(null); }
-else { activeModelId=id; db.ref('activeQuizModel').set(id); }
-refreshModelsList(); updateActiveModelDisplay();
+if(activeModelId === id) { activeModelId = null; db.ref('activeQuizModel').set(null); }
+else { activeModelId = id; db.ref('activeQuizModel').set(id); }
+refreshModelsList(); updateActiveModelDisplay(); updateDashboardStats();
 }
 function deleteModel(idx) {
 let m = quizModels[idx];
 if(confirm(`حذف النموذج "${m.name}"؟ الأسئلة المرتبطة ستبقى بدون نموذج`)) {
-questions.forEach(q=>{ if(q.modelId===m.id) q.modelId=null; });
+questions.forEach(q => { if(q.modelId === m.id) q.modelId = null; });
 db.ref('questions').set(questions);
 quizModels.splice(idx,1);
 db.ref('quizModels').set(quizModels);
-if(activeModelId===m.id) { activeModelId=null; db.ref('activeQuizModel').set(null); }
+if(activeModelId === m.id) { activeModelId = null; db.ref('activeQuizModel').set(null); }
 refreshModelsList(); updateActiveModelDisplay();
-}
-}
-function updateActiveModelDisplay() {
-let info = document.getElementById('active-model-info');
-if(info) {
-let model = quizModels.find(m=>m.id===activeModelId);
-info.innerHTML = model ? `النموذج النشط: ${model.name}` : 'لا يوجد نموذج نشط – جميع الأسئلة ظاهرة';
 }
 }
 function viewModelQuestions(modelId) {
 let model = quizModels.find(m=>m.id===modelId);
 let qs = questions.filter(q=>q.modelId===modelId);
-let html = `<h3>أسئلة نموذج "${model.name}"</h3><p>العدد: ${qs.length}</p>`;
-qs.forEach((q,i)=>{
-html += `<div><strong>س${i+1}:</strong> ${q.question}<br>الإجابة الصحيحة: ${q.correct}</div><hr>`;
-});
+let html = `<h3>أسئلة النموذج "${model.name}"</h3><p>العدد: ${qs.length}</p>`;
+qs.forEach((q,i)=>{ html += `<div><strong>س${i+1}:</strong> ${q.question}<br>الصحيح: ${q.correct}</div><hr>`; });
 document.getElementById('modalContent').innerHTML = html;
-document.getElementById('questionModal').style.display = 'block';
+document.getElementById('modal').style.display = 'flex';
 }
+function updateActiveModelDisplay() { /* اختياري */ }
 
-// -------------------- الأسئلة --------------------
 function addQuestion() {
-let text = document.getElementById('question-text').value.trim();
+let text = document.getElementById('questionText').value.trim();
 let a1 = document.getElementById('ans1').value.trim(), a2=document.getElementById('ans2').value.trim(), a3=document.getElementById('ans3').value.trim(), a4=document.getElementById('ans4').value.trim();
-let modelId = document.getElementById('question-model-select').value;
-if(!text || !a1||!a2||!a3||!a4 || !modelId) { showStatus('question-status','املأ جميع الحقول واختر نموذجاً','error'); return; }
-let correctIdx = parseInt(document.querySelector('input[name="correct"]:checked').value);
+let modelId = document.getElementById('questionModelSelect').value;
+if(!text || !a1||!a2||!a3||!a4 || !modelId) { showStatus('questionStatus', 'املأ جميع الحقول واختر نموذجاً', true); return; }
+let correctIdx = parseInt(document.querySelector('input[name="correctAns"]:checked').value);
 let answers = [a1,a2,a3,a4];
 let newQ = { question: text, answers: answers, correct: answers[correctIdx], hidden: false, modelId: modelId };
 questions.push(newQ);
 db.ref('questions').set(questions);
-document.getElementById('question-text').value = '';
-document.getElementById('ans1').value = ''; document.getElementById('ans2').value=''; document.getElementById('ans3').value=''; document.getElementById('ans4').value='';
+document.getElementById('questionText').value = '';
+document.getElementById('ans1').value=''; document.getElementById('ans2').value=''; document.getElementById('ans3').value=''; document.getElementById('ans4').value='';
 refreshQuestionsList();
-showStatus('question-status','تمت إضافة السؤال','success');
+showStatus('questionStatus', 'تمت إضافة السؤال', false);
 }
 function refreshQuestionsList() {
-let container = document.getElementById('questions-list');
+let container = document.getElementById('questionsList');
 if(!container) return;
 container.innerHTML = '';
 questions.forEach((q,idx) => {
@@ -648,232 +728,76 @@ div.innerHTML = `<div><strong>${q.question}</strong> (${model?model.name:'بدو
 container.appendChild(div);
 });
 }
-function editQuestion(idx) {
-let q = questions[idx];
-document.getElementById('question-text').value = q.question;
-document.getElementById('ans1').value = q.answers[0];
-document.getElementById('ans2').value = q.answers[1];
-document.getElementById('ans3').value = q.answers[2];
-document.getElementById('ans4').value = q.answers[3];
-document.getElementById('question-model-select').value = q.modelId || '';
-let corrIdx = q.answers.indexOf(q.correct);
-document.querySelectorAll('input[name="correct"]')[corrIdx].checked = true;
-questions.splice(idx,1);
-db.ref('questions').set(questions);
-refreshQuestionsList();
-showStatus('question-status','عدل السؤال ثم اضغط إضافة','success');
-}
+function editQuestion(idx) { alert('يمكن تعديل السؤال بحذفه ثم إعادة إضافته'); }
 function deleteQuestion(idx) { if(confirm('حذف السؤال؟')){ questions.splice(idx,1); db.ref('questions').set(questions); refreshQuestionsList(); } }
-
-// -------------------- دوال الاختبار (بدون عد تنازلي) --------------------
-function getActiveQuestions() {
-let visible = questions.filter(q=>!q.hidden);
-if(activeModelId) visible = visible.filter(q=>q.modelId===activeModelId);
-return visible;
-}
-
-function startQuizForPlayer(email, arabicName) {
-currentPlayerEmail = email;
-currentPlayerName = arabicName;
-currentIndex = 0;
-playerAnswers = [];
-playerStats = { correct:0, incorrect:0 };
-// التحقق من وجود تقدم محفوظ (لا نستخدمه هنا لتبسيط الأمور)
-showNextQuestion();
-}
-
-function showNextQuestion() {
-let activeQuestions = getActiveQuestions();
-if(currentIndex >= activeQuestions.length) {
-endQuiz();
-return;
-}
-let q = activeQuestions[currentIndex];
-document.getElementById('player-question').innerHTML = `<h3>السؤال ${currentIndex+1} من ${activeQuestions.length}</h3><p>${q.question}</p>`;
-let answersDiv = document.getElementById('player-answers');
-answersDiv.innerHTML = '<div class="answers-grid" id="answersGrid"></div>';
-let grid = document.getElementById('answersGrid');
-q.answers.forEach(answer => {
-let btn = document.createElement('button');
-btn.className = 'answer-btn';
-btn.innerText = answer;
-btn.onclick = () => handleAnswer(answer, q.correct, q.question);
-grid.appendChild(btn);
-});
-}
-
-function handleAnswer(selected, correct, questionText) {
-if(!quizActive) { alert("الاختبار غير نشط حالياً"); return; }
-// تعطيل الأزرار فوراً
-document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
-let isCorrect = (selected === correct);
-if(isCorrect) playerStats.correct++;
-else playerStats.incorrect++;
-// تخزين التفاصيل
-playerAnswers.push({
-question: questionText,
-userAnswer: selected,
-correctAnswer: correct,
-isCorrect: isCorrect
-});
-// حفظ النتيجة في Firebase
-saveAnswerToDB(questionText, selected, correct, isCorrect);
-// الانتقال إلى السؤال التالي فوراً
-currentIndex++;
-showNextQuestion();
-}
-
-function saveAnswerToDB(question, userAnswer, correctAnswer, isCorrect) {
-let ref = db.ref('quizResults').push();
-ref.set({
-playerEmail: currentPlayerEmail,
-playerName: currentPlayerName,
-question: question,
-userAnswer: userAnswer,
-correctAnswer: correctAnswer,
-isCorrect: isCorrect,
-timestamp: Date.now(),
-sessionId: Date.now()+Math.random().toString(36)
-});
-}
-
-function endQuiz() {
-// حفظ أن المستخدم أنهى الاختبار
-sessionStorage.setItem('quizCompleted', 'true');
-sessionStorage.setItem('playerEmail', currentPlayerEmail);
-// عرض النتائج مع زر تحميل Excel
-let total = playerStats.correct + playerStats.incorrect;
-let accuracy = total ? (playerStats.correct/total*100).toFixed(1) : 0;
-let passFail = accuracy >= 50 ? 'ناجح' : 'راسب';
-let html = `
-<div class="player-results">
-<h2>🎉 انتهى الاختبار 🎉</h2>
-<p>شكراً لك يا ${currentPlayerName}</p>
-<div class="result-stats">
-<div class="result-stat"><span class="result-number result-correct">${playerStats.correct}</span><span>صحيحة</span></div>
-<div class="result-stat"><span class="result-number result-incorrect">${playerStats.incorrect}</span><span>خاطئة</span></div>
-<div class="result-stat"><span class="result-number">${accuracy}%</span><span>الدقة</span></div>
-<div class="result-stat"><span class="result-number">${passFail}</span><span>النتيجة</span></div>
-</div>
-<button class="download-btn" onclick="downloadMyExcel()">📥 تحميل نتائجي (Excel)</button>
-<div class="instructions"><p>✅ تم حفظ إجاباتك. لا يمكنك إعادة الاختبار.</p></div>
-</div>`;
-document.getElementById('player-question').innerHTML = html;
-document.getElementById('player-answers').innerHTML = '';
-// إزالة المستخدم من قائمة النشطاء
-db.ref('activePlayers/'+currentPlayerEmail).remove();
-}
-
-function downloadMyExcel() {
-let data = [['السؤال', 'إجابة المشارك', 'الإجابة الصحيحة', 'النتيجة']];
-playerAnswers.forEach(a => {
-data.push([a.question, a.userAnswer, a.correctAnswer, a.isCorrect ? 'صحيح' : 'خاطئ']);
-});
-let ws = XLSX.utils.aoa_to_sheet(data);
-let wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, `نتائج_${currentPlayerName}`);
-XLSX.writeFile(wb, `نتائج_${currentPlayerName}.xlsx`);
-}
-
-// -------------------- دوال تسجيل الدخول --------------------
-document.getElementById('joinBtn').onclick = () => {
-if(!quizActive) { alert("الاختبار غير نشط حالياً"); return; }
-if(sessionStorage.getItem('quizCompleted') === 'true') { alert("لقد أنهيت الاختبار مسبقاً"); return; }
-let email = document.getElementById('player-email').value.trim();
-if(!email) { alert("أدخل بريدك الإلكتروني"); return; }
-let user = users.find(u => u.email === email);
-if(!user) { alert("بريد غير مسجل. تواصل مع المشرف"); return; }
-if(!user.active) { alert("حسابك غير نشط"); return; }
-// تسجيل الدخول
-sessionStorage.setItem('quizStarted', 'true');
-sessionStorage.setItem('playerEmail', email);
-document.getElementById('player-email').disabled = true;
-document.getElementById('joinBtn').disabled = true;
-document.getElementById('joinBtn').innerText = 'دخلت الاختبار';
-// تسجيل في النشطاء
-db.ref('activePlayers/'+email).set({ name: user.arabicName, joinedAt: Date.now() });
-startQuizForPlayer(email, user.arabicName);
-};
-
-// استعادة جلسة عند إعادة تحميل الصفحة
-if(sessionStorage.getItem('quizStarted')==='true' && sessionStorage.getItem('quizCompleted')!=='true') {
-let savedEmail = sessionStorage.getItem('playerEmail');
-if(savedEmail && users.find(u=>u.email===savedEmail)) {
-let usr = users.find(u=>u.email===savedEmail);
-document.getElementById('player-email').disabled = true;
-document.getElementById('joinBtn').disabled = true;
-startQuizForPlayer(savedEmail, usr.arabicName);
-}
-}
-
-// -------------------- دوال المشرف --------------------
-function verifyAdmin() {
-let code = document.getElementById('admin-code').value;
-if(code === adminPassword) {
-document.getElementById('admin-features').style.display = 'block';
-document.getElementById('admin-status').innerHTML = '<span class="success">تم الدخول</span>';
-document.querySelector('.admin-section:first-child').style.display = 'none';
-loadResultsTable();
-} else {
-document.getElementById('admin-status').innerHTML = '<span class="error">كلمة مرور خاطئة</span>';
-}
-}
 
 function loadResultsTable() {
 db.ref('quizResults').once('value').then(snap => {
-let results = snap.val();
-let container = document.getElementById('results-table');
-if(!results) { container.innerHTML = '<p>لا توجد نتائج بعد</p>'; return; }
-let arr = Object.values(results);
-let html = '<table border="1" style="width:100%;border-collapse:collapse"><tr><th>المشارك</th><th>السؤال</th><th>إجابته</th><th>الصحيح</th><th>النتيجة</th></tr>';
+let res = snap.val();
+let container = document.getElementById('resultsTable');
+if(!res) { container.innerHTML = '<p>لا توجد نتائج بعد</p>'; return; }
+let arr = Object.values(res);
+let html = '<table border="1" style="width:100%;border-collapse:collapse"><tr><th>الاسم</th><th>البريد</th><th>السؤال</th><th>إجابته</th><th>الصحيح</th><th>النتيجة</th></tr>';
 arr.forEach(r => {
-html += `<tr><td>${r.playerName} (${r.playerEmail})</td><td>${r.question}</td><td>${r.userAnswer}</td><td>${r.correctAnswer}</td><td>${r.isCorrect ? '✔️ صحيح' : '❌ خطأ'}</td></tr>`;
+html += `<tr><td>${r.playerName}</td><td>${r.playerEmail}</td><td>${r.question}</td><td>${r.userAnswer}</td><td>${r.correctAnswer}</td><td>${r.isCorrect?'✔️ صحيح':'❌ خطأ'}</td></tr>`;
 });
 html += '</table>';
 container.innerHTML = html;
 });
 }
-
 function exportAllResults() {
 db.ref('quizResults').once('value').then(snap => {
-let results = snap.val();
-if(!results) { alert('لا توجد نتائج'); return; }
-let data = Object.values(results).map(r => ({
+let res = snap.val();
+if(!res) { alert('لا توجد نتائج'); return; }
+let data = Object.values(res).map(r => ({
 'الاسم العربي': r.playerName,
 'البريد الإلكتروني': r.playerEmail,
 'السؤال': r.question,
 'إجابة المستخدم': r.userAnswer,
 'الإجابة الصحيحة': r.correctAnswer,
-'صحيح/خاطئ': r.isCorrect ? 'صحيح' : 'خاطئ',
+'النتيجة': r.isCorrect ? 'صحيح' : 'خاطئ',
 'التوقيت': new Date(r.timestamp).toLocaleString()
 }));
 let ws = XLSX.utils.json_to_sheet(data);
 let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, 'النتائج');
-XLSX.writeFile(wb, `نتائج_الاختبار_${new Date().toISOString().slice(0,19)}.xlsx`);
+XLSX.writeFile(wb, `نتائج_الاختبار.xlsx`);
 });
 }
-function deleteAllResults() { if(confirm('حذف جميع النتائج نهائياً؟')) db.ref('quizResults').remove().then(()=>loadResultsTable()); }
+function deleteAllResults() { if(confirm('حذف كل النتائج؟')) db.ref('quizResults').remove().then(()=>loadResultsTable()); }
 
-function scrollToSection(id) { document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function switchTab(tab) {
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(tab).classList.add('active');
 document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
 event.target.classList.add('active');
-if(tab==='host') { loadResultsTable(); refreshUsersList(); refreshModelsList(); refreshQuestionsList(); updateDashboard(); }
+if(tab==='host') loadResultsTable();
 }
-function closeModal() { document.getElementById('questionModal').style.display = 'none'; }
 
-// تهيئة التطبيق
-loadAdminPassword();
-loadData();
-setInterval(()=>{ if(quizActive && !sessionStorage.getItem('quizCompleted')) updateQuizStatus(); },1000);
-// إضافة عنصر active-model-info في الـ DOM إن لم يكن موجوداً (للتوافق)
-if(!document.getElementById('active-model-info')) {
-let div = document.createElement('div'); div.id='active-model-info'; div.style.display='none';
-document.body.appendChild(div);
-}
+// ربط زر الدخول
+document.getElementById('joinQuizBtn').onclick = () => {
+if(!quizActive) { alert("الاختبار غير نشط حالياً. انتظر حتى الوقت المحدد."); return; }
+if(sessionStorage.getItem('quizCompleted') === 'true') { alert("لقد أنهيت الاختبار مسبقاً"); return; }
+let email = document.getElementById('playerEmail').value.trim();
+if(!email) { alert("أدخل بريدك الإلكتروني"); return; }
+let user = users.find(u => u.email === email);
+if(!user) { alert("بريد غير مسجل. تواصل مع المشرف."); return; }
+if(!user.active) { alert("حسابك غير نشط"); return; }
+// بدء الاختبار
+document.getElementById('playerEmail').disabled = true;
+document.getElementById('joinQuizBtn').disabled = true;
+startQuizForPlayer(email, user.arabicName);
+};
+
+// -------------------- بدء التطبيق --------------------
+loadAllData();
+setInterval(updateQuizUI, 1000);
+setTimeout(() => {
+if(questions.length === 0) addDefaultQuestion();
+restoreSession();
+}, 1500);
+window.onclick = function(e) { if(e.target === document.getElementById('modal')) closeModal(); };
 </script>
 </body>
 </html>
