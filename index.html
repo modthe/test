@@ -1279,6 +1279,14 @@ width: 95%;
 padding: 1rem;
 }
 
+.rank-display {
+position: relative;
+top: auto;
+right: auto;
+margin: 1rem 0;
+width: 100%;
+}
+
 .host-dashboard {
 grid-template-columns: 1fr;
 }
@@ -1355,7 +1363,6 @@ font-size: 1.1rem;
 <button id="joinBtn">Join Game</button>
 
 <div id="player-question"></div>
-<div id="countdown" class="countdown"></div>
 <div id="player-answers"></div>
 </div>
 
@@ -1846,7 +1853,6 @@ var currentIndex = 0;
 var playerEmail = "";
 var playerArabicName = "";
 var countdownInterval;
-var timeLeft = 25;
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null;
@@ -3804,9 +3810,6 @@ removeStoredValue('playerEmail');
 location.reload();
 }
 
-// NO COUNTDOWN - removed startCountdown function
-// We'll move to next question immediately after answer
-
 function getVisibleQuestions() {
 let visibleQuestions = questions.filter(q => !q.hidden);
 
@@ -3918,11 +3921,15 @@ ${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
 `;
 
 document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').innerHTML = "";
 }
 
-// NEW: Download player results as Excel with Arabic name, questions, answers
+// FIXED: Download player results as Excel with Arabic name, questions, answers
 function downloadPlayerResultsExcel() {
+if (!playerResults.answersDetails || playerResults.answersDetails.length === 0) {
+alert("No answers recorded. Please make sure you have answered at least one question.");
+return;
+}
+
 var avgResponseTime = playerResults.responseTimes.length > 0
 ? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
 : 0;
@@ -3932,16 +3939,13 @@ const userName = user ? user.arabicName : 'Unknown User';
 const accuracy = playerResults.accuracy;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 
-// Prepare detailed data for Excel
 const excelData = [];
 
-// Title section
 excelData.push([`Quiz Results for: ${userName}`]);
 excelData.push([`Email: ${playerEmail}`]);
 excelData.push([`Date: ${new Date().toLocaleString()}`]);
 excelData.push([]);
 
-// Summary section
 excelData.push(['SUMMARY']);
 excelData.push(['Correct Answers:', playerResults.correct]);
 excelData.push(['Incorrect Answers:', playerResults.incorrect]);
@@ -3951,7 +3955,6 @@ excelData.push(['Average Response Time:', avgResponseTime + ' seconds']);
 excelData.push(['Final Result:', passFail]);
 excelData.push([]);
 
-// Detailed answers section
 excelData.push(['DETAILED ANSWERS']);
 excelData.push(['Question #', 'Question Text', 'Your Answer', 'Correct Answer', 'Result']);
 
@@ -3968,10 +3971,7 @@ detail.isCorrect ? '✓ Correct' : '✗ Incorrect'
 const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 const workbook = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(workbook, worksheet, `Quiz Results - ${userName}`);
-
-// Auto-size columns (basic)
 worksheet['!cols'] = [{wch:10}, {wch:50}, {wch:30}, {wch:30}, {wch:12}];
-
 XLSX.writeFile(workbook, `quiz_results_${userName}_${new Date().toISOString().slice(0,19)}.xlsx`);
 }
 
@@ -4021,7 +4021,7 @@ button.style.opacity = '0.7';
 this.style.backgroundColor = '#e0e0e0';
 this.style.borderColor = '#6e8efb';
 
-// Show answer saved message (no color feedback)
+// Show answer saved message
 showAnswerSavedMessage();
 
 // Track results internally
@@ -4035,6 +4035,7 @@ playerResults.responseTimes.push(responseTime);
 playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 
 // Store detailed answer for Excel export
+if (!playerResults.answersDetails) playerResults.answersDetails = [];
 playerResults.answersDetails.push({
 question: q.question,
 userAnswer: selected,
@@ -4048,7 +4049,7 @@ const userName = user ? user.arabicName : 'مستخدم غير معروف';
 saveToFirebase(playerEmail, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
 saveQuizProgress();
 
-// Move to next question IMMEDIATELY (no countdown)
+// Move to next question IMMEDIATELY
 moveToNextQuestion();
 };
 gridContainer.appendChild(btn);
@@ -4102,7 +4103,7 @@ document.getElementById('answer-saved-message').remove();
 }, 2000);
 }
 
-// Ranking system (keep original but simplified)
+// Ranking system
 function startRankingSystem() {
 if (rankingUpdateInterval) {
 clearInterval(rankingUpdateInterval);
@@ -4293,8 +4294,8 @@ playerResults = progress.playerResults || playerResults;
 startRankingSystem();
 
 currentIndex = 0;
-document.getElementById("player-email").style.display = "none";
-document.getElementById("joinBtn").style.display = "none";
+document.getElementById("player-email").disabled = true;
+document.getElementById("joinBtn").disabled = true;
 showPlayerQuestion();
 } else {
 alert("Please enter your email address to join the game.");
@@ -4336,7 +4337,7 @@ document.getElementById('player-question').innerHTML = `
 </div>
 </div>
 `;
-document.getElementById("player-email").style.display = "none";
+document.getElementById("player-email").disabled = true;
 document.getElementById("joinBtn").disabled = true;
 document.getElementById("joinBtn").style.background = "#ccc";
 document.getElementById("joinBtn").textContent = "Quiz Completed";
@@ -4353,7 +4354,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Email Login, No Countdown, and Excel Export");
+console.log("Enhanced Kahoot FS with Email Login, No Countdown, and Working Excel Export");
 });
 </script>
 </body>
