@@ -267,22 +267,11 @@ opacity: 0.7;
 pointer-events: none;
 }
 
-.answer-btn.correct-answer {
-background: #4caf50 !important;
-color: white !important;
-border-color: #4caf50 !important;
-}
-
-.answer-btn.wrong-answer {
-background: #f44336 !important;
-color: white !important;
-border-color: #f44336 !important;
-}
-
+/* تم إزالة الكلاسات التي تظهر الإجابات الصحيحة/الخاطئة للاعب */
+.answer-btn.correct-answer,
+.answer-btn.wrong-answer,
 .answer-btn.partial-answer {
-background: #ff9800 !important;
-color: white !important;
-border-color: #ff9800 !important;
+/* no styling */
 }
 
 .answer-btn.other-option {
@@ -4149,15 +4138,8 @@ const status = selectedAnswers.length === 0 ? 'Unanswered' : (isCorrect ? 'Corre
 saveToFirebase(playerCode, userName, q.question, selectedAnswers, correctAnswers, responseTime, status, q.modelId);
 saveQuizProgress();
 
-// Show visual feedback on buttons
-document.querySelectorAll('.answer-btn').forEach(btn => {
-const btnText = btn.textContent.trim();
-if (correctAnswers.includes(btnText)) {
-btn.classList.add('correct-answer');
-} else if (selectedAnswers.includes(btnText) && !correctAnswers.includes(btnText)) {
-btn.classList.add('wrong-answer');
-}
-});
+// NO FEEDBACK COLORS - only disable buttons, no correct/wrong highlighting
+// Just show "Answer Saved" message
 
 // Show "Answer Saved" message
 showAnswerSavedMessage();
@@ -4368,13 +4350,11 @@ if (!quizActive) {
 alert("الاختبار غير نشط حالياً. يرجى التحقق من جدول الاختبار.");
 return;
 }
-// Check if at least one answer selected
-const selected = document.querySelectorAll('.answer-btn.selected');
-if (selected.length === 0) {
-// Optionally, allow submitting no answer? We'll allow it.
-// alert('Please select at least one answer or click "Skip".');
+// Check if at least one answer selected - optional
+// if (document.querySelectorAll('.answer-btn.selected').length === 0) {
+// alert('Please select at least one answer.');
 // return;
-}
+// }
 // Submit the answers
 submitAnswers();
 };
@@ -4563,7 +4543,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Multi-Select Answers Initialized");
+console.log("Enhanced Kahoot FS with Multi-Select Answers (Feedback Hidden) Initialized");
 });
 </script>
 </body>
