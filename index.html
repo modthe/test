@@ -1869,7 +1869,7 @@ var quizModels = [];
 var currentIndex = 0;
 var playerCode = "";
 var countdownInterval;
-var timeLeft = 30;
+var timeLeft = 60;
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null;
@@ -4080,7 +4080,7 @@ location.reload();
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 30;
+timeLeft = 60;
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 clearInterval(countdownInterval);
