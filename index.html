@@ -267,7 +267,6 @@ opacity: 0.7;
 pointer-events: none;
 }
 
-/* تم إزالة الكلاسات التي تظهر الإجابات الصحيحة/الخاطئة للاعب */
 .answer-btn.correct-answer,
 .answer-btn.wrong-answer,
 .answer-btn.partial-answer {
@@ -1633,6 +1632,8 @@ font-size: 1.1rem;
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
 <button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results (First Attempt Only)</button>
+<button class="export-btn" style="background: #ff9800;" onclick="exportTopFiveLastQuiz()">🏆 تنزيل ترتيب الخمس الأوائل (آخر اختبار)</button>
+<button class="export-btn" style="background: #9c27b0;" onclick="exportAllUsersLastQuiz()">📥 تنزيل نتائج جميع المستخدمين (آخر اختبار)</button>
 <button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
@@ -1869,7 +1870,7 @@ var quizModels = [];
 var currentIndex = 0;
 var playerCode = "";
 var countdownInterval;
-var timeLeft = 60;
+var timeLeft = 30;
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null;
@@ -3116,6 +3117,158 @@ alert('Error exporting data.');
 });
 }
 
+// ======== الوظائف الجديدة للزرين ========
+
+// دالة لتحديد نتائج آخر اختبار (أحدث مجموعة نتائج خلال آخر 10 دقائق)
+function getLastQuizResults() {
+return new Promise((resolve, reject) => {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) {
+resolve([]);
+return;
+}
+const allResults = Object.values(results);
+if (allResults.length === 0) {
+resolve([]);
+return;
+}
+
+// العثور على أحدث timestamp
+const latest = allResults.reduce((max, r) => {
+const t = new Date(r.timestamp).getTime();
+return t > max ? t : max;
+}, 0);
+
+// نطاق زمني: آخر 10 دقائق
+const cutoff = latest - 10 * 60 * 1000;
+const filtered = allResults.filter(r => {
+const t = new Date(r.timestamp).getTime();
+return t >= cutoff;
+});
+
+resolve(filtered);
+})
+.catch(reject);
+});
+}
+
+// دالة لتنزيل ترتيب الخمس الأوائل
+function exportTopFiveLastQuiz() {
+getLastQuizResults().then(results => {
+if (results.length === 0) {
+alert('لا توجد نتائج لآخر اختبار.');
+return;
+}
+
+// تجميع النتائج حسب اللاعب (playerCode)
+const playerMap = {};
+results.forEach(r => {
+if (!playerMap[r.playerCode]) {
+playerMap[r.playerCode] = {
+playerCode: r.playerCode,
+playerName: r.playerName || 'Unknown',
+totalCorrect: 0,
+totalQuestions: 0,
+totalResponseTime: 0,
+responses: []
+};
+}
+const player = playerMap[r.playerCode];
+player.responses.push(r);
+// حساب الصحة
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+if (isCorrect) player.totalCorrect++;
+player.totalQuestions++;
+player.totalResponseTime += (r.responseTime || 0);
+});
+
+// تحويل إلى مصفوفة وحساب المتوسطات
+const players = Object.values(playerMap).map(p => ({
+...p,
+avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
+accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0
+}));
+
+// ترتيب: حسب الصحة تنازلياً، ثم الوقت تصاعدياً
+players.sort((a, b) => {
+if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
+return a.avgTime - b.avgTime;
+});
+
+// أخذ الخمسة الأوائل
+const top5 = players.slice(0, 5);
+
+// إنشاء ملف Excel
+const workbook = XLSX.utils.book_new();
+const data = [
+['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'الدقة %', 'متوسط زمن الإجابة (ثانية)']
+];
+top5.forEach((p, index) => {
+data.push([
+index + 1,
+p.playerName,
+p.playerCode,
+p.totalCorrect,
+p.totalQuestions,
+p.accuracy.toFixed(1),
+p.avgTime.toFixed(2)
+]);
+});
+
+const worksheet = XLSX.utils.aoa_to_sheet(data);
+XLSX.utils.book_append_sheet(workbook, worksheet, 'Top 5');
+XLSX.writeFile(workbook, `top5-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
+alert('تم تنزيل ترتيب الخمس الأوائل بنجاح.');
+}).catch(err => {
+console.error(err);
+alert('حدث خطأ أثناء تحميل البيانات.');
+});
+}
+
+// دالة لتنزيل نتائج جميع المستخدمين في آخر اختبار
+function exportAllUsersLastQuiz() {
+getLastQuizResults().then(results => {
+if (results.length === 0) {
+alert('لا توجد نتائج لآخر اختبار.');
+return;
+}
+
+// إنشاء ملف Excel مفصل
+const workbook = XLSX.utils.book_new();
+const data = [
+['اسم اللاعب', 'الكود', 'السؤال', 'الإجابات المختارة', 'الإجابات الصحيحة', 'زمن الاستجابة (ثانية)', 'الحالة', 'النتيجة']
+];
+
+results.forEach(r => {
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+data.push([
+r.playerName || 'Unknown',
+r.playerCode || '',
+r.question || '',
+(r.selectedAnswers || []).join(', '),
+(r.correctAnswers || []).join(', '),
+r.responseTime || 0,
+r.status || '',
+isCorrect ? 'صحيح' : 'خاطئ'
+]);
+});
+
+const worksheet = XLSX.utils.aoa_to_sheet(data);
+XLSX.utils.book_append_sheet(workbook, worksheet, 'All Results');
+XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
+alert('تم تنزيل نتائج جميع المستخدمين بنجاح.');
+}).catch(err => {
+console.error(err);
+alert('حدث خطأ أثناء تحميل البيانات.');
+});
+}
+
+// ======== نهاية الوظائف الجديدة ========
+
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
 if (savedQuestions) {
@@ -4080,7 +4233,7 @@ location.reload();
 
 // Countdown timer function
 function startCountdown() {
-timeLeft = 60;
+timeLeft = 60; // تغيير إلى 60 ثانية (دقيقة كاملة)
 document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 clearInterval(countdownInterval);
@@ -4090,7 +4243,7 @@ document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
 
 if (timeLeft <= 0) {
 clearInterval(countdownInterval);
-// Auto-submit if time runs out (no answers selected)
+// Auto-submit if time runs out
 submitAnswers();
 }
 }, 1000);
@@ -4137,9 +4290,6 @@ playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 const status = selectedAnswers.length === 0 ? 'Unanswered' : (isCorrect ? 'Correct' : 'Incorrect');
 saveToFirebase(playerCode, userName, q.question, selectedAnswers, correctAnswers, responseTime, status, q.modelId);
 saveQuizProgress();
-
-// NO FEEDBACK COLORS - only disable buttons, no correct/wrong highlighting
-// Just show "Answer Saved" message
 
 // Show "Answer Saved" message
 showAnswerSavedMessage();
@@ -4350,11 +4500,6 @@ if (!quizActive) {
 alert("الاختبار غير نشط حالياً. يرجى التحقق من جدول الاختبار.");
 return;
 }
-// Check if at least one answer selected - optional
-// if (document.querySelectorAll('.answer-btn.selected').length === 0) {
-// alert('Please select at least one answer.');
-// return;
-// }
 // Submit the answers
 submitAnswers();
 };
