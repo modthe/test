@@ -3106,10 +3106,12 @@ alert('Error exporting data.');
 });
 }
 
-// ======== الوظائف الجديدة للزرين (المعدلة) ========
+// ============================================================
+// دوال محدثة خاصة بالنموذج الافتراضي (default) وآخر محاولة فقط
+// ============================================================
 
-// دالة للحصول على نتائج آخر اختبار (أحدث نموذج وجلسة) بدون قيد زمني صارم
-function getLastQuizResults() {
+// دالة للحصول على نتائج آخر اختبار في النموذج الافتراضي (default)
+function getLastQuizResultsDefaultModel() {
 return new Promise((resolve, reject) => {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
@@ -3124,121 +3126,135 @@ resolve([]);
 return;
 }
 
-// العثور على أحدث نتيجة
-let latestTime = 0;
-let latestModelId = null;
-allResults.forEach(r => {
-const t = new Date(r.timestamp).getTime();
-if (t > latestTime) {
-latestTime = t;
-latestModelId = r.modelId;
+// تصفية النتائج التي تنتمي للنموذج الافتراضي (id = 'default')
+// إذا لم تجد، حاول البحث عن نموذج باسم "Default Model"
+const defaultModelId = 'default';
+const defaultModel = quizModels.find(m => m.id === defaultModelId);
+if (!defaultModel) {
+// إذا لم يوجد، استخدم أول نموذج موجود
+if (quizModels.length > 0) {
+const firstModel = quizModels[0];
+const filtered = allResults.filter(r => r.modelId === firstModel.id);
+resolve(filtered);
+} else {
+resolve([]);
 }
-});
-
-// إذا لم يكن هناك modelId، نأخذ جميع النتائج (حالة استثنائية)
-if (!latestModelId) {
-// قد تكون النتائج القديمة بدون modelId، نأخذها كلها كحل بديل
-resolve(allResults);
 return;
 }
 
-// نأخذ جميع النتائج التي تحمل نفس modelId (بدون قيد زمني)
-const filtered = allResults.filter(r => r.modelId === latestModelId);
-
+const filtered = allResults.filter(r => r.modelId === defaultModelId);
 resolve(filtered);
 })
 .catch(reject);
 });
 }
 
-// دالة لتنزيل ترتيب الخمس الأوائل مع التفاصيل (فقط المكملين)
+// دالة لتنزيل ترتيب الخمس الأوائل (آخر محاولة لكل مستخدم في النموذج الافتراضي)
 function exportTopFiveLastQuiz() {
-getLastQuizResults().then(results => {
+getLastQuizResultsDefaultModel().then(results => {
 if (results.length === 0) {
-alert('لا توجد نتائج لآخر اختبار.');
+alert('لا توجد نتائج للنموذج الافتراضي.');
 return;
 }
 
-// تحديد إجمالي عدد الأسئلة في هذا النموذج
-const modelId = results[0].modelId;
-// إذا كان modelId غير موجود، نحاول استنتاج النموذج من أول نتيجة
-let totalQuestions = 0;
-if (modelId) {
-const modelQuestions = questions.filter(q => q.modelId === modelId);
-totalQuestions = modelQuestions.length;
-} else {
-// إذا لم يكن هناك modelId، نأخذ عدد الأسئلة من أول نتيجة (قد يكون غير دقيق)
-// لكننا سنعتبر أن جميع المستخدمين أجابوا على نفس عدد الأسئلة
-const counts = results.map(r => r.questionIndex + 1); // افتراض أن الأسئلة مرقمة
-totalQuestions = Math.max(...counts);
-}
+// تحديد عدد الأسئلة في النموذج الافتراضي
+const defaultModelId = 'default';
+const modelQuestions = questions.filter(q => q.modelId === defaultModelId);
+const totalQuestions = modelQuestions.length;
 
 if (totalQuestions === 0) {
-alert('تعذر تحديد عدد الأسئلة لهذا الاختبار. تأكد من وجود أسئلة مرتبطة بالنموذج.');
+alert('لا توجد أسئلة في النموذج الافتراضي.');
 return;
 }
 
-// تجميع النتائج حسب اللاعب
+// تجميع النتائج حسب اللاعب، ثم فصل المحاولات
 const playerMap = {};
 results.forEach(r => {
 if (!playerMap[r.playerCode]) {
 playerMap[r.playerCode] = {
 playerCode: r.playerCode,
 playerName: r.playerName || 'Unknown',
-totalCorrect: 0,
-totalQuestions: 0,
-totalResponseTime: 0,
-responses: []
+attempts: [] // سنجمع كل المحاولات
 };
 }
-const player = playerMap[r.playerCode];
-player.responses.push(r);
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) player.totalCorrect++;
-player.totalQuestions++;
-player.totalResponseTime += (r.responseTime || 0);
+playerMap[r.playerCode].attempts.push(r);
 });
 
-// تصفية المستخدمين الذين أكملوا جميع الأسئلة
-const eligiblePlayers = Object.values(playerMap).filter(p => p.totalQuestions === totalQuestions);
+// لكل لاعب، نأخذ أحدث محاولة (آخر مجموعة إجابات لنفس الجلسة)
+const latestAttempts = [];
+Object.values(playerMap).forEach(player => {
+// ترتيب المحاولات حسب التاريخ
+const sortedAttempts = player.attempts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+// تجميع المحاولات المتقاربة (نفس الجلسة)
+const attemptsGroups = groupResultsByAttempt(sortedAttempts);
+if (attemptsGroups.length > 0) {
+// نأخذ آخر مجموعة (أحدث محاولة)
+const latestGroup = attemptsGroups[attemptsGroups.length - 1];
+// نتأكد من أن هذه المحاولة تحتوي على جميع الأسئلة
+if (latestGroup.length === totalQuestions) {
+latestAttempts.push({
+playerCode: player.playerCode,
+playerName: player.playerName,
+responses: latestGroup
+});
+}
+}
+});
 
-if (eligiblePlayers.length === 0) {
-alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في آخر اختبار.');
+if (latestAttempts.length === 0) {
+alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في النموذج الافتراضي.');
 return;
 }
 
-// حساب المتوسطات
-const players = eligiblePlayers.map(p => ({
-...p,
-avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
-passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' : 'FAIL'
-}));
+// حساب الإحصائيات لكل لاعب
+const playersStats = latestAttempts.map(p => {
+let correct = 0;
+let totalTime = 0;
+p.responses.forEach(r => {
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+if (isCorrect) correct++;
+totalTime += (r.responseTime || 0);
+});
+const total = p.responses.length;
+const avgTime = total > 0 ? totalTime / total : 0;
+const accuracy = total > 0 ? (correct / total) * 100 : 0;
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+return {
+playerCode: p.playerCode,
+playerName: p.playerName,
+correct: correct,
+total: total,
+avgTime: avgTime,
+accuracy: accuracy,
+passFail: passFail,
+responses: p.responses
+};
+});
 
-// ترتيب: حسب الصحة تنازلياً، ثم الوقت تصاعدياً
-players.sort((a, b) => {
-if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
+// ترتيب حسب الصحة تنازلياً ثم الوقت تصاعدياً
+playersStats.sort((a, b) => {
+if (b.correct !== a.correct) return b.correct - a.correct;
 return a.avgTime - b.avgTime;
 });
 
-// أخذ الخمسة الأوائل
-const top5 = players.slice(0, 5);
+// الخمسة الأوائل
+const top5 = playersStats.slice(0, 5);
 
 // إنشاء ملف Excel
 const workbook = XLSX.utils.book_new();
 
 // ورقة الملخص
 const summaryData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %', 'متوسط زمن الاستجابة (ث)', 'النتيجة']
+['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة %', 'متوسط الزمن (ث)', 'النتيجة']
 ];
-top5.forEach((p, index) => {
+top5.forEach((p, idx) => {
 summaryData.push([
-index + 1,
+idx + 1,
 p.playerName,
 p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
+p.correct,
+p.total,
 p.accuracy.toFixed(1),
 p.avgTime.toFixed(2),
 p.passFail
@@ -3247,14 +3263,13 @@ p.passFail
 const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
 XLSX.utils.book_append_sheet(workbook, summaryWS, 'Top 5 Summary');
 
-// ورقة التفاصيل لكل لاعب
+// ورقة التفاصيل
 const detailsData = [
 ['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
 ];
 top5.forEach((p, rank) => {
-// ترتيب الإجابات حسب التاريخ
-const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-sortedResponses.forEach(r => {
+const sortedRes = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+sortedRes.forEach(r => {
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
 detailsData.push([
@@ -3269,41 +3284,34 @@ r.responseTime || 0,
 isCorrect ? 'صحيح' : 'خاطئ'
 ]);
 });
-// إضافة صف فارغ بين كل لاعب
-detailsData.push([]);
+detailsData.push([]); // فاصل بين اللاعبين
 });
 const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
 XLSX.utils.book_append_sheet(workbook, detailsWS, 'Top 5 Details');
 
-XLSX.writeFile(workbook, `top5-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل ترتيب الخمس الأوائل مع التفاصيل بنجاح.');
+XLSX.writeFile(workbook, `top5-default-model-${new Date().toISOString().split('T')[0]}.xlsx`);
+alert('تم تنزيل ترتيب الخمس الأوائل بنجاح.');
 }).catch(err => {
 console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات: ' + err.message);
+alert('حدث خطأ: ' + err.message);
 });
 }
 
-// دالة لتنزيل نتائج جميع المستخدمين المكملين في آخر اختبار مع التفاصيل
+// دالة لتنزيل نتائج جميع المستخدمين (آخر محاولة لكل مستخدم في النموذج الافتراضي)
 function exportAllUsersLastQuiz() {
-getLastQuizResults().then(results => {
+getLastQuizResultsDefaultModel().then(results => {
 if (results.length === 0) {
-alert('لا توجد نتائج لآخر اختبار.');
+alert('لا توجد نتائج للنموذج الافتراضي.');
 return;
 }
 
-// تحديد إجمالي عدد الأسئلة في هذا النموذج
-const modelId = results[0].modelId;
-let totalQuestions = 0;
-if (modelId) {
-const modelQuestions = questions.filter(q => q.modelId === modelId);
-totalQuestions = modelQuestions.length;
-} else {
-const counts = results.map(r => r.questionIndex + 1);
-totalQuestions = Math.max(...counts);
-}
+// تحديد عدد الأسئلة في النموذج الافتراضي
+const defaultModelId = 'default';
+const modelQuestions = questions.filter(q => q.modelId === defaultModelId);
+const totalQuestions = modelQuestions.length;
 
 if (totalQuestions === 0) {
-alert('تعذر تحديد عدد الأسئلة لهذا الاختبار.');
+alert('لا توجد أسئلة في النموذج الافتراضي.');
 return;
 }
 
@@ -3314,50 +3322,76 @@ if (!playerMap[r.playerCode]) {
 playerMap[r.playerCode] = {
 playerCode: r.playerCode,
 playerName: r.playerName || 'Unknown',
-totalCorrect: 0,
-totalQuestions: 0,
-totalResponseTime: 0,
-responses: []
+attempts: []
 };
 }
-const player = playerMap[r.playerCode];
-player.responses.push(r);
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) player.totalCorrect++;
-player.totalQuestions++;
-player.totalResponseTime += (r.responseTime || 0);
+playerMap[r.playerCode].attempts.push(r);
 });
 
-// تصفية المستخدمين الذين أكملوا جميع الأسئلة
-const eligiblePlayers = Object.values(playerMap).filter(p => p.totalQuestions === totalQuestions);
+// لكل لاعب، نأخذ أحدث محاولة مكتملة
+const latestAttempts = [];
+Object.values(playerMap).forEach(player => {
+const sortedAttempts = player.attempts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+const attemptsGroups = groupResultsByAttempt(sortedAttempts);
+if (attemptsGroups.length > 0) {
+const latestGroup = attemptsGroups[attemptsGroups.length - 1];
+if (latestGroup.length === totalQuestions) {
+latestAttempts.push({
+playerCode: player.playerCode,
+playerName: player.playerName,
+responses: latestGroup
+});
+}
+}
+});
 
-if (eligiblePlayers.length === 0) {
-alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في آخر اختبار.');
+if (latestAttempts.length === 0) {
+alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في النموذج الافتراضي.');
 return;
 }
 
-// حساب المتوسطات
-const players = eligiblePlayers.map(p => ({
-...p,
-avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
-passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' : 'FAIL'
-}));
+// حساب الإحصائيات
+const playersStats = latestAttempts.map(p => {
+let correct = 0;
+let totalTime = 0;
+p.responses.forEach(r => {
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+if (isCorrect) correct++;
+totalTime += (r.responseTime || 0);
+});
+const total = p.responses.length;
+const avgTime = total > 0 ? totalTime / total : 0;
+const accuracy = total > 0 ? (correct / total) * 100 : 0;
+const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+return {
+playerCode: p.playerCode,
+playerName: p.playerName,
+correct: correct,
+total: total,
+avgTime: avgTime,
+accuracy: accuracy,
+passFail: passFail,
+responses: p.responses
+};
+});
+
+// ترتيب حسب الاسم
+playersStats.sort((a, b) => a.playerName.localeCompare(b.playerName));
 
 // إنشاء ملف Excel
 const workbook = XLSX.utils.book_new();
 
-// ورقة الملخص العام لجميع المستخدمين
+// ورقة الملخص العام
 const summaryData = [
-['اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %', 'متوسط زمن الاستجابة (ث)', 'النتيجة']
+['اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة %', 'متوسط الزمن (ث)', 'النتيجة']
 ];
-players.forEach(p => {
+playersStats.forEach(p => {
 summaryData.push([
 p.playerName,
 p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
+p.correct,
+p.total,
 p.accuracy.toFixed(1),
 p.avgTime.toFixed(2),
 p.passFail
@@ -3366,16 +3400,13 @@ p.passFail
 const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
 XLSX.utils.book_append_sheet(workbook, summaryWS, 'All Users Summary');
 
-// ورقة التفاصيل لكل المستخدمين
+// ورقة التفاصيل
 const detailsData = [
 ['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
 ];
-// ترتيب اللاعبين حسب الاسم
-const sortedPlayers = players.sort((a, b) => a.playerName.localeCompare(b.playerName));
-sortedPlayers.forEach(p => {
-// ترتيب الإجابات حسب التاريخ
-const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-sortedResponses.forEach(r => {
+playersStats.forEach(p => {
+const sortedRes = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+sortedRes.forEach(r => {
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
 detailsData.push([
@@ -3389,21 +3420,22 @@ r.responseTime || 0,
 isCorrect ? 'صحيح' : 'خاطئ'
 ]);
 });
-// إضافة صف فارغ بين كل لاعب
-detailsData.push([]);
+detailsData.push([]); // فاصل بين اللاعبين
 });
 const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
 XLSX.utils.book_append_sheet(workbook, detailsWS, 'All Users Details');
 
-XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل نتائج جميع المستخدمين المكملين مع التفاصيل بنجاح.');
+XLSX.writeFile(workbook, `all-users-default-model-${new Date().toISOString().split('T')[0]}.xlsx`);
+alert('تم تنزيل نتائج جميع المستخدمين بنجاح.');
 }).catch(err => {
 console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات: ' + err.message);
+alert('حدث خطأ: ' + err.message);
 });
 }
 
-// ======== نهاية الوظائف الجديدة ========
+// ============================================================
+// باقي الكود (تحميل البيانات، إدارة النماذج، إلخ) كما هو
+// ============================================================
 
 // Load questions from localStorage
 var savedQuestions = localStorage.getItem('quizQuestions');
