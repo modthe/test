@@ -3118,9 +3118,9 @@ alert('Error exporting data.');
 });
 }
 
-// ======== الوظائف الجديدة للزرين ========
+// ======== الوظائف الجديدة للزرين (المعدلة) ========
 
-// دالة لتحديد نتائج آخر اختبار (أحدث مجموعة نتائج خلال آخر 10 دقائق)
+// دالة للحصول على نتائج آخر اختبار (أحدث نموذج وجلسة)
 function getLastQuizResults() {
 return new Promise((resolve, reject) => {
 database.ref('quizResults').once('value')
@@ -3136,17 +3136,29 @@ resolve([]);
 return;
 }
 
-// العثور على أحدث timestamp
-const latest = allResults.reduce((max, r) => {
+// العثور على أحدث نتيجة
+let latestTime = 0;
+let latestModelId = null;
+allResults.forEach(r => {
 const t = new Date(r.timestamp).getTime();
-return t > max ? t : max;
-}, 0);
+if (t > latestTime) {
+latestTime = t;
+latestModelId = r.modelId;
+}
+});
 
-// نطاق زمني: آخر 10 دقائق
-const cutoff = latest - 10 * 60 * 1000;
+if (!latestModelId) {
+resolve([]);
+return;
+}
+
+// نطاق زمني: آخر 30 دقيقة من أحدث نتيجة
+const cutoff = latestTime - 30 * 60 * 1000;
+
+// تصفية النتائج: نفس modelId وفي النطاق الزمني
 const filtered = allResults.filter(r => {
 const t = new Date(r.timestamp).getTime();
-return t >= cutoff;
+return r.modelId === latestModelId && t >= cutoff;
 });
 
 resolve(filtered);
@@ -3155,11 +3167,20 @@ resolve(filtered);
 });
 }
 
-// دالة لتنزيل ترتيب الخمس الأوائل مع التفاصيل
+// دالة لتنزيل ترتيب الخمس الأوائل مع التفاصيل (فقط المكملين)
 function exportTopFiveLastQuiz() {
 getLastQuizResults().then(results => {
 if (results.length === 0) {
 alert('لا توجد نتائج لآخر اختبار.');
+return;
+}
+
+// تحديد إجمالي عدد الأسئلة في هذا النموذج
+const modelId = results[0].modelId;
+const modelQuestions = questions.filter(q => q.modelId === modelId);
+const totalQuestions = modelQuestions.length;
+if (totalQuestions === 0) {
+alert('لا توجد أسئلة لهذا النموذج.');
 return;
 }
 
@@ -3185,8 +3206,16 @@ player.totalQuestions++;
 player.totalResponseTime += (r.responseTime || 0);
 });
 
-// تحويل إلى مصفوفة وحساب المتوسطات
-const players = Object.values(playerMap).map(p => ({
+// تصفية المستخدمين الذين أكملوا جميع الأسئلة
+const eligiblePlayers = Object.values(playerMap).filter(p => p.totalQuestions === totalQuestions);
+
+if (eligiblePlayers.length === 0) {
+alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في آخر اختبار.');
+return;
+}
+
+// حساب المتوسطات
+const players = eligiblePlayers.map(p => ({
 ...p,
 avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
 accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
@@ -3229,8 +3258,9 @@ const detailsData = [
 ['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
 ];
 top5.forEach((p, rank) => {
-// لكل سؤال من إجابات هذا اللاعب
-p.responses.forEach(r => {
+// ترتيب الإجابات حسب التاريخ
+const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+sortedResponses.forEach(r => {
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
 detailsData.push([
@@ -3259,11 +3289,20 @@ alert('حدث خطأ أثناء تحميل البيانات.');
 });
 }
 
-// دالة لتنزيل نتائج جميع المستخدمين في آخر اختبار مع التفاصيل
+// دالة لتنزيل نتائج جميع المستخدمين المكملين في آخر اختبار مع التفاصيل
 function exportAllUsersLastQuiz() {
 getLastQuizResults().then(results => {
 if (results.length === 0) {
 alert('لا توجد نتائج لآخر اختبار.');
+return;
+}
+
+// تحديد إجمالي عدد الأسئلة في هذا النموذج
+const modelId = results[0].modelId;
+const modelQuestions = questions.filter(q => q.modelId === modelId);
+const totalQuestions = modelQuestions.length;
+if (totalQuestions === 0) {
+alert('لا توجد أسئلة لهذا النموذج.');
 return;
 }
 
@@ -3289,8 +3328,16 @@ player.totalQuestions++;
 player.totalResponseTime += (r.responseTime || 0);
 });
 
-// تحويل إلى مصفوفة وحساب المتوسطات
-const players = Object.values(playerMap).map(p => ({
+// تصفية المستخدمين الذين أكملوا جميع الأسئلة
+const eligiblePlayers = Object.values(playerMap).filter(p => p.totalQuestions === totalQuestions);
+
+if (eligiblePlayers.length === 0) {
+alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في آخر اختبار.');
+return;
+}
+
+// حساب المتوسطات
+const players = eligiblePlayers.map(p => ({
 ...p,
 avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
 accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
@@ -3318,14 +3365,14 @@ p.passFail
 const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
 XLSX.utils.book_append_sheet(workbook, summaryWS, 'All Users Summary');
 
-// ورقة التفاصيل لكل المستخدمين مع ترتيب الإجابات
+// ورقة التفاصيل لكل المستخدمين
 const detailsData = [
 ['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
 ];
 // ترتيب اللاعبين حسب الاسم
 const sortedPlayers = players.sort((a, b) => a.playerName.localeCompare(b.playerName));
 sortedPlayers.forEach(p => {
-// لكل سؤال من إجابات هذا اللاعب (مرتبة حسب التاريخ)
+// ترتيب الإجابات حسب التاريخ
 const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 sortedResponses.forEach(r => {
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
@@ -3348,7 +3395,7 @@ const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
 XLSX.utils.book_append_sheet(workbook, detailsWS, 'All Users Details');
 
 XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل نتائج جميع المستخدمين مع التفاصيل بنجاح.');
+alert('تم تنزيل نتائج جميع المستخدمين المكملين مع التفاصيل بنجاح.');
 }).catch(err => {
 console.error(err);
 alert('حدث خطأ أثناء تحميل البيانات.');
