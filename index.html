@@ -10,6 +10,7 @@
 <!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+/* (جميع الأنماط كما هي، لم تتغير) */
 * {
 margin: 0;
 padding: 0;
@@ -3154,7 +3155,7 @@ resolve(filtered);
 });
 }
 
-// دالة لتنزيل ترتيب الخمس الأوائل
+// دالة لتنزيل ترتيب الخمس الأوائل مع التفاصيل
 function exportTopFiveLastQuiz() {
 getLastQuizResults().then(results => {
 if (results.length === 0) {
@@ -3162,7 +3163,7 @@ alert('لا توجد نتائج لآخر اختبار.');
 return;
 }
 
-// تجميع النتائج حسب اللاعب (playerCode)
+// تجميع النتائج حسب اللاعب
 const playerMap = {};
 results.forEach(r => {
 if (!playerMap[r.playerCode]) {
@@ -3177,7 +3178,6 @@ responses: []
 }
 const player = playerMap[r.playerCode];
 player.responses.push(r);
-// حساب الصحة
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
 if (isCorrect) player.totalCorrect++;
@@ -3189,7 +3189,8 @@ player.totalResponseTime += (r.responseTime || 0);
 const players = Object.values(playerMap).map(p => ({
 ...p,
 avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0
+accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
+passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' : 'FAIL'
 }));
 
 // ترتيب: حسب الصحة تنازلياً، ثم الوقت تصاعدياً
@@ -3203,32 +3204,62 @@ const top5 = players.slice(0, 5);
 
 // إنشاء ملف Excel
 const workbook = XLSX.utils.book_new();
-const data = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'الدقة %', 'متوسط زمن الإجابة (ثانية)']
+
+// ورقة الملخص
+const summaryData = [
+['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %', 'متوسط زمن الاستجابة (ث)', 'النتيجة']
 ];
 top5.forEach((p, index) => {
-data.push([
+summaryData.push([
 index + 1,
 p.playerName,
 p.playerCode,
 p.totalCorrect,
 p.totalQuestions,
 p.accuracy.toFixed(1),
-p.avgTime.toFixed(2)
+p.avgTime.toFixed(2),
+p.passFail
 ]);
 });
+const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+XLSX.utils.book_append_sheet(workbook, summaryWS, 'Top 5 Summary');
 
-const worksheet = XLSX.utils.aoa_to_sheet(data);
-XLSX.utils.book_append_sheet(workbook, worksheet, 'Top 5');
+// ورقة التفاصيل لكل لاعب
+const detailsData = [
+['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
+];
+top5.forEach((p, rank) => {
+// لكل سؤال من إجابات هذا اللاعب
+p.responses.forEach(r => {
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+detailsData.push([
+rank + 1,
+p.playerName,
+p.playerCode,
+new Date(r.timestamp).toLocaleString(),
+r.question || '',
+(r.selectedAnswers || []).join(', '),
+(r.correctAnswers || []).join(', '),
+r.responseTime || 0,
+isCorrect ? 'صحيح' : 'خاطئ'
+]);
+});
+// إضافة صف فارغ بين كل لاعب
+detailsData.push([]);
+});
+const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
+XLSX.utils.book_append_sheet(workbook, detailsWS, 'Top 5 Details');
+
 XLSX.writeFile(workbook, `top5-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل ترتيب الخمس الأوائل بنجاح.');
+alert('تم تنزيل ترتيب الخمس الأوائل مع التفاصيل بنجاح.');
 }).catch(err => {
 console.error(err);
 alert('حدث خطأ أثناء تحميل البيانات.');
 });
 }
 
-// دالة لتنزيل نتائج جميع المستخدمين في آخر اختبار
+// دالة لتنزيل نتائج جميع المستخدمين في آخر اختبار مع التفاصيل
 function exportAllUsersLastQuiz() {
 getLastQuizResults().then(results => {
 if (results.length === 0) {
@@ -3236,31 +3267,88 @@ alert('لا توجد نتائج لآخر اختبار.');
 return;
 }
 
-// إنشاء ملف Excel مفصل
-const workbook = XLSX.utils.book_new();
-const data = [
-['اسم اللاعب', 'الكود', 'السؤال', 'الإجابات المختارة', 'الإجابات الصحيحة', 'زمن الاستجابة (ثانية)', 'الحالة', 'النتيجة']
-];
-
+// تجميع النتائج حسب اللاعب
+const playerMap = {};
 results.forEach(r => {
+if (!playerMap[r.playerCode]) {
+playerMap[r.playerCode] = {
+playerCode: r.playerCode,
+playerName: r.playerName || 'Unknown',
+totalCorrect: 0,
+totalQuestions: 0,
+totalResponseTime: 0,
+responses: []
+};
+}
+const player = playerMap[r.playerCode];
+player.responses.push(r);
 const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
-data.push([
-r.playerName || 'Unknown',
-r.playerCode || '',
+if (isCorrect) player.totalCorrect++;
+player.totalQuestions++;
+player.totalResponseTime += (r.responseTime || 0);
+});
+
+// تحويل إلى مصفوفة وحساب المتوسطات
+const players = Object.values(playerMap).map(p => ({
+...p,
+avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
+accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
+passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' : 'FAIL'
+}));
+
+// إنشاء ملف Excel
+const workbook = XLSX.utils.book_new();
+
+// ورقة الملخص العام لجميع المستخدمين
+const summaryData = [
+['اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %', 'متوسط زمن الاستجابة (ث)', 'النتيجة']
+];
+players.forEach(p => {
+summaryData.push([
+p.playerName,
+p.playerCode,
+p.totalCorrect,
+p.totalQuestions,
+p.accuracy.toFixed(1),
+p.avgTime.toFixed(2),
+p.passFail
+]);
+});
+const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+XLSX.utils.book_append_sheet(workbook, summaryWS, 'All Users Summary');
+
+// ورقة التفاصيل لكل المستخدمين مع ترتيب الإجابات
+const detailsData = [
+['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
+];
+// ترتيب اللاعبين حسب الاسم
+const sortedPlayers = players.sort((a, b) => a.playerName.localeCompare(b.playerName));
+sortedPlayers.forEach(p => {
+// لكل سؤال من إجابات هذا اللاعب (مرتبة حسب التاريخ)
+const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+sortedResponses.forEach(r => {
+const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers);
+detailsData.push([
+p.playerName,
+p.playerCode,
+new Date(r.timestamp).toLocaleString(),
 r.question || '',
 (r.selectedAnswers || []).join(', '),
 (r.correctAnswers || []).join(', '),
 r.responseTime || 0,
-r.status || '',
 isCorrect ? 'صحيح' : 'خاطئ'
 ]);
 });
+// إضافة صف فارغ بين كل لاعب
+detailsData.push([]);
+});
+const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
+XLSX.utils.book_append_sheet(workbook, detailsWS, 'All Users Details');
 
-const worksheet = XLSX.utils.aoa_to_sheet(data);
-XLSX.utils.book_append_sheet(workbook, worksheet, 'All Results');
 XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل نتائج جميع المستخدمين بنجاح.');
+alert('تم تنزيل نتائج جميع المستخدمين مع التفاصيل بنجاح.');
 }).catch(err => {
 console.error(err);
 alert('حدث خطأ أثناء تحميل البيانات.');
