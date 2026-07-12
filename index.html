@@ -10,7 +10,6 @@
 <!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* (جميع الأنماط كما هي، لم تتغير) */
 * {
 margin: 0;
 padding: 0;
@@ -266,17 +265,6 @@ box-shadow: 0 6px 20px rgba(110, 142, 251, 0.4);
 .answer-btn:disabled {
 opacity: 0.7;
 pointer-events: none;
-}
-
-.answer-btn.correct-answer,
-.answer-btn.wrong-answer,
-.answer-btn.partial-answer {
-/* no styling */
-}
-
-.answer-btn.other-option {
-opacity: 0.6;
-background: #f0f0f0;
 }
 
 .confirm-btn {
@@ -3120,7 +3108,7 @@ alert('Error exporting data.');
 
 // ======== الوظائف الجديدة للزرين (المعدلة) ========
 
-// دالة للحصول على نتائج آخر اختبار (أحدث نموذج وجلسة)
+// دالة للحصول على نتائج آخر اختبار (أحدث نموذج وجلسة) بدون قيد زمني صارم
 function getLastQuizResults() {
 return new Promise((resolve, reject) => {
 database.ref('quizResults').once('value')
@@ -3147,19 +3135,15 @@ latestModelId = r.modelId;
 }
 });
 
+// إذا لم يكن هناك modelId، نأخذ جميع النتائج (حالة استثنائية)
 if (!latestModelId) {
-resolve([]);
+// قد تكون النتائج القديمة بدون modelId، نأخذها كلها كحل بديل
+resolve(allResults);
 return;
 }
 
-// نطاق زمني: آخر 30 دقيقة من أحدث نتيجة
-const cutoff = latestTime - 30 * 60 * 1000;
-
-// تصفية النتائج: نفس modelId وفي النطاق الزمني
-const filtered = allResults.filter(r => {
-const t = new Date(r.timestamp).getTime();
-return r.modelId === latestModelId && t >= cutoff;
-});
+// نأخذ جميع النتائج التي تحمل نفس modelId (بدون قيد زمني)
+const filtered = allResults.filter(r => r.modelId === latestModelId);
 
 resolve(filtered);
 })
@@ -3177,10 +3161,20 @@ return;
 
 // تحديد إجمالي عدد الأسئلة في هذا النموذج
 const modelId = results[0].modelId;
+// إذا كان modelId غير موجود، نحاول استنتاج النموذج من أول نتيجة
+let totalQuestions = 0;
+if (modelId) {
 const modelQuestions = questions.filter(q => q.modelId === modelId);
-const totalQuestions = modelQuestions.length;
+totalQuestions = modelQuestions.length;
+} else {
+// إذا لم يكن هناك modelId، نأخذ عدد الأسئلة من أول نتيجة (قد يكون غير دقيق)
+// لكننا سنعتبر أن جميع المستخدمين أجابوا على نفس عدد الأسئلة
+const counts = results.map(r => r.questionIndex + 1); // افتراض أن الأسئلة مرقمة
+totalQuestions = Math.max(...counts);
+}
+
 if (totalQuestions === 0) {
-alert('لا توجد أسئلة لهذا النموذج.');
+alert('تعذر تحديد عدد الأسئلة لهذا الاختبار. تأكد من وجود أسئلة مرتبطة بالنموذج.');
 return;
 }
 
@@ -3285,7 +3279,7 @@ XLSX.writeFile(workbook, `top5-last-quiz-${new Date().toISOString().split('T')[0
 alert('تم تنزيل ترتيب الخمس الأوائل مع التفاصيل بنجاح.');
 }).catch(err => {
 console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات.');
+alert('حدث خطأ أثناء تحميل البيانات: ' + err.message);
 });
 }
 
@@ -3299,10 +3293,17 @@ return;
 
 // تحديد إجمالي عدد الأسئلة في هذا النموذج
 const modelId = results[0].modelId;
+let totalQuestions = 0;
+if (modelId) {
 const modelQuestions = questions.filter(q => q.modelId === modelId);
-const totalQuestions = modelQuestions.length;
+totalQuestions = modelQuestions.length;
+} else {
+const counts = results.map(r => r.questionIndex + 1);
+totalQuestions = Math.max(...counts);
+}
+
 if (totalQuestions === 0) {
-alert('لا توجد أسئلة لهذا النموذج.');
+alert('تعذر تحديد عدد الأسئلة لهذا الاختبار.');
 return;
 }
 
@@ -3398,7 +3399,7 @@ XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('
 alert('تم تنزيل نتائج جميع المستخدمين المكملين مع التفاصيل بنجاح.');
 }).catch(err => {
 console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات.');
+alert('حدث خطأ أثناء تحميل البيانات: ' + err.message);
 });
 }
 
