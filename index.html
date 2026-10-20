@@ -1,19 +1,15 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kahoot FS - Quiz Platform (متعدد الإجابات)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة الاختبارات - كاهوت FS</title>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
-</script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <!-- Excel Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* (جميع الأنماط كما هي، لم تتغير) */
 * {
 margin: 0;
 padding: 0;
@@ -98,15 +94,9 @@ animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-0% {
-transform: scale(1);
-}
-50% {
-transform: scale(1.05);
-}
-100% {
-transform: scale(1);
-}
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
 }
 
 h1 {
@@ -166,14 +156,8 @@ animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-from {
-opacity: 0;
-transform: translateY(20px);
-}
-to {
-opacity: 1;
-transform: translateY(0);
-}
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
 }
 
 .card {
@@ -197,10 +181,7 @@ color: #a777e3;
 margin: 1.2rem 0 0.8rem;
 }
 
-input,
-button,
-select,
-textarea {
+input, button, select, textarea {
 padding: 0.8rem 1rem;
 margin: 0.5rem 0;
 border-radius: 5px;
@@ -208,9 +189,7 @@ border: 1px solid #ddd;
 font-size: 0.9rem;
 }
 
-input,
-select,
-textarea {
+input, select, textarea {
 width: 100%;
 max-width: 300px;
 }
@@ -240,6 +219,7 @@ cursor: not-allowed;
 transform: none;
 }
 
+/* Enhanced answer button styles for grid layout with better spacing */
 .answers-grid {
 display: grid;
 grid-template-columns: 1fr 1fr;
@@ -272,15 +252,7 @@ position: relative;
 background: #e9ecef;
 transform: translateY(-3px);
 border-color: #6e8efb;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.answer-btn.selected {
-background: #6e8efb;
-color: white;
-border-color: #6e8efb;
-transform: scale(1.03);
-box-shadow: 0 6px 20px rgba(110, 142, 251, 0.4);
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .answer-btn:disabled {
@@ -288,30 +260,7 @@ opacity: 0.7;
 pointer-events: none;
 }
 
-.answer-btn.correct-answer,
-.answer-btn.wrong-answer,
-.answer-btn.partial-answer {
-/* no styling */
-}
-
-.answer-btn.other-option {
-opacity: 0.6;
-background: #f0f0f0;
-}
-
-.confirm-btn {
-margin-top: 15px;
-padding: 12px 30px;
-font-size: 1.1rem;
-background: #4caf50;
-width: 100%;
-max-width: 200px;
-}
-
-.confirm-btn:hover {
-background: #45a049;
-}
-
+/* Responsive design for mobile */
 @media (max-width: 768px) {
 .answers-grid {
 grid-template-columns: 1fr;
@@ -333,8 +282,7 @@ flex-direction: column;
 gap: 10px;
 }
 
-.quiz-timer,
-.player-count {
+.quiz-timer, .player-count {
 min-width: 100%;
 }
 }
@@ -487,19 +435,11 @@ display: flex;
 align-items: center;
 margin-bottom: 0.5rem;
 gap: 10px;
-flex-wrap: wrap;
 }
 
 .answer-option input[type="text"] {
 flex: 1;
 max-width: none;
-}
-
-.answer-option input[type="checkbox"] {
-width: 20px;
-height: 20px;
-margin: 0;
-cursor: pointer;
 }
 
 .response-time {
@@ -536,6 +476,7 @@ border-radius: 4px;
 color: #c62828;
 }
 
+/* Results Styles */
 .stats-container {
 background: #f5f5f5;
 padding: 1rem;
@@ -555,7 +496,7 @@ background: white;
 padding: 1rem;
 border-radius: 8px;
 text-align: center;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .stat-number {
@@ -578,10 +519,9 @@ overflow: auto;
 max-height: 400px;
 }
 
-.result-header,
-.result-row {
+.result-header, .result-row {
 display: grid;
-grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1fr 1fr 2fr;
+grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 2fr;
 gap: 1px;
 padding: 0.5rem;
 min-width: 800px;
@@ -632,11 +572,13 @@ background: #2196f3;
 background: #f44336;
 }
 
+/* Host features container */
 #admin-features {
 max-height: 70vh;
 overflow-y: auto;
 }
 
+/* Security notice */
 .security-notice {
 background: #e3f2fd;
 border-left: 4px solid #2196f3;
@@ -651,6 +593,7 @@ color: #1565c0;
 margin-bottom: 0.5rem;
 }
 
+/* Show/Hide question styles */
 .question-toggle {
 background: #ff9800;
 padding: 0.3rem 0.8rem;
@@ -687,6 +630,7 @@ background: #f44336;
 color: white;
 }
 
+/* Player results styles */
 .player-results {
 text-align: center;
 padding: 2rem;
@@ -706,7 +650,7 @@ margin: 2rem 0;
 background: white;
 padding: 1.5rem;
 border-radius: 8px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .result-number {
@@ -715,18 +659,10 @@ font-weight: bold;
 display: block;
 }
 
-.result-correct {
-color: #4caf50;
-}
-.result-incorrect {
-color: #f44336;
-}
-.result-accuracy {
-color: #2196f3;
-}
-.result-time {
-color: #ff9800;
-}
+.result-correct { color: #4caf50; }
+.result-incorrect { color: #f44336; }
+.result-accuracy { color: #2196f3; }
+.result-time { color: #ff9800; }
 
 .result-label {
 font-size: 0.9rem;
@@ -760,6 +696,7 @@ color: #856404;
 margin-bottom: 0.5rem;
 }
 
+/* New styles for user management */
 .user-management {
 background: #e8f5e9;
 border-left: 4px solid #4caf50;
@@ -853,6 +790,7 @@ background: #2196f3;
 background: #ff9800;
 }
 
+/* Individual user results */
 .user-results {
 margin-top: 1rem;
 }
@@ -862,7 +800,7 @@ background: white;
 padding: 1rem;
 margin: 0.5rem 0;
 border-radius: 5px;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .user-result-header {
@@ -896,6 +834,7 @@ font-size: 0.7rem;
 color: #666;
 }
 
+/* Password change form */
 .password-change {
 background: #e3f2fd;
 border-left: 4px solid #2196f3;
@@ -908,6 +847,7 @@ border-radius: 4px;
 color: #1565c0;
 }
 
+/* Quiz Model Styles */
 .quiz-model {
 background: #f3e5f5;
 border-left: 4px solid #9c27b0;
@@ -997,6 +937,7 @@ background: #2e7d32;
 background: #ff9800;
 }
 
+/* Active Model Display */
 .active-model-display {
 background: #e8f5e9;
 border-left: 4px solid #4caf50;
@@ -1010,6 +951,7 @@ color: #2e7d32;
 margin-bottom: 0.5rem;
 }
 
+/* Quick Navigation */
 .quick-nav {
 display: flex;
 gap: 10px;
@@ -1027,6 +969,7 @@ font-size: 0.8rem;
 background: #5a7df9;
 }
 
+/* Model Selection Modal */
 .modal {
 display: none;
 position: fixed;
@@ -1035,7 +978,7 @@ left: 0;
 top: 0;
 width: 100%;
 height: 100%;
-background-color: rgba(0, 0, 0, 0.5);
+background-color: rgba(0,0,0,0.5);
 }
 
 .modal-content {
@@ -1045,7 +988,7 @@ padding: 2rem;
 border-radius: 10px;
 width: 90%;
 max-width: 500px;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 .modal-header {
@@ -1092,6 +1035,7 @@ background: #e8f5e9;
 border-color: #4caf50;
 }
 
+/* Quiz Separator */
 .quiz-separator {
 border-top: 2px dashed #ddd;
 margin: 2rem 0;
@@ -1108,6 +1052,7 @@ background: #f8f9fa;
 border-radius: 5px;
 }
 
+/* Final Rank Display */
 .final-rank-section {
 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 color: white;
@@ -1115,9 +1060,10 @@ padding: 25px;
 border-radius: 15px;
 margin: 20px 0;
 text-align: center;
-box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
+/* Question View Modal */
 .question-modal {
 display: none;
 position: fixed;
@@ -1126,7 +1072,7 @@ left: 0;
 top: 0;
 width: 100%;
 height: 100%;
-background-color: rgba(0, 0, 0, 0.5);
+background-color: rgba(0,0,0,0.5);
 overflow: auto;
 }
 
@@ -1137,7 +1083,7 @@ padding: 2rem;
 border-radius: 10px;
 width: 90%;
 max-width: 800px;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 max-height: 80vh;
 overflow-y: auto;
 }
@@ -1182,6 +1128,7 @@ background: #ffebee;
 border-left-color: #f44336;
 }
 
+/* Host Dashboard */
 .host-dashboard {
 display: grid;
 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1193,7 +1140,7 @@ margin-bottom: 2rem;
 background: white;
 border-radius: 10px;
 padding: 1.5rem;
-box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 border-left: 4px solid #6e8efb;
 }
 
@@ -1221,6 +1168,7 @@ gap: 10px;
 flex-wrap: wrap;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
 .container {
 width: 100%;
@@ -1271,13 +1219,11 @@ flex-direction: column;
 align-items: flex-start;
 }
 
-.time-input-group input,
-.time-input-group select {
+.time-input-group input, .time-input-group select {
 max-width: 100%;
 }
 
-.result-header,
-.result-row {
+.result-header, .result-row {
 grid-template-columns: 1fr;
 font-size: 0.8rem;
 min-width: auto;
@@ -1370,14 +1316,6 @@ h3 {
 font-size: 1.1rem;
 }
 }
-
-/* زر التصدير الجديد */
-.export-btn.combined {
-background: #9c27b0;
-}
-.export-btn.combined:hover {
-background: #7b1fa2;
-}
 </style>
 </head>
 <body>
@@ -1388,8 +1326,8 @@ background: #7b1fa2;
 ⏱️ Quiz: Not started
 </div>
 <div class="header-title">
-<h1>Kahoot FS (متعدد الإجابات)</h1>
-<p class="subtitle">اختر أكثر من إجابة صحيحة لكل سؤال</p>
+<h1>Kahoot FS</h1>
+<p class="subtitle">Answer questions at your own pace - no time limit</p>
 </div>
 <div class="player-count" id="player-count">
 👤 <span id="current-player-count">0</span> Players
@@ -1413,7 +1351,7 @@ background: #7b1fa2;
 </div>
 
 <div class="card">
-<input id="player-code" placeholder="Enter your access code">
+<input type="email" id="player-email" placeholder="Enter your email address" dir="ltr">
 <button id="joinBtn">Join Game</button>
 
 <div id="player-question"></div>
@@ -1424,13 +1362,12 @@ background: #7b1fa2;
 <div class="instructions">
 <h3>Player Instructions</h3>
 <ol>
-<li>Enter your access code and click "Join Game"</li>
-<li>Wait for the host to start the quiz</li>
-<li>Select one or more answers (click to toggle selection)</li>
-<li>Click "Confirm Answer" to submit your selection</li>
-<li>Your answers and response time will be recorded</li>
-<li>Each device has separate session - codes won't conflict</li>
-<li>View your results and download them at the end</li>
+<li>Enter your email address (registered by the host) and click "Join Game"</li>
+<li>Wait for the host to start the quiz (based on scheduled time)</li>
+<li>Select your answer when questions appear - NO time limit per question</li>
+<li>After answering, the next question appears immediately</li>
+<li>Your answers will be recorded automatically</li>
+<li>At the end, you can download an Excel file with your Arabic name, all questions, your answers, and correct answers</li>
 <li><strong>Note:</strong> You can only complete the quiz once per session</li>
 </ol>
 </div>
@@ -1599,22 +1536,22 @@ background: #7b1fa2;
 </div>
 </div>
 
-<!-- User Management Section -->
+<!-- User Management Section (EMAIL + ARABIC NAME) -->
 <div class="user-management" id="user-management">
 <h3>User Management</h3>
 
 <div class="form-group">
-<label for="user-name">User Name:</label>
-<input type="text" id="user-name" placeholder="Enter user's real name">
+<label for="user-arabic-name">Arabic Name:</label>
+<input type="text" id="user-arabic-name" placeholder="Enter user's Arabic name (e.g., أحمد محمد)">
 </div>
 
 <div class="form-group">
-<label for="user-code">Access Code:</label>
-<input type="text" id="user-code" placeholder="Enter unique access code">
+<label for="user-email">Email Address:</label>
+<input type="email" id="user-email" placeholder="Enter user's email">
 </div>
 
 <button onclick="addUser()">Add User</button>
-<div id="user-status" class="url-status">Add users with unique access codes</div>
+<div id="user-status" class="url-status">Add users with their email and Arabic name</div>
 
 <div class="user-list">
 <h4>Current Users</h4>
@@ -1638,22 +1575,22 @@ background: #7b1fa2;
 </div>
 
 <div class="form-group">
-<label>Answer Options (حدد الإجابات الصحيحة عبر checkbox):</label>
+<label>Answer Options:</label>
 <div class="answer-option">
 <input type="text" id="answer-1" placeholder="Enter answer 1">
-<input type="checkbox" class="correct-checkbox" data-index="0"> صحيح
+<input type="radio" name="correct-answer" value="0" checked> Correct Answer
 </div>
 <div class="answer-option">
 <input type="text" id="answer-2" placeholder="Enter answer 2">
-<input type="checkbox" class="correct-checkbox" data-index="1"> صحيح
+<input type="radio" name="correct-answer" value="1"> Correct Answer
 </div>
 <div class="answer-option">
 <input type="text" id="answer-3" placeholder="Enter answer 3">
-<input type="checkbox" class="correct-checkbox" data-index="2"> صحيح
+<input type="radio" name="correct-answer" value="2"> Correct Answer
 </div>
 <div class="answer-option">
 <input type="text" id="answer-4" placeholder="Enter answer 4">
-<input type="checkbox" class="correct-checkbox" data-index="3"> صحيح
+<input type="radio" name="correct-answer" value="3"> Correct Answer
 </div>
 </div>
 
@@ -1673,10 +1610,6 @@ background: #7b1fa2;
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
 <button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results (First Attempt Only)</button>
-<button class="export-btn" style="background: #ff9800;" onclick="exportTopFiveLastQuiz()">🏆 تنزيل ترتيب الخمس الأوائل (آخر اختبار)</button>
-<button class="export-btn" style="background: #9c27b0;" onclick="exportAllUsersLastQuiz()">📥 تنزيل نتائج جميع المستخدمين (آخر اختبار)</button>
-<!-- زر التصدير المجمع الجديد -->
-<button class="export-btn combined" onclick="exportCombinedLastQuizResults()">📊 تصدير تقرير شامل (الخمس الأوائل + جميع المستخدمين)</button>
 <button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
 </div>
@@ -1693,19 +1626,16 @@ background: #7b1fa2;
 <div class="instructions">
 <h3>Host Instructions</h3>
 <ol>
-<li>Enter the admin code to access host features</li>
+<li>Enter the admin code to access host features (default: adminHafsa)</li>
 <li>Create quiz models to organize questions</li>
-<li>Click on model names to view their questions</li>
-<li>Use the "Select" button to set a model as active for the quiz</li>
-<li>Use the "Deselect" button to remove a model from being active</li>
-<li>Add users with unique access codes</li>
+<li>Add users with their <strong>email address</strong> and <strong>Arabic name</strong></li>
 <li>Set the date and time for your quiz</li>
-<li>Add questions using the question management form (حدد الإجابات الصحيحة المتعددة)</li>
+<li>Add questions using the question management form</li>
 <li>Use Show/Hide buttons to control which questions are active</li>
 <li>View results in the Quiz Results section</li>
 <li>Export results to Excel or CSV for analysis</li>
-<li>Supports 30+ concurrent users easily</li>
-<li>Prevents users from restarting quiz by refreshing</li>
+<li>Players will login using their email (no access code needed)</li>
+<li>No time limit per question - players answer at their own pace</li>
 </ol>
 </div>
 </div>
@@ -1717,7 +1647,7 @@ background: #7b1fa2;
 <div class="setup-complete">
 <h3>✅ Kahoot FS Ready!✅</h3>
 <p>Kahoot quiz app is optimized for production use with Firebase.</p>
-<p><strong>Capacity:</strong> 30+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
+<p><strong>Capacity:</strong> 100+ concurrent users | <strong>Storage:</strong> Firebase Realtime Database</p>
 <button onclick="switchTab('player')">Go to Player Tab</button>
 </div>
 
@@ -1748,9 +1678,11 @@ background: #7b1fa2;
 <ol>
 <li><strong>Admin control:</strong> Full control over quiz</li>
 <li><strong>Data Protection:</strong> All data encrypted in Firebase</li>
-<li><strong>Real-time Ranking:</strong> See live rankings during quiz</li>
-<li><strong>First Attempt Export:</strong> Download only first attempts in bulk</li>
-<li><strong>Individual Export:</strong> Export all attempts for specific users</li>
+<li><strong>Email Login:</strong> Players login with their email address</li>
+<li><strong>Arabic Names:</strong> Users' Arabic names appear in results and Excel exports</li>
+<li><strong>No Time Limit:</strong> Players can answer questions at their own pace</li>
+<li><strong>Instant Next Question:</strong> After answering, next question appears immediately</li>
+<li><strong>Personal Excel Export:</strong> Each player can download their results with questions and answers</li>
 </ol>
 </div>
 
@@ -1758,8 +1690,8 @@ background: #7b1fa2;
 <h3>Kahoot FS Features</h3>
 <ul>
 <li>✅ Player results with statistics</li>
-<li>✅ Results download for players</li>
-<li>✅ Enhanced answer feedback</li>
+<li>✅ Results download for players (Excel with Arabic name)</li>
+<li>✅ No answer feedback (students don't know if correct/wrong)</li>
 <li>✅ Pass/Fail status (50% threshold)</li>
 <li>✅ Real-time ranking system</li>
 </ul>
@@ -1825,7 +1757,7 @@ console.error('Firebase initialization error:', error);
 const database = firebase.database();
 
 // Store admin password in Firebase to persist across sessions
-let adminCode = "adminHafsa";
+let adminCode = "adminHafsa"; // Default password
 
 // Load admin password from Firebase on startup
 function loadAdminPassword() {
@@ -1855,18 +1787,27 @@ console.error("Error saving admin password:", error);
 
 // Session management - unique for each device with fallback for incognito mode
 function getSessionId() {
+// Try sessionStorage first (normal browser)
 if (sessionStorage.getItem('playerSessionId')) {
 return sessionStorage.getItem('playerSessionId');
 }
+
+// Try localStorage as fallback (incognito mode)
 if (localStorage.getItem('playerSessionId')) {
 return localStorage.getItem('playerSessionId');
 }
+
+// Create new session ID
 const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+// Try to save in sessionStorage first
 try {
 sessionStorage.setItem('playerSessionId', sessionId);
 } catch (e) {
+// If sessionStorage fails (incognito), use localStorage
 localStorage.setItem('playerSessionId', sessionId);
 }
+
 return sessionId;
 }
 
@@ -1902,9 +1843,10 @@ var questions = [];
 var users = [];
 var quizModels = [];
 var currentIndex = 0;
-var playerCode = "";
+var playerEmail = "";
+var playerArabicName = "";
 var countdownInterval;
-var timeLeft = 30;
+var timeLeft = 25;
 var questionStartTime;
 var quizActive = false;
 var currentModelFilter = null;
@@ -1912,14 +1854,19 @@ var activeQuizModel = null;
 var selectedUserForExport = null;
 var selectedModelForExport = null;
 
-// Player results tracking
+// Player results tracking - store detailed answers for Excel export
 var playerResults = {
 correct: 0,
 incorrect: 0,
 total: 0,
 responseTimes: [],
-accuracy: 0
+accuracy: 0,
+answersDetails: [] // store each question's details for Excel
 };
+
+// Real-time ranking system (optional, keep original)
+let playerRankings = {};
+let rankingUpdateInterval = null;
 
 // Quiz timing configuration
 var quizStartTime = localStorage.getItem('quizStartTime');
@@ -1951,6 +1898,7 @@ setTimeout(loadDataFromFirebase, 1000);
 return;
 }
 
+// Load admin password first
 loadAdminPassword();
 
 database.ref('quizTime').on('value', (snapshot) => {
@@ -1972,15 +1920,18 @@ questions = Object.values(data);
 } else {
 questions = [];
 }
+
 localStorage.setItem('quizQuestions', JSON.stringify(questions));
 displayQuestions();
 updateDashboard();
+
 if (document.getElementById('player').classList.contains('active') &&
 document.getElementById('player-question').innerHTML !== "") {
 showPlayerQuestion();
 }
 });
 
+// Load users (now with email and arabicName)
 database.ref('users').on('value', (snapshot) => {
 const data = snapshot.val();
 if (data) {
@@ -1988,6 +1939,7 @@ users = Object.values(data);
 } else {
 users = [];
 }
+
 localStorage.setItem('quizUsers', JSON.stringify(users));
 if (document.getElementById('host').classList.contains('active')) {
 displayUsers();
@@ -1995,6 +1947,7 @@ updateDashboard();
 }
 });
 
+// Load quiz models
 database.ref('quizModels').on('value', (snapshot) => {
 const data = snapshot.val();
 if (data) {
@@ -2002,6 +1955,7 @@ quizModels = Object.values(data);
 } else {
 quizModels = [];
 }
+
 localStorage.setItem('quizModels', JSON.stringify(quizModels));
 if (document.getElementById('host').classList.contains('active')) {
 displayQuizModels();
@@ -2009,6 +1963,7 @@ updateDashboard();
 }
 });
 
+// Load active quiz model
 database.ref('activeQuizModel').on('value', (snapshot) => {
 const data = snapshot.val();
 if (data) {
@@ -2022,12 +1977,15 @@ updateDashboard();
 }
 });
 
+// Track active players
 database.ref('activePlayers').on('value', (snapshot) => {
 const data = snapshot.val();
 if (data) {
 const activePlayerCount = Object.keys(data).length;
 document.getElementById('current-player-count').textContent = activePlayerCount;
 document.getElementById('dashboard-player-count').textContent = activePlayerCount;
+
+// Add visual feedback when players are active
 const playerCountElement = document.getElementById('player-count');
 if (activePlayerCount > 0) {
 playerCountElement.classList.add('active');
@@ -2044,6 +2002,7 @@ document.getElementById('player-count').classList.remove('active');
 
 // Update dashboard with current stats
 function updateDashboard() {
+// Update quiz status
 const now = new Date().getTime();
 let quizStatus = 'Not Started';
 if (now >= quizStartTime && now <= quizEndTime) {
@@ -2053,13 +2012,17 @@ quizStatus = 'Ended';
 }
 document.getElementById('dashboard-quiz-status').textContent = quizStatus;
 
+// Update quiz time
 const start = new Date(quizStartTime);
 const end = new Date(quizEndTime);
-const timeRange = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) +
-' - ' + end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+const timeRange = start.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) +
+' - ' + end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 document.getElementById('dashboard-quiz-time').textContent = 'Time: ' + timeRange;
+
+// Update question count
 document.getElementById('dashboard-question-count').textContent = questions.length;
 
+// Update active model
 if (activeQuizModel) {
 const model = quizModels.find(m => m.id === activeQuizModel);
 document.getElementById('dashboard-active-model').textContent = model ? model.name : 'Unknown';
@@ -2088,6 +2051,7 @@ displayQuizModels();
 updateDashboard();
 document.getElementById('model-status').textContent = 'Active model cleared. Players will see all questions.';
 document.getElementById('model-status').className = 'url-status success';
+
 setTimeout(() => {
 document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
 document.getElementById('model-status').className = 'url-status';
@@ -2097,10 +2061,12 @@ document.getElementById('model-status').className = 'url-status';
 // Update active model display
 function updateActiveModelDisplay() {
 const activeModelInfo = document.getElementById('active-model-info');
+
 if (activeQuizModel) {
 const model = quizModels.find(m => m.id === activeQuizModel);
 const modelName = model ? model.name : 'Unknown Model';
 const questionCount = questions.filter(q => q.modelId === activeQuizModel).length;
+
 activeModelInfo.innerHTML = `
 <strong>${modelName}</strong> - ${questionCount} questions
 <br><small>Players will only see questions from this model</small>
@@ -2165,15 +2131,15 @@ document.getElementById('model-status').className = 'url-status error';
 }
 
 // Save quiz results to Firebase
-function saveToFirebase(playerCode, playerName, question, selectedAnswers, correctAnswers, responseTime, status,
-modelId) {
+function saveToFirebase(playerEmail, playerName, question, selectedAnswer, correctAnswer, responseTime, status, modelId) {
 const responseId = database.ref().child('quizResults').push().key;
+
 const quizData = {
-playerCode: playerCode || "Unknown Code",
+playerEmail: playerEmail || "Unknown Email",
 playerName: playerName || "Unknown Player",
 question: question || "Unknown Question",
-selectedAnswers: selectedAnswers || [],
-correctAnswers: correctAnswers || [],
+selectedAnswer: selectedAnswer || "No Answer",
+correctAnswer: correctAnswer || "Unknown",
 responseTime: responseTime || 0,
 status: status || "Unknown",
 timestamp: new Date().toISOString(),
@@ -2182,6 +2148,7 @@ sessionId: getSessionId(),
 deviceType: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
 modelId: modelId || "No Model"
 };
+
 database.ref('quizResults/' + responseId).set(quizData)
 .then(() => {
 console.log("Data saved successfully for session:", quizData.sessionId);
@@ -2195,13 +2162,15 @@ database.ref('quizResults/' + responseId).set(quizData);
 }
 
 // Track active player
-function trackActivePlayer(playerCode, action) {
-if (!playerCode) return;
-const playerRef = database.ref('activePlayers/' + playerCode);
+function trackActivePlayer(playerEmail, action) {
+if (!playerEmail) return;
+
+const playerRef = database.ref('activePlayers/' + playerEmail.replace(/\./g, '_'));
+
 if (action === 'join') {
 playerRef.set({
 joinedAt: new Date().toISOString(),
-playerName: users.find(u => u.code === playerCode)?.name || 'Unknown'
+playerName: users.find(u => u.email === playerEmail)?.arabicName || 'Unknown'
 });
 } else if (action === 'leave') {
 playerRef.remove();
@@ -2217,6 +2186,7 @@ if (!results) {
 alert('No results to export.');
 return;
 }
+
 const data = Object.values(results);
 const worksheet = XLSX.utils.json_to_sheet(data);
 const workbook = XLSX.utils.book_new();
@@ -2238,535 +2208,25 @@ if (!results) {
 alert('No results to export.');
 return;
 }
+
 const data = Object.values(results);
-const csvContent = generateCSV(data);
-downloadCSV(csvContent, 'quiz-results.csv');
+const csv = convertToCSV(data);
+const blob = new Blob([csv], { type: 'text/csv' });
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'quiz-results.csv';
+a.click();
+window.URL.revokeObjectURL(url);
 alert('CSV file downloaded successfully!');
 })
 .catch((error) => {
 console.error("Error exporting to CSV:", error);
-alert('Error exporting data: ' + error.message);
+alert('Error exporting data.');
 });
 }
 
-function generateCSV(data) {
-if (data.length === 0) return '';
-const headers = Object.keys(data[0]);
-let csv = '\uFEFF';
-csv += headers.map(header => escapeCSVField(header)).join(',') + '\r\n';
-data.forEach(row => {
-const rowData = headers.map(header => escapeCSVField(row[header]));
-csv += rowData.join(',') + '\r\n';
-});
-return csv;
-}
-
-function escapeCSVField(field) {
-if (field === null || field === undefined) return '';
-const stringField = String(field);
-if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n') || stringField.includes(
-'\r')) {
-return `"${stringField.replace(/"/g, '""')}"`;
-}
-return stringField;
-}
-
-function downloadCSV(csvContent, filename) {
-const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-const url = URL.createObjectURL(blob);
-const link = document.createElement('a');
-link.setAttribute('href', url);
-link.setAttribute('download', filename);
-link.style.visibility = 'hidden';
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-URL.revokeObjectURL(url);
-}
-
-// ============================================================
-// دالة تصدير التقرير الشامل (الخمس الأوائل + جميع المستخدمين)
-// ============================================================
-function exportCombinedLastQuizResults() {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-alert('لا توجد نتائج للتصدير.');
-return;
-}
-
-const allResults = Object.values(results);
-if (allResults.length === 0) {
-alert('لا توجد نتائج للتصدير.');
-return;
-}
-
-// 1) تحديد النموذج الافتراضي "الأحدث" بناءً على النتائج
-// نجمع كل النتائج حسب modelId ونأخذ النموذج الذي لديه أحدث تاريخ
-const modelGroups = {};
-allResults.forEach(r => {
-const mid = r.modelId || 'NoModel';
-if (!modelGroups[mid]) modelGroups[mid] = [];
-modelGroups[mid].push(r);
-});
-
-let latestModelId = null;
-let latestTimestamp = 0;
-for (const [mid, items] of Object.entries(modelGroups)) {
-// أحدث زمن في هذه المجموعة
-const maxTs = items.reduce((max, it) => {
-const t = new Date(it.timestamp).getTime();
-return t > max ? t : max;
-}, 0);
-if (maxTs > latestTimestamp) {
-latestTimestamp = maxTs;
-latestModelId = mid;
-}
-}
-
-if (!latestModelId) {
-alert('تعذر تحديد النموذج الافتراضي.');
-return;
-}
-
-// جلب النتائج الخاصة بهذا النموذج
-const modelResults = allResults.filter(r => (r.modelId || 'NoModel') === latestModelId);
-if (modelResults.length === 0) {
-alert('لا توجد نتائج لهذا النموذج.');
-return;
-}
-
-// اسم النموذج
-const model = quizModels.find(m => m.id === latestModelId);
-const modelName = model ? model.name : 'النموذج الافتراضي (غير معروف)';
-
-// 2) تجميع النتائج حسب اللاعب (أول محاولة فقط لكل لاعب)
-const playerMap = {};
-modelResults.forEach(r => {
-const code = r.playerCode || 'unknown';
-if (!playerMap[code]) {
-playerMap[code] = {
-playerCode: code,
-playerName: r.playerName || 'Unknown',
-totalCorrect: 0,
-totalQuestions: 0,
-totalResponseTime: 0,
-responses: []
-};
-}
-const p = playerMap[code];
-p.responses.push(r);
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) p.totalCorrect++;
-p.totalQuestions++;
-p.totalResponseTime += (r.responseTime || 0);
-});
-
-// تحويل إلى مصفوفة وحساب المتوسطات
-const players = Object.values(playerMap).map(p => ({
-...p,
-avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
-passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' :
-'FAIL'
-}));
-
-// ترتيب حسب الصحة تنازلياً، ثم الوقت تصاعدياً
-players.sort((a, b) => {
-if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
-return a.avgTime - b.avgTime;
-});
-
-// الخمسة الأوائل
-const top5 = players.slice(0, 5);
-
-// 3) إنشاء ملف Excel متعدد الأوراق
-const workbook = XLSX.utils.book_new();
-
-// --- الورقة 1: ملخص جميع المستخدمين مرتبين ---
-const allSummaryData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %',
-'متوسط زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-players.forEach((p, idx) => {
-allSummaryData.push([
-idx + 1,
-p.playerName,
-p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
-});
-const allSummaryWS = XLSX.utils.aoa_to_sheet(allSummaryData);
-XLSX.utils.book_append_sheet(workbook, allSummaryWS, 'جميع المستخدمين');
-
-// --- الورقة 2: الخمسة الأوائل (ملخص) ---
-const top5SummaryData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %',
-'متوسط زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-top5.forEach((p, idx) => {
-top5SummaryData.push([
-idx + 1,
-p.playerName,
-p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
-});
-const top5WS = XLSX.utils.aoa_to_sheet(top5SummaryData);
-XLSX.utils.book_append_sheet(workbook, top5WS, 'الخمس الأوائل');
-
-// --- الورقة 3: تفاصيل جميع المستخدمين (كل إجابة) ---
-const detailsData = [
-['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة',
-'زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-// ترتيب اللاعبين حسب الاسم
-const sortedPlayers = [...players].sort((a, b) => a.playerName.localeCompare(b.playerName));
-sortedPlayers.forEach(p => {
-const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b
-.timestamp));
-sortedResponses.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-detailsData.push([
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
-});
-// صف فارغ بين كل لاعب
-detailsData.push([]);
-});
-const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
-XLSX.utils.book_append_sheet(workbook, detailsWS, 'تفاصيل الإجابات');
-
-// --- الورقة 4: تفاصيل الخمسة الأوائل ---
-const top5DetailsData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة',
-'زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-top5.forEach((p, rank) => {
-const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b
-.timestamp));
-sortedResponses.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-top5DetailsData.push([
-rank + 1,
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
-});
-top5DetailsData.push([]);
-});
-const top5DetailsWS = XLSX.utils.aoa_to_sheet(top5DetailsData);
-XLSX.utils.book_append_sheet(workbook, top5DetailsWS, 'تفاصيل الخمس الأوائل');
-
-// --- الورقة 5: معلومات عامة عن الاختبار ---
-const infoData = [
-['تقرير شامل - آخر اختبار للنموذج الافتراضي'],
-[''],
-['النموذج:', modelName],
-['عدد الأسئلة في هذا النموذج:', questions.filter(q => q.modelId === latestModelId).length],
-['عدد اللاعبين:', players.length],
-['إجمالي الإجابات:', modelResults.length],
-['تاريخ التصدير:', new Date().toLocaleString()],
-[''],
-['ترتيب اللاعبين حسب:'],
-['1- عدد الإجابات الصحيحة (تنازلياً)'],
-['2- متوسط زمن الاستجابة (تصاعدياً)']
-];
-const infoWS = XLSX.utils.aoa_to_sheet(infoData);
-XLSX.utils.book_append_sheet(workbook, infoWS, 'معلومات الاختبار');
-
-// 4) تحميل الملف
-const fileName =
-`تقرير_شامل_${modelName}_${new Date().toISOString().split('T')[0]}.xlsx`;
-XLSX.writeFile(workbook, fileName);
-alert(`✅ تم تصدير التقرير الشامل بنجاح!\nالنموذج: ${modelName}\nعدد اللاعبين: ${players.length}\nعدد الإجابات: ${modelResults.length}`);
-})
-.catch((error) => {
-console.error("Error exporting combined results:", error);
-alert('حدث خطأ أثناء تصدير التقرير: ' + error.message);
-});
-}
-
-// ============================================================
-// دوال مساعدة موجودة مسبقاً (نحتفظ بها)
-// ============================================================
-
-function getLastQuizResults() {
-return new Promise((resolve, reject) => {
-database.ref('quizResults').once('value')
-.then((snapshot) => {
-const results = snapshot.val();
-if (!results) {
-resolve([]);
-return;
-}
-const allResults = Object.values(results);
-if (allResults.length === 0) {
-resolve([]);
-return;
-}
-const latest = allResults.reduce((max, r) => {
-const t = new Date(r.timestamp).getTime();
-return t > max ? t : max;
-}, 0);
-const cutoff = latest - 10 * 60 * 1000;
-const filtered = allResults.filter(r => {
-const t = new Date(r.timestamp).getTime();
-return t >= cutoff;
-});
-resolve(filtered);
-})
-.catch(reject);
-});
-}
-
-function exportTopFiveLastQuiz() {
-getLastQuizResults().then(results => {
-if (results.length === 0) {
-alert('لا توجد نتائج لآخر اختبار.');
-return;
-}
-const playerMap = {};
-results.forEach(r => {
-if (!playerMap[r.playerCode]) {
-playerMap[r.playerCode] = {
-playerCode: r.playerCode,
-playerName: r.playerName || 'Unknown',
-totalCorrect: 0,
-totalQuestions: 0,
-totalResponseTime: 0,
-responses: []
-};
-}
-const player = playerMap[r.playerCode];
-player.responses.push(r);
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) player.totalCorrect++;
-player.totalQuestions++;
-player.totalResponseTime += (r.responseTime || 0);
-});
-const players = Object.values(playerMap).map(p => ({
-...p,
-avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
-passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' :
-'FAIL'
-}));
-players.sort((a, b) => {
-if (b.totalCorrect !== a.totalCorrect) return b.totalCorrect - a.totalCorrect;
-return a.avgTime - b.avgTime;
-});
-const top5 = players.slice(0, 5);
-const workbook = XLSX.utils.book_new();
-const summaryData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %',
-'متوسط زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-top5.forEach((p, index) => {
-summaryData.push([
-index + 1,
-p.playerName,
-p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
-});
-const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
-XLSX.utils.book_append_sheet(workbook, summaryWS, 'Top 5 Summary');
-const detailsData = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة',
-'زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-top5.forEach((p, rank) => {
-p.responses.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-detailsData.push([
-rank + 1,
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
-});
-detailsData.push([]);
-});
-const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
-XLSX.utils.book_append_sheet(workbook, detailsWS, 'Top 5 Details');
-XLSX.writeFile(workbook, `top5-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل ترتيب الخمس الأوائل مع التفاصيل بنجاح.');
-}).catch(err => {
-console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات.');
-});
-}
-
-function exportAllUsersLastQuiz() {
-getLastQuizResults().then(results => {
-if (results.length === 0) {
-alert('لا توجد نتائج لآخر اختبار.');
-return;
-}
-const playerMap = {};
-results.forEach(r => {
-if (!playerMap[r.playerCode]) {
-playerMap[r.playerCode] = {
-playerCode: r.playerCode,
-playerName: r.playerName || 'Unknown',
-totalCorrect: 0,
-totalQuestions: 0,
-totalResponseTime: 0,
-responses: []
-};
-}
-const player = playerMap[r.playerCode];
-player.responses.push(r);
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) player.totalCorrect++;
-player.totalQuestions++;
-player.totalResponseTime += (r.responseTime || 0);
-});
-const players = Object.values(playerMap).map(p => ({
-...p,
-avgTime: p.totalQuestions > 0 ? (p.totalResponseTime / p.totalQuestions) : 0,
-accuracy: p.totalQuestions > 0 ? ((p.totalCorrect / p.totalQuestions) * 100) : 0,
-passFail: (p.totalQuestions > 0 && ((p.totalCorrect / p.totalQuestions) * 100) >= 50) ? 'PASS' :
-'FAIL'
-}));
-const workbook = XLSX.utils.book_new();
-const summaryData = [
-['اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة المئوية %',
-'متوسط زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-players.forEach(p => {
-summaryData.push([
-p.playerName,
-p.playerCode,
-p.totalCorrect,
-p.totalQuestions,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
-});
-const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
-XLSX.utils.book_append_sheet(workbook, summaryWS, 'All Users Summary');
-const detailsData = [
-['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة',
-'زمن الاستجابة (ث)', 'النتيجة'
-]
-];
-const sortedPlayers = players.sort((a, b) => a.playerName.localeCompare(b.playerName));
-sortedPlayers.forEach(p => {
-const sortedResponses = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b
-.timestamp));
-sortedResponses.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-detailsData.push([
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
-});
-detailsData.push([]);
-});
-const detailsWS = XLSX.utils.aoa_to_sheet(detailsData);
-XLSX.utils.book_append_sheet(workbook, detailsWS, 'All Users Details');
-XLSX.writeFile(workbook, `all-users-last-quiz-${new Date().toISOString().split('T')[0]}.xlsx`);
-alert('تم تنزيل نتائج جميع المستخدمين مع التفاصيل بنجاح.');
-}).catch(err => {
-console.error(err);
-alert('حدث خطأ أثناء تحميل البيانات.');
-});
-}
-
-// ============================================================
-// دوال مساعدة عامة
-// ============================================================
-
-function arraysEqual(a, b) {
-if (!Array.isArray(a) || !Array.isArray(b)) return false;
-if (a.length !== b.length) return false;
-const sortedA = [...a].sort();
-const sortedB = [...b].sort();
-return sortedA.every((val, i) => val === sortedB[i]);
-}
-
-function groupResultsByAttempt(results) {
-if (!results || results.length === 0) return [];
-const sortedResults = [...results].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-const attempts = [];
-let currentAttempt = [sortedResults[0]];
-for (let i = 1; i < sortedResults.length; i++) {
-const currentResult = sortedResults[i];
-const previousResult = sortedResults[i - 1];
-const timeDiff = new Date(currentResult.timestamp) - new Date(previousResult.timestamp);
-const isNewAttempt = timeDiff > 30 * 60 * 1000 ||
-currentResult.sessionId !== previousResult.sessionId;
-if (isNewAttempt) {
-attempts.push(currentAttempt);
-currentAttempt = [currentResult];
-} else {
-currentAttempt.push(currentResult);
-}
-}
-if (currentAttempt.length > 0) {
-attempts.push(currentAttempt);
-}
-return attempts;
-}
-
+// Download all individual user results - FIRST ATTEMPT ONLY
 function downloadAllUserResults() {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
@@ -2775,66 +2235,86 @@ if (!results) {
 alert('No results to export.');
 return;
 }
+
 const allResults = Object.values(results);
+
 if (allResults.length === 0) {
 alert('No results to export.');
 return;
 }
+
+// Group results by user AND by quiz/model to track multiple attempts
 const resultsByUserAndQuiz = {};
+
 allResults.forEach(result => {
-if (result && result.playerCode && result.modelId) {
-const userCode = result.playerCode;
+if (result && result.playerEmail && result.modelId) {
+const userEmail = result.playerEmail;
 const quizId = result.modelId;
-if (!resultsByUserAndQuiz[userCode]) {
-resultsByUserAndQuiz[userCode] = {};
+
+if (!resultsByUserAndQuiz[userEmail]) {
+resultsByUserAndQuiz[userEmail] = {};
 }
-if (!resultsByUserAndQuiz[userCode][quizId]) {
-resultsByUserAndQuiz[userCode][quizId] = [];
+
+if (!resultsByUserAndQuiz[userEmail][quizId]) {
+resultsByUserAndQuiz[userEmail][quizId] = [];
 }
-resultsByUserAndQuiz[userCode][quizId].push(result);
+
+resultsByUserAndQuiz[userEmail][quizId].push(result);
 }
 });
+
 if (Object.keys(resultsByUserAndQuiz).length === 0) {
 alert('No valid user results to export.');
 return;
 }
+
 const workbook = XLSX.utils.book_new();
-const allUsersData = [
-['Player Name', 'Code', 'Quiz Model', 'First Attempt Date', 'Number of Questions Answered',
-'Correct Answers', 'Wrong Answers', 'Accuracy %', 'Response Time Avg (seconds)',
+
+// Sheet 1: All Users Combined - FIRST ATTEMPT ONLY
+const allUsersData = [];
+
+allUsersData.push([
+'Player Name',
+'Email',
+'Quiz Model',
+'First Attempt Date',
+'Number of Questions Answered',
+'Correct Answers',
+'Wrong Answers',
+'Accuracy %',
+'Response Time Avg (seconds)',
 'Pass/Fail'
-]
-];
-Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
-const user = users.find(u => u && u.code === playerCode);
-const userName = user ? user.name : `Unknown User (${playerCode})`;
+]);
+
+Object.entries(resultsByUserAndQuiz).forEach(([playerEmail, userQuizzes]) => {
+const user = users.find(u => u && u.email === playerEmail);
+const userName = user ? user.arabicName : `Unknown User (${playerEmail})`;
+
 Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
 const model = quizModels.find(m => m && m.id === modelId);
 const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
+
 const attempts = groupResultsByAttempt(quizResults);
+
 if (attempts.length > 0) {
 const firstAttempt = attempts[0];
+
 const totalQuestions = firstAttempt.length;
-const correctAnswers = firstAttempt.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+const correctAnswers = firstAttempt.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
 const wrongAnswers = totalQuestions - correctAnswers;
-const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) *
-100).toFixed(1) : 0;
-const totalResponseTime = firstAttempt.reduce((sum, r) => sum + (r
-.responseTime || 0), 0);
-const avgResponseTime = totalQuestions > 0 ? (totalResponseTime /
-totalQuestions).toFixed(2) : 0;
+const accuracy = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(1) : 0;
+
+const totalResponseTime = firstAttempt.reduce((sum, r) => sum + (r.responseTime || 0), 0);
+const avgResponseTime = totalQuestions > 0 ? (totalResponseTime / totalQuestions).toFixed(2) : 0;
+
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
 const attemptDate = firstAttempt.length > 0 ?
 new Date(firstAttempt[0].timestamp).toLocaleDateString() : 'Unknown Date';
+
 allUsersData.push([
 userName,
-playerCode,
+playerEmail,
 modelName,
 attemptDate,
 totalQuestions,
@@ -2847,40 +2327,55 @@ passFail
 }
 });
 });
+
 if (allUsersData.length > 1) {
 const allUsersSheet = XLSX.utils.aoa_to_sheet(allUsersData);
 XLSX.utils.book_append_sheet(workbook, allUsersSheet, "First Attempts Only");
 }
-Object.entries(resultsByUserAndQuiz).forEach(([playerCode, userQuizzes]) => {
-const user = users.find(u => u && u.code === playerCode);
-const userName = user ? user.name : `Unknown User (${playerCode})`;
+
+// Individual User Sheets (FIRST ATTEMPT ONLY)
+Object.entries(resultsByUserAndQuiz).forEach(([playerEmail, userQuizzes]) => {
+const user = users.find(u => u && u.email === playerEmail);
+const userName = user ? user.arabicName : `Unknown User (${playerEmail})`;
+
 let userSheetData = [];
 let quizCounter = 1;
+
 Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
 const model = quizModels.find(m => m && m.id === modelId);
 const modelName = model ? model.name : `Unknown Quiz (${modelId})`;
+
 const attempts = groupResultsByAttempt(quizResults);
+
 if (attempts.length > 0) {
 const firstAttempt = attempts[0];
+
 userSheetData.push([`QUIZ ${quizCounter}: ${modelName}`]);
 userSheetData.push([`FIRST ATTEMPT ONLY`]);
-userSheetData.push([`USER: ${userName} (${playerCode})`]);
+userSheetData.push([`USER: ${userName} (${playerEmail})`]);
 userSheetData.push([`DATE: ${new Date(firstAttempt[0].timestamp).toLocaleString()}`]);
 userSheetData.push([]);
+
 userSheetData.push([
-'Question Number', 'Question Text', 'Selected Answers', 'Correct Answers',
-'Response Time (seconds)', 'Status', 'Timestamp', 'Result'
+'Question Number',
+'Question Text',
+'Selected Answer',
+'Correct Answer',
+'Response Time (seconds)',
+'Status',
+'Timestamp',
+'Result'
 ]);
+
 firstAttempt.forEach((result, index) => {
 if (result) {
-const isCorrect = Array.isArray(result.selectedAnswers) && Array
-.isArray(result.correctAnswers) &&
-arraysEqual(result.selectedAnswers, result.correctAnswers);
+const isCorrect = result.selectedAnswer === result.correctAnswer;
+
 userSheetData.push([
 index + 1,
 result.question || 'N/A',
-(result.selectedAnswers || []).join(', '),
-(result.correctAnswers || []).join(', '),
+result.selectedAnswer || 'No Answer',
+result.correctAnswer || 'N/A',
 result.responseTime || 0,
 result.status || 'Unknown',
 new Date(result.timestamp).toLocaleString(),
@@ -2888,56 +2383,53 @@ isCorrect ? 'CORRECT' : 'INCORRECT'
 ]);
 }
 });
-const correctAnswers = firstAttempt.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r
-.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+
+const correctAnswers = firstAttempt.filter(r => r && r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = firstAttempt.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) *
-100).toFixed(1) : 0;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
-(firstAttempt.reduce((sum, r) => sum + (r.responseTime || 0), 0) /
-totalAnswers).toFixed(2) : 0;
+(firstAttempt.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
 userSheetData.push([]);
 userSheetData.push(['FIRST ATTEMPT SUMMARY', '', '', '', '', '', '', '']);
 userSheetData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
 userSheetData.push(['Attempt:', 'First Attempt', '', '', '', '', '', '']);
 userSheetData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
 userSheetData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
-userSheetData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '',
-'', '', ''
-]);
+userSheetData.push(['Wrong Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
 userSheetData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
-userSheetData.push(['Average Response Time:', avgResponseTime + ' seconds', '',
-'', '', '', '', ''
-]);
+userSheetData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
 userSheetData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
+
 if (quizCounter < Object.keys(userQuizzes).length) {
 userSheetData.push([]);
 userSheetData.push(['--- NEXT QUIZ ---', '', '', '', '', '', '', '']);
 userSheetData.push([]);
 }
+
 quizCounter++;
 }
 });
+
 if (userSheetData.length > 0) {
 const worksheet = XLSX.utils.aoa_to_sheet(userSheetData);
-let sheetName = `${userName} (${playerCode}) - First Attempt`;
+
+let sheetName = `${userName} (${playerEmail}) - First Attempt`;
 sheetName = sheetName.substring(0, 31);
 sheetName = sheetName.replace(/[\\/*\[\]?:]/g, '');
+
 XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 }
 });
+
 if (workbook.SheetNames.length === 0) {
 alert('No valid data to export.');
 return;
 }
-XLSX.writeFile(workbook,
-`first-attempt-results-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+XLSX.writeFile(workbook, `first-attempt-results-${new Date().toISOString().split('T')[0]}.xlsx`);
+
 alert('First attempt results downloaded successfully!');
 })
 .catch((error) => {
@@ -2946,6 +2438,59 @@ alert('Error exporting data: ' + error.message);
 });
 }
 
+function groupResultsByAttempt(results) {
+if (!results || results.length === 0) return [];
+
+const sortedResults = [...results].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+const attempts = [];
+let currentAttempt = [sortedResults[0]];
+
+for (let i = 1; i < sortedResults.length; i++) {
+const currentResult = sortedResults[i];
+const previousResult = sortedResults[i - 1];
+
+const timeDiff = new Date(currentResult.timestamp) - new Date(previousResult.timestamp);
+const isNewAttempt = timeDiff > 30 * 60 * 1000 ||
+currentResult.sessionId !== previousResult.sessionId;
+
+if (isNewAttempt) {
+attempts.push(currentAttempt);
+currentAttempt = [currentResult];
+} else {
+currentAttempt.push(currentResult);
+}
+}
+
+if (currentAttempt.length > 0) {
+attempts.push(currentAttempt);
+}
+
+return attempts;
+}
+
+function convertToCSV(data) {
+if (data.length === 0) return '';
+
+const headers = Object.keys(data[0]);
+const csvRows = [];
+csvRows.push(headers.join(','));
+
+for (const row of data) {
+const values = headers.map(header => {
+const value = row[header] || '';
+if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+return `"${value.replace(/"/g, '""')}"`;
+}
+return value;
+});
+csvRows.push(values.join(','));
+}
+
+return csvRows.join('\n');
+}
+
+// Delete all quiz results
 function deleteAllResults() {
 database.ref('quizResults').remove()
 .then(() => {
@@ -2958,8 +2503,9 @@ alert('Error deleting results. Please try again.');
 });
 }
 
-function deleteUserResults(playerCode) {
-if (confirm(`Are you sure you want to delete all results for user with code: ${playerCode}?`)) {
+// Delete results for a specific user
+function deleteUserResults(playerEmail) {
+if (confirm(`Are you sure you want to delete all results for user with email: ${playerEmail}?`)) {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
 const results = snapshot.val();
@@ -2967,21 +2513,25 @@ if (!results) {
 alert('No results found for this user.');
 return;
 }
+
 const updates = {};
 let foundResults = false;
+
 Object.keys(results).forEach(key => {
-if (results[key] && results[key].playerCode === playerCode) {
+if (results[key] && results[key].playerEmail === playerEmail) {
 updates[key] = null;
 foundResults = true;
 }
 });
+
 if (!foundResults) {
 alert('No results found for this user.');
 return;
 }
+
 database.ref('quizResults').update(updates)
 .then(() => {
-alert(`All results for user ${playerCode} have been deleted successfully!`);
+alert(`All results for user ${playerEmail} have been deleted successfully!`);
 setTimeout(() => {
 loadQuizResults();
 }, 1000);
@@ -3006,62 +2556,78 @@ deleteAllResults();
 }
 }
 
+// Load and display quiz results
 function loadQuizResults() {
 const resultsContainer = document.getElementById('results-container');
 resultsContainer.innerHTML = '<p>Loading results...</p>';
+
 database.ref('quizResults').once('value')
 .then((snapshot) => {
 const results = snapshot.val();
 resultsContainer.innerHTML = '';
+
 if (!results) {
 resultsContainer.innerHTML = '<p>No results yet. Results will appear here as players answer questions.</p>';
 return;
 }
+
 const resultsArray = Object.values(results);
 const totalResponses = resultsArray.length;
-const correctAnswers = resultsArray.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+const correctAnswers = resultsArray.filter(r => r.selectedAnswer === r.correctAnswer).length;
 const accuracy = totalResponses > 0 ? ((correctAnswers / totalResponses) * 100).toFixed(1) : 0;
 const avgResponseTime = totalResponses > 0 ?
-(resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) :
-0;
-const uniquePlayers = new Set(resultsArray.map(r => r.playerCode)).size;
+(resultsArray.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalResponses).toFixed(2) : 0;
+
+const uniquePlayers = new Set(resultsArray.map(r => r.playerEmail)).size;
+
 let resultsHTML = `
 <div class="stats-container">
 <h3>Quiz Statistics</h3>
 <div class="stats-grid">
-<div class="stat-card"><span class="stat-number">${uniquePlayers}</span><span class="stat-label">Unique Players</span></div>
-<div class="stat-card"><span class="stat-number">${totalResponses}</span><span class="stat-label">Total Responses</span></div>
-<div class="stat-card"><span class="stat-number">${correctAnswers}</span><span class="stat-label">Correct Answers</span></div>
-<div class="stat-card"><span class="stat-number">${accuracy}%</span><span class="stat-label">Accuracy</span></div>
-<div class="stat-card"><span class="stat-number">${avgResponseTime}s</span><span class="stat-label">Avg Response Time</span></div>
+<div class="stat-card">
+<span class="stat-number">${uniquePlayers}</span>
+<span class="stat-label">Unique Players</span>
+</div>
+<div class="stat-card">
+<span class="stat-number">${totalResponses}</span>
+<span class="stat-label">Total Responses</span>
+</div>
+<div class="stat-card">
+<span class="stat-number">${correctAnswers}</span>
+<span class="stat-label">Correct Answers</span>
+</div>
+<div class="stat-card">
+<span class="stat-number">${accuracy}%</span>
+<span class="stat-label">Accuracy</span>
+</div>
+<div class="stat-card">
+<span class="stat-number">${avgResponseTime}s</span>
+<span class="stat-label">Avg Response Time</span>
+</div>
 </div>
 </div>
 `;
+
 resultsHTML += '<div class="results-table">';
-resultsHTML +=
-'<div class="result-header"><span>Player</span><span>Question</span><span>Selected Answers</span><span>Correct Answers</span><span>Time</span><span>Status</span><span>Device</span><span>Model</span></div>';
+resultsHTML += '<div class="result-header">';
+resultsHTML += '<span>Player</span><span>Question</span><span>Answer</span><span>Correct</span><span>Time</span><span>Status</span><span>Device</span><span>Model</span>';
+resultsHTML += '</div>';
+
 resultsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
 resultsArray.forEach((result) => {
-const isCorrect = Array.isArray(result.selectedAnswers) && Array.isArray(result
-.correctAnswers) &&
-arraysEqual(result.selectedAnswers, result.correctAnswers);
-const shortQuestion = result.question ? (result.question.length > 30 ?
-result.question.substring(0, 30) + '...' : result.question) : 'N/A';
+const isCorrect = result.selectedAnswer === result.correctAnswer;
+const shortQuestion = result.question.length > 30 ?
+result.question.substring(0, 30) + '...' : result.question;
 const model = quizModels.find(m => m.id === result.modelId);
 const modelName = model ? model.name : 'No Model';
-const selectedStr = (result.selectedAnswers || []).join(', ');
-const correctStr = (result.correctAnswers || []).join(', ');
+
 resultsHTML += `
 <div class="result-row ${isCorrect ? 'correct' : 'incorrect'}">
-<span>${result.playerName} (${result.playerCode})</span>
-<span title="${result.question || ''}">${shortQuestion}</span>
-<span>${selectedStr || 'No Answer'}</span>
-<span>${correctStr || 'N/A'}</span>
+<span>${result.playerName} (${result.playerEmail})</span>
+<span title="${result.question}">${shortQuestion}</span>
+<span>${result.selectedAnswer}</span>
+<span>${result.correctAnswer}</span>
 <span>${result.responseTime}s</span>
 <span>${result.status}</span>
 <span>${result.deviceType}</span>
@@ -3069,8 +2635,10 @@ resultsHTML += `
 </div>
 `;
 });
+
 resultsHTML += '</div>';
 resultsContainer.innerHTML = resultsHTML;
+
 loadIndividualUserResults(resultsArray);
 })
 .catch((error) => {
@@ -3082,58 +2650,62 @@ resultsContainer.innerHTML = '<p>Error loading results.</p>';
 function loadIndividualUserResults(resultsArray) {
 const userResultsContainer = document.getElementById('user-results-container');
 userResultsContainer.innerHTML = '<p>Loading individual user results...</p>';
+
 const resultsByUserAndQuiz = {};
+
 resultsArray.forEach(result => {
-if (!resultsByUserAndQuiz[result.playerCode]) {
-resultsByUserAndQuiz[result.playerCode] = {};
+if (!resultsByUserAndQuiz[result.playerEmail]) {
+resultsByUserAndQuiz[result.playerEmail] = {};
 }
-if (!resultsByUserAndQuiz[result.playerCode][result.modelId]) {
-resultsByUserAndQuiz[result.playerCode][result.modelId] = [];
+if (!resultsByUserAndQuiz[result.playerEmail][result.modelId]) {
+resultsByUserAndQuiz[result.playerEmail][result.modelId] = [];
 }
-resultsByUserAndQuiz[result.playerCode][result.modelId].push(result);
+resultsByUserAndQuiz[result.playerEmail][result.modelId].push(result);
 });
+
 let userResultsHTML = '';
-for (const [playerCode, userQuizzes] of Object.entries(resultsByUserAndQuiz)) {
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+
+for (const [playerEmail, userQuizzes] of Object.entries(resultsByUserAndQuiz)) {
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'Unknown User';
+
 userResultsHTML += `
 <div class="user-result-item">
 <div class="user-result-header">
 <div>
-<strong>${userName}</strong> (Code: ${playerCode})
+<strong>${userName}</strong> (Email: ${playerEmail})
 <br><small>Total Quizzes Taken: ${Object.keys(userQuizzes).length}</small>
 </div>
 <div>
-<button class="user-btn export" onclick="openModelSelection('${playerCode}')">Export All Attempts</button>
-<button class="user-btn delete-results" onclick="deleteUserResults('${playerCode}')">Delete Results</button>
-<button class="user-btn delete" onclick="deleteUserByCode('${playerCode}')">Delete User</button>
+<button class="user-btn export" onclick="openModelSelection('${playerEmail}')">Export All Attempts</button>
+<button class="user-btn delete-results" onclick="deleteUserResults('${playerEmail}')">Delete Results</button>
+<button class="user-btn delete" onclick="deleteUserByEmail('${playerEmail}')">Delete User</button>
 </div>
 </div>`;
+
 let quizCounter = 1;
 Object.entries(userQuizzes).forEach(([modelId, quizResults]) => {
 const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Quiz';
+
 const attempts = groupResultsByAttempt(quizResults);
+
 userResultsHTML += `
 <div class="quiz-separator">
 <div class="quiz-title">Quiz ${quizCounter}: ${modelName} (${attempts.length} attempt${attempts.length > 1 ? 's' : ''})</div>`;
+
 attempts.forEach((attemptResults, attemptIndex) => {
-const correctAnswers = attemptResults.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+const correctAnswers = attemptResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = attemptResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(
-1) : 0;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
-(attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) /
-totalAnswers).toFixed(2) : 0;
+(attemptResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 const passFailClass = passFail === 'PASS' ? 'status-active' : 'status-inactive';
+
 const attemptDate = attemptResults.length > 0 ?
 new Date(attemptResults[0].timestamp).toLocaleString() : 'N/A';
+
 userResultsHTML += `
 <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
 <div style="font-weight: bold; margin-bottom: 5px;">
@@ -3141,41 +2713,65 @@ ${attempts.length > 1 ? `Attempt ${attemptIndex + 1}` : 'Single Attempt'}
 - ${attemptDate}
 </div>
 <div class="user-result-stats">
-<div class="user-stat"><span class="user-stat-number">${correctAnswers}</span><span class="user-stat-label">Correct</span></div>
-<div class="user-stat"><span class="user-stat-number">${totalAnswers - correctAnswers}</span><span class="user-stat-label">Incorrect</span></div>
-<div class="user-stat"><span class="user-stat-number">${totalAnswers}</span><span class="user-stat-label">Total</span></div>
-<div class="user-stat"><span class="user-stat-number">${accuracy}%</span><span class="user-stat-label">Accuracy</span></div>
-<div class="user-stat"><span class="user-stat-number">${avgResponseTime}s</span><span class="user-stat-label">Avg Time</span></div>
-<div class="user-stat"><span class="user-stat-number ${passFailClass}">${passFail}</span><span class="user-stat-label">Result</span></div>
+<div class="user-stat">
+<span class="user-stat-number">${correctAnswers}</span>
+<span class="user-stat-label">Correct</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers - correctAnswers}</span>
+<span class="user-stat-label">Incorrect</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${totalAnswers}</span>
+<span class="user-stat-label">Total</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${accuracy}%</span>
+<span class="user-stat-label">Accuracy</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number">${avgResponseTime}s</span>
+<span class="user-stat-label">Avg Time</span>
+</div>
+<div class="user-stat">
+<span class="user-stat-number ${passFailClass}">${passFail}</span>
+<span class="user-stat-label">Result</span>
+</div>
 </div>
 </div>`;
 });
+
 userResultsHTML += `</div>`;
 quizCounter++;
 });
+
 userResultsHTML += `</div>`;
 }
+
 userResultsContainer.innerHTML = userResultsHTML;
 }
 
-function deleteUserByCode(userCode) {
-if (confirm(`Are you sure you want to delete user with code: ${userCode}? This will also delete all their results.`)) {
-const userIndex = users.findIndex(u => u.code === userCode);
+function deleteUserByEmail(userEmail) {
+if (confirm(`Are you sure you want to delete user with email: ${userEmail}? This will also delete all their results.`)) {
+const userIndex = users.findIndex(u => u.email === userEmail);
 if (userIndex !== -1) {
 users.splice(userIndex, 1);
 saveUsersToFirebase();
 displayUsers();
 }
-deleteUserResults(userCode);
+
+deleteUserResults(userEmail);
 }
 }
 
-function openModelSelection(playerCode) {
-selectedUserForExport = playerCode;
+function openModelSelection(playerEmail) {
+selectedUserForExport = playerEmail;
 const modal = document.getElementById('modelSelectionModal');
 const modelList = document.getElementById('modelSelectionList');
+
 modelList.innerHTML = '';
 selectedModelForExport = null;
+
 database.ref('quizResults').once('value')
 .then((snapshot) => {
 const results = snapshot.val();
@@ -3183,26 +2779,25 @@ if (!results) {
 alert('No results found for this user.');
 return;
 }
+
 const allResults = Object.values(results);
-const userResults = allResults.filter(r => r.playerCode === playerCode);
+const userResults = allResults.filter(r => r.playerEmail === playerEmail);
+
 if (userResults.length === 0) {
 alert('No results found for this user.');
 return;
 }
+
 const userModels = [...new Set(userResults.map(r => r.modelId))];
+
 userModels.forEach(modelId => {
 const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Quiz';
 const modelResults = userResults.filter(r => r.modelId === modelId);
-const correctAnswers = modelResults.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+const correctAnswers = modelResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = modelResults.length;
-const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100)
-.toFixed(1) : 0;
+const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
+
 const modelItem = document.createElement('div');
 modelItem.className = 'model-selection-item';
 modelItem.innerHTML = `
@@ -3222,6 +2817,7 @@ selectedModelForExport = modelId;
 };
 modelList.appendChild(modelItem);
 });
+
 modal.style.display = 'block';
 })
 .catch((error) => {
@@ -3242,11 +2838,12 @@ if (!selectedUserForExport || !selectedModelForExport) {
 alert('Please select a quiz to export.');
 return;
 }
+
 exportUserResultsForModel(selectedUserForExport, selectedModelForExport);
 closeModelSelection();
 }
 
-function exportUserResultsForModel(playerCode, modelId) {
+function exportUserResultsForModel(playerEmail, modelId) {
 database.ref('quizResults').once('value')
 .then((snapshot) => {
 const results = snapshot.val();
@@ -3254,53 +2851,62 @@ if (!results) {
 alert('No results to export.');
 return;
 }
+
 const allResults = Object.values(results);
-const userResults = allResults.filter(r => r.playerCode === playerCode && r.modelId ===
-modelId);
+const userResults = allResults.filter(r => r.playerEmail === playerEmail && r.modelId === modelId);
+
 if (userResults.length === 0) {
 alert('No results found for this user and quiz.');
 return;
 }
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'Unknown User';
+
 const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Quiz';
+
 const workbook = XLSX.utils.book_new();
+
 const excelData = [];
+
 excelData.push([`QUIZ: ${modelName}`]);
-excelData.push([`USER: ${userName} (${playerCode})`]);
+excelData.push([`USER: ${userName} (${playerEmail})`]);
 excelData.push([]);
+
 excelData.push([
-'Question Number', 'Question Text', 'Selected Answers', 'Correct Answers',
-'Response Time (seconds)', 'Status', 'Timestamp', 'Result'
+'Question Number',
+'Question Text',
+'Selected Answer',
+'Correct Answer',
+'Response Time (seconds)',
+'Status',
+'Timestamp',
+'Result'
 ]);
+
 userResults.forEach((result, index) => {
-const isCorrect = Array.isArray(result.selectedAnswers) && Array.isArray(result
-.correctAnswers) &&
-arraysEqual(result.selectedAnswers, result.correctAnswers);
+const isCorrect = result.selectedAnswer === result.correctAnswer;
+
 excelData.push([
 index + 1,
 result.question || 'N/A',
-(result.selectedAnswers || []).join(', '),
-(result.correctAnswers || []).join(', '),
+result.selectedAnswer || 'No Answer',
+result.correctAnswer || 'N/A',
 result.responseTime || 0,
 result.status || 'Unknown',
 new Date(result.timestamp).toLocaleString(),
 isCorrect ? 'CORRECT' : 'INCORRECT'
 ]);
 });
-const correctAnswers = userResults.filter(r => {
-if (Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers)) {
-return arraysEqual(r.selectedAnswers, r.correctAnswers);
-}
-return false;
-}).length;
+
+const correctAnswers = userResults.filter(r => r.selectedAnswer === r.correctAnswer).length;
 const totalAnswers = userResults.length;
 const accuracy = totalAnswers > 0 ? ((correctAnswers / totalAnswers) * 100).toFixed(1) : 0;
 const avgResponseTime = totalAnswers > 0 ?
-(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(
-2) : 0;
+(userResults.reduce((sum, r) => sum + (r.responseTime || 0), 0) / totalAnswers).toFixed(2) : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
+
 excelData.push([]);
 excelData.push(['QUIZ SUMMARY', '', '', '', '', '', '', '']);
 excelData.push(['Quiz Name:', modelName, '', '', '', '', '', '']);
@@ -3308,18 +2914,19 @@ excelData.push(['Total Questions:', totalAnswers, '', '', '', '', '', '']);
 excelData.push(['Correct Answers:', correctAnswers, '', '', '', '', '', '']);
 excelData.push(['Incorrect Answers:', totalAnswers - correctAnswers, '', '', '', '', '', '']);
 excelData.push(['Accuracy:', accuracy + '%', '', '', '', '', '', '']);
-excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '',
-''
-]);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds', '', '', '', '', '', '']);
 excelData.push(['Quiz Result:', passFail, '', '', '', '', '', '']);
+
 const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
 let sheetName = `${userName} - ${modelName}`;
 sheetName = sheetName.substring(0, 31);
 sheetName = sheetName.replace(/[\\/*\[\]?:]/g, '');
+
 XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-XLSX.writeFile(workbook,
-`quiz-results-${userName}-${modelName}-${new Date().toISOString().split('T')[0]}.xlsx`
-);
+
+XLSX.writeFile(workbook, `quiz-results-${userName}-${modelName}-${new Date().toISOString().split('T')[0]}.xlsx`);
+
 alert(`Excel file for ${userName} - ${modelName} downloaded successfully!`);
 })
 .catch((error) => {
@@ -3328,23 +2935,52 @@ alert('Error exporting data.');
 });
 }
 
-// ============================================================
-// دوال إدارة النماذج والأسئلة والمستخدمين (موجودة مسبقاً)
-// ============================================================
+var savedQuestions = localStorage.getItem('quizQuestions');
+if (savedQuestions) {
+questions = JSON.parse(savedQuestions);
+} else {
+questions = [];
+}
+
+var savedUsers = localStorage.getItem('quizUsers');
+if (savedUsers) {
+users = JSON.parse(savedUsers);
+} else {
+users = [];
+}
+
+var savedModels = localStorage.getItem('quizModels');
+if (savedModels) {
+quizModels = JSON.parse(savedModels);
+} else {
+quizModels = [];
+if (quizModels.length === 0) {
+quizModels.push({
+id: 'default',
+name: 'Default Model',
+createdAt: new Date().toISOString()
+});
+saveQuizModelsToFirebase();
+}
+}
 
 function loadHostTimeSettings() {
 var quizDate = new Date(quizStartTime);
 document.getElementById('host-quiz-date').value = quizDate.toISOString().split('T')[0];
+
 var startTime = new Date(quizStartTime);
 var hours = startTime.getHours();
 var ampm = hours >= 12 ? 'PM' : 'AM';
 hours = hours % 12;
 hours = hours ? hours : 12;
+
 document.getElementById('host-start-hour').value = hours;
 document.getElementById('host-start-minute').value = startTime.getMinutes();
 document.getElementById('host-start-ampm').value = ampm;
+
 var duration = Math.round((quizEndTime - quizStartTime) / 60000);
 document.getElementById('host-quiz-duration').value = duration;
+
 displayQuestions();
 displayUsers();
 displayQuizModels();
@@ -3353,26 +2989,33 @@ updateDashboard();
 
 function addQuizModel() {
 var modelName = document.getElementById('model-name').value.trim();
+
 if (!modelName) {
 document.getElementById('model-status').textContent = 'Please enter a model name';
 document.getElementById('model-status').className = 'url-status error';
 return;
 }
+
 if (quizModels.some(m => m.name.toLowerCase() === modelName.toLowerCase())) {
 document.getElementById('model-status').textContent = 'Model name already exists';
 document.getElementById('model-status').className = 'url-status error';
 return;
 }
+
 var newModel = {
 id: 'model-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
 name: modelName,
 createdAt: new Date().toISOString()
 };
+
 quizModels.push(newModel);
 saveQuizModelsToFirebase();
+
 document.getElementById('model-status').textContent = 'Model created successfully!';
 document.getElementById('model-status').className = 'url-status success';
+
 document.getElementById('model-name').value = '';
+
 setTimeout(() => {
 document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
 document.getElementById('model-status').className = 'url-status';
@@ -3382,20 +3025,26 @@ document.getElementById('model-status').className = 'url-status';
 function displayQuizModels() {
 var container = document.getElementById('models-container');
 var modelSelect = document.getElementById('question-model');
+
 container.innerHTML = '';
 modelSelect.innerHTML = '<option value="">-- Select a Model --</option>';
+
 if (quizModels.length === 0) {
 container.innerHTML = '<p>No models created yet.</p>';
 return;
 }
+
 quizModels.forEach((model, index) => {
 const questionCount = questions.filter(q => q.modelId === model.id).length;
+
 var modelItem = document.createElement('div');
 modelItem.className = 'model-item';
 modelItem.onclick = function() {
 filterQuestionsByModel(model.id);
 };
+
 const isActive = activeQuizModel === model.id;
+
 modelItem.innerHTML = `
 <div class="model-info">
 <div class="model-name">${model.name} ${isActive ? '⭐' : ''}</div>
@@ -3411,6 +3060,7 @@ ${isActive ?
 </div>
 `;
 container.appendChild(modelItem);
+
 var option = document.createElement('option');
 option.value = model.id;
 option.textContent = model.name;
@@ -3421,33 +3071,36 @@ modelSelect.appendChild(option);
 function viewModelQuestions(modelId) {
 const model = quizModels.find(m => m.id === modelId);
 const modelQuestions = questions.filter(q => q.modelId === modelId);
+
 if (modelQuestions.length === 0) {
 alert(`No questions found in the "${model.name}" model.`);
 return;
 }
+
 let modalContent = `
 <h3>Questions in "${model.name}"</h3>
 <p>Total questions: ${modelQuestions.length}</p>
 <div class="question-modal-answers">
 `;
+
 modelQuestions.forEach((q, index) => {
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q
-.correct
-] : []);
+const correctIndex = q.answers.indexOf(q.correct);
 modalContent += `
 <div class="answer-item">
 <strong>Question ${index + 1}:</strong> ${q.question}
 <div style="margin-top: 10px;">
 ${q.answers.map((answer, i) => `
-<div class="answer-item ${correctAnswers.includes(answer) ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
-${correctAnswers.includes(answer) ? '✅ ' : '❌ '} ${answer}
+<div class="answer-item ${i === correctIndex ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
+${i === correctIndex ? '✅ ' : '❌ '} ${answer}
 </div>
 `).join('')}
 </div>
 </div>
 `;
 });
+
 modalContent += `</div>`;
+
 document.getElementById('question-modal-body').innerHTML = modalContent;
 document.getElementById('questionViewModal').style.display = 'block';
 }
@@ -3457,31 +3110,34 @@ if (questions.length === 0) {
 alert('No questions available.');
 return;
 }
+
 let modalContent = `
 <h3>All Questions</h3>
 <p>Total questions: ${questions.length}</p>
 <div class="question-modal-answers">
 `;
+
 questions.forEach((q, index) => {
 const model = quizModels.find(m => m.id === q.modelId);
 const modelName = model ? model.name : 'No Model';
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q
-.correct
-] : []);
+const correctIndex = q.answers.indexOf(q.correct);
+
 modalContent += `
 <div class="answer-item">
 <strong>Question ${index + 1} (${modelName}):</strong> ${q.question}
 <div style="margin-top: 10px;">
 ${q.answers.map((answer, i) => `
-<div class="answer-item ${correctAnswers.includes(answer) ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
-${correctAnswers.includes(answer) ? '✅ ' : '❌ '} ${answer}
+<div class="answer-item ${i === correctIndex ? 'correct' : ''}" style="margin: 5px 0; padding: 8px; border-radius: 4px;">
+${i === correctIndex ? '✅ ' : '❌ '} ${answer}
 </div>
 `).join('')}
 </div>
 </div>
 `;
 });
+
 modalContent += `</div>`;
+
 document.getElementById('question-modal-body').innerHTML = modalContent;
 document.getElementById('questionViewModal').style.display = 'block';
 }
@@ -3493,14 +3149,17 @@ document.getElementById('questionViewModal').style.display = 'none';
 function selectQuizModel(modelId) {
 activeQuizModel = modelId;
 saveActiveQuizModel(modelId);
+
 const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Model';
-document.getElementById('model-status').textContent =
-`"${modelName}" is now the active quiz model. Players will only see questions from this model.`;
+
+document.getElementById('model-status').textContent = `"${modelName}" is now the active quiz model. Players will only see questions from this model.`;
 document.getElementById('model-status').className = 'url-status success';
+
 displayQuizModels();
 updateActiveModelDisplay();
 updateDashboard();
+
 setTimeout(() => {
 document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
 document.getElementById('model-status').className = 'url-status';
@@ -3510,11 +3169,14 @@ document.getElementById('model-status').className = 'url-status';
 function deselectQuizModel() {
 activeQuizModel = null;
 saveActiveQuizModel(null);
+
 document.getElementById('model-status').textContent = 'Model deselected. Players will see all questions.';
 document.getElementById('model-status').className = 'url-status success';
+
 displayQuizModels();
 updateActiveModelDisplay();
 updateDashboard();
+
 setTimeout(() => {
 document.getElementById('model-status').textContent = 'Create quiz models to organize questions';
 document.getElementById('model-status').className = 'url-status';
@@ -3525,7 +3187,9 @@ function filterQuestionsByModel(modelId) {
 currentModelFilter = modelId;
 const model = quizModels.find(m => m.id === modelId);
 const modelName = model ? model.name : 'Unknown Model';
+
 document.getElementById('current-model-display').innerHTML = `- ${modelName}`;
+
 displayQuestions();
 }
 
@@ -3538,12 +3202,12 @@ displayQuestions();
 function deleteQuizModel(index) {
 const model = quizModels[index];
 const modelQuestions = questions.filter(q => q.modelId === model.id);
+
 if (modelQuestions.length > 0) {
-if (!confirm(
-`This model has ${modelQuestions.length} questions. Deleting it will remove the model association from these questions. Are you sure you want to delete this model?`
-)) {
+if (!confirm(`This model has ${modelQuestions.length} questions. Deleting it will remove the model association from these questions. Are you sure you want to delete this model?`)) {
 return;
 }
+
 questions.forEach(question => {
 if (question.modelId === model.id) {
 question.modelId = null;
@@ -3552,14 +3216,17 @@ question.modelName = null;
 });
 saveQuestionsToFirebase();
 }
+
 if (activeQuizModel === model.id) {
 activeQuizModel = null;
 saveActiveQuizModel(null);
 }
+
 quizModels.splice(index, 1);
 saveQuizModelsToFirebase();
 displayQuizModels();
 updateDashboard();
+
 if (currentModelFilter === model.id) {
 showAllQuestions();
 }
@@ -3568,9 +3235,9 @@ showAllQuestions();
 function recoverMissingModels() {
 let recoveredCount = 0;
 let assignedToDefault = 0;
+
 questions.forEach(question => {
-if (!question.modelId || question.modelId === "No Model" || !quizModels.find(m => m.id === question
-.modelId)) {
+if (!question.modelId || question.modelId === "No Model" || !quizModels.find(m => m.id === question.modelId)) {
 if (question.modelName && quizModels.length > 0) {
 const model = quizModels.find(m => m.name === question.modelName);
 if (model) {
@@ -3579,6 +3246,7 @@ recoveredCount++;
 return;
 }
 }
+
 if (quizModels.length > 0) {
 const firstModel = quizModels[0];
 question.modelId = firstModel.id;
@@ -3587,6 +3255,7 @@ assignedToDefault++;
 }
 }
 });
+
 if (recoveredCount > 0 || assignedToDefault > 0) {
 saveQuestionsToFirebase();
 displayQuestions();
@@ -3601,12 +3270,14 @@ alert('No questions with missing models found.');
 
 function validateAllModels() {
 let issuesFound = 0;
+
 questions.forEach((question, index) => {
 if (!question.modelId || !quizModels.find(m => m.id === question.modelId)) {
 console.warn(`Question ${index} has missing model:`, question);
 issuesFound++;
 }
 });
+
 quizModels.forEach(model => {
 const modelQuestions = questions.filter(q => q.modelId === model.id);
 if (modelQuestions.length === 0) {
@@ -3614,6 +3285,7 @@ console.warn(`Model "${model.name}" has no questions`);
 issuesFound++;
 }
 });
+
 if (issuesFound === 0) {
 alert('✅ All models and questions are properly linked!');
 } else {
@@ -3625,33 +3297,39 @@ function debugModelQuestions() {
 console.log("=== DEBUG: Models and Questions ===");
 console.log("Total models:", quizModels.length);
 console.log("Total questions:", questions.length);
+
 quizModels.forEach(model => {
 const modelQuestions = questions.filter(q => q.modelId === model.id);
 console.log(`Model "${model.name}" (${model.id}): ${modelQuestions.length} questions`);
+
 modelQuestions.forEach((q, index) => {
 console.log(` Q${index + 1}: ${q.question.substring(0, 50)}...`);
 });
 });
+
 const orphanedQuestions = questions.filter(q => !q.modelId || !quizModels.find(m => m.id === q.modelId));
 console.log("Orphaned questions (no valid model):", orphanedQuestions.length);
+
 orphanedQuestions.forEach((q, index) => {
 console.log(` Orphan Q${index + 1}: ${q.question.substring(0, 50)}... (Model: ${q.modelId})`);
 });
-alert(
-`Debug complete. Check console for details.\nTotal models: ${quizModels.length}\nTotal questions: ${questions.length}\nOrphaned questions: ${orphanedQuestions.length}`
-);
+
+alert(`Debug complete. Check console for details.\nTotal models: ${quizModels.length}\nTotal questions: ${questions.length}\nOrphaned questions: ${orphanedQuestions.length}`);
 }
 
 function verifyAdmin() {
 var code = document.getElementById('admin-code').value;
 var status = document.getElementById('admin-status');
+
 document.getElementById('admin-code').value = '';
+
 if (code === adminCode) {
 document.getElementById('admin-features').style.display = 'block';
 status.textContent = 'Admin access granted! Features unlocked.';
 status.className = 'url-status success';
 loadQuizResults();
 updateDashboard();
+
 document.querySelector('.admin-section:first-child').style.display = 'none';
 } else {
 status.textContent = 'Invalid admin code. Please try again.';
@@ -3664,25 +3342,31 @@ var currentPassword = document.getElementById('current-password').value;
 var newPassword = document.getElementById('new-password').value;
 var confirmPassword = document.getElementById('confirm-password').value;
 var status = document.getElementById('password-status');
+
 if (currentPassword !== adminCode) {
 status.textContent = 'Current password is incorrect.';
 status.className = 'url-status error';
 return;
 }
+
 if (newPassword !== confirmPassword) {
 status.textContent = 'New passwords do not match.';
 status.className = 'url-status error';
 return;
 }
+
 if (newPassword.length < 4) {
 status.textContent = 'New password must be at least 4 characters long.';
 status.className = 'url-status error';
 return;
 }
+
 adminCode = newPassword;
 saveAdminPassword(newPassword);
+
 status.textContent = 'Password changed successfully!';
 status.className = 'url-status success';
+
 document.getElementById('current-password').value = '';
 document.getElementById('new-password').value = '';
 document.getElementById('confirm-password').value = '';
@@ -3694,49 +3378,67 @@ var hour = parseInt(document.getElementById('host-start-hour').value);
 var minute = parseInt(document.getElementById('host-start-minute').value);
 var ampm = document.getElementById('host-start-ampm').value;
 var duration = document.getElementById('host-quiz-duration').value;
+
 if (!date || isNaN(hour) || isNaN(minute) || !duration) {
 document.getElementById('host-time-status').textContent = 'Please fill in all fields correctly';
 document.getElementById('host-time-status').className = 'url-status error';
 return;
 }
+
 if (ampm === 'PM' && hour < 12) hour += 12;
 else if (ampm === 'AM' && hour === 12) hour = 0;
+
 var startDate = new Date(date);
 startDate.setHours(hour, minute, 0, 0);
 var endDate = new Date(startDate.getTime() + parseInt(duration) * 60000);
+
 quizStartTime = startDate.getTime();
 quizEndTime = endDate.getTime();
+
 saveQuizTimeToFirebase(quizStartTime, quizEndTime);
 updateQuizTimeInfo();
 updateDashboard();
+
 setTimeout(() => {
 document.getElementById('host-time-status').textContent = 'Quiz time configuration saved';
 document.getElementById('host-time-status').className = 'url-status';
 }, 3000);
 }
 
+// MODIFIED: Add user with email and Arabic name
 function addUser() {
-var userName = document.getElementById('user-name').value;
-var userCode = document.getElementById('user-code').value;
-if (!userName || !userCode) {
-document.getElementById('user-status').textContent = 'Please fill in all fields';
+var arabicName = document.getElementById('user-arabic-name').value.trim();
+var email = document.getElementById('user-email').value.trim();
+
+if (!arabicName || !email) {
+document.getElementById('user-status').textContent = 'Please fill in both Arabic name and email';
 document.getElementById('user-status').className = 'url-status error';
 return;
 }
-if (users.some(u => u.code === userCode)) {
-document.getElementById('user-status').textContent = 'This access code is already in use';
+
+if (users.some(u => u.email === email)) {
+document.getElementById('user-status').textContent = 'This email is already registered';
 document.getElementById('user-status').className = 'url-status error';
 return;
 }
-var newUser = { name: userName, code: userCode, active: true };
+
+var newUser = {
+email: email,
+arabicName: arabicName,
+active: true
+};
+
 users.push(newUser);
 saveUsersToFirebase();
+
 document.getElementById('user-status').textContent = 'User added successfully!';
 document.getElementById('user-status').className = 'url-status success';
-document.getElementById('user-name').value = '';
-document.getElementById('user-code').value = '';
+
+document.getElementById('user-arabic-name').value = '';
+document.getElementById('user-email').value = '';
+
 setTimeout(() => {
-document.getElementById('user-status').textContent = 'Add users with unique access codes';
+document.getElementById('user-status').textContent = 'Add users with their email and Arabic name';
 document.getElementById('user-status').className = 'url-status';
 }, 3000);
 }
@@ -3744,23 +3446,28 @@ document.getElementById('user-status').className = 'url-status';
 function displayUsers() {
 var container = document.getElementById('users-container');
 container.innerHTML = '';
+
 if (users.length === 0) {
 container.innerHTML = '<p>No users added yet.</p>';
 return;
 }
+
 users.forEach((user, index) => {
 var userItem = document.createElement('div');
 userItem.className = 'user-item';
+
 userItem.innerHTML = `
 <div class="user-info">
-<div class="user-name">${user.name}</div>
-<div class="user-code">Access Code: ${user.code}</div>
+<div class="user-name">${user.arabicName}</div>
+<div class="user-code">Email: ${user.email}</div>
 </div>
 <span class="user-status status-${user.active ? 'active' : 'inactive'}">
 ${user.active ? 'ACTIVE' : 'INACTIVE'}
 </span>
 <div class="user-controls">
-<button class="user-btn toggle" onclick="toggleUserStatus(${index})">${user.active ? 'Deactivate' : 'Activate'}</button>
+<button class="user-btn toggle" onclick="toggleUserStatus(${index})">
+${user.active ? 'Deactivate' : 'Activate'}
+</button>
 <button class="user-btn delete" onclick="deleteUser(${index})">Delete</button>
 </div>
 `;
@@ -3789,62 +3496,58 @@ var answer2 = document.getElementById('answer-2').value;
 var answer3 = document.getElementById('answer-3').value;
 var answer4 = document.getElementById('answer-4').value;
 var modelId = document.getElementById('question-model').value;
+
 if (!questionText || !answer1 || !answer2 || !answer3 || !answer4) {
 document.getElementById('question-status').textContent = 'Please fill in all fields';
 document.getElementById('question-status').className = 'url-status error';
 return;
 }
+
 if (!modelId) {
 document.getElementById('question-status').textContent = 'Please select a model';
 document.getElementById('question-status').className = 'url-status error';
 return;
 }
+
 const selectedModel = quizModels.find(m => m.id === modelId);
 if (!selectedModel) {
-document.getElementById('question-status').textContent =
-'Error: Selected model no longer exists. Please select a valid model.';
+document.getElementById('question-status').textContent = 'Error: Selected model no longer exists. Please select a valid model.';
 document.getElementById('question-status').className = 'url-status error';
 displayQuizModels();
 return;
 }
-const correctCheckboxes = document.querySelectorAll('.correct-checkbox:checked');
-const correctAnswers = [];
-correctCheckboxes.forEach(cb => {
-const index = parseInt(cb.getAttribute('data-index'));
-const answerText = document.getElementById(`answer-${index+1}`).value.trim();
-if (answerText) {
-correctAnswers.push(answerText);
-}
-});
-if (correctAnswers.length === 0) {
-document.getElementById('question-status').textContent = 'Please select at least one correct answer.';
-document.getElementById('question-status').className = 'url-status error';
-return;
-}
+
+var correctAnswerIndex = parseInt(document.querySelector('input[name="correct-answer"]:checked').value);
 var answers = [answer1, answer2, answer3, answer4];
+var correctAnswer = answers[correctAnswerIndex];
+
 var newQuestion = {
 question: questionText,
 answers: answers,
-correctAnswers: correctAnswers,
+correct: correctAnswer,
 hidden: false,
 modelId: modelId,
 modelName: selectedModel.name,
 timestamp: new Date().toISOString(),
 questionId: 'q-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
 };
+
 questions.push(newQuestion);
 saveQuestionsToFirebase();
-document.getElementById('question-status').textContent =
-`Question added successfully to "${selectedModel.name}" model! Total questions in this model: ${questions.filter(q => q.modelId === modelId).length}`;
+
+document.getElementById('question-status').textContent = `Question added successfully to "${selectedModel.name}" model! Total questions in this model: ${questions.filter(q => q.modelId === modelId).length}`;
 document.getElementById('question-status').className = 'url-status success';
+
 document.getElementById('question-text').value = '';
 document.getElementById('answer-1').value = '';
 document.getElementById('answer-2').value = '';
 document.getElementById('answer-3').value = '';
 document.getElementById('answer-4').value = '';
-document.querySelectorAll('.correct-checkbox').forEach(cb => cb.checked = false);
+document.querySelector('input[name="correct-answer"][value="0"]').checked = true;
+
 displayQuestions();
 updateDashboard();
+
 setTimeout(() => {
 document.getElementById('question-status').textContent = 'Add a new question to the quiz';
 document.getElementById('question-status').className = 'url-status';
@@ -3854,6 +3557,7 @@ document.getElementById('question-status').className = 'url-status';
 function displayQuestions() {
 var container = document.getElementById('questions-container');
 container.innerHTML = '';
+
 if (currentModelFilter) {
 const showAllButton = document.createElement('button');
 showAllButton.className = 'admin-btn';
@@ -3862,27 +3566,33 @@ showAllButton.onclick = showAllQuestions;
 showAllButton.style.marginBottom = '1rem';
 container.appendChild(showAllButton);
 }
+
 let filteredQuestions = questions;
+
 if (currentModelFilter) {
 filteredQuestions = questions.filter(q => q.modelId === currentModelFilter);
 }
+
 if (filteredQuestions.length === 0) {
 container.innerHTML += '<p>No questions found.</p>';
 return;
 }
+
 filteredQuestions.forEach((q, index) => {
 const actualIndex = questions.findIndex(question => question === q);
+
 var questionItem = document.createElement('div');
 questionItem.className = 'question-item';
 if (q.hidden) {
 questionItem.classList.add('hidden');
 }
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q
-.correct
-] : []);
+
+var correctIndex = q.answers.indexOf(q.correct);
 var status = q.hidden ? 'hidden' : 'visible';
+
 var model = quizModels.find(m => m.id === q.modelId);
 var modelName = 'No Model';
+
 if (model) {
 modelName = model.name;
 } else if (q.modelName) {
@@ -3894,16 +3604,20 @@ modelName = q.modelName;
 setTimeout(saveQuestionsToFirebase, 1000);
 }
 }
+
 const modelQuestions = questions.filter(question => question.modelId === q.modelId);
 const modelQuestionIndex = modelQuestions.indexOf(q) + 1;
+
 questionItem.innerHTML = `
 <strong>Q${modelQuestionIndex}:</strong> ${q.question}
 <span class="model-badge">${modelName}</span>
 <span class="status-badge status-${status}">${status.toUpperCase()}</span>
-<div class="response-time">Correct answers: ${correctAnswers.join(', ')}</div>
+<div class="response-time">Correct answer: ${q.correct} (Option ${correctIndex + 1})</div>
 <div class="admin-controls">
 <button class="admin-btn edit" onclick="editExistingQuestion(${actualIndex})">Edit</button>
-<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${actualIndex})">${q.hidden ? 'Show' : 'Hide'}</button>
+<button class="admin-btn toggle" onclick="toggleQuestionVisibility(${actualIndex})">
+${q.hidden ? 'Show' : 'Hide'}
+</button>
 <button class="admin-btn delete" onclick="deleteQuestion(${actualIndex})">Delete</button>
 <button class="admin-btn" onclick="viewQuestion(${actualIndex})" style="background: #2196f3;">View</button>
 </div>
@@ -3916,8 +3630,8 @@ function viewQuestion(index) {
 const q = questions[index];
 const model = quizModels.find(m => m.id === q.modelId);
 const modelName = model ? model.name : 'No Model';
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q.correct] :
-[]);
+const correctIndex = q.answers.indexOf(q.correct);
+
 let modalContent = `
 <h3>Question Details</h3>
 <p><strong>Model:</strong> ${modelName}</p>
@@ -3925,36 +3639,38 @@ let modalContent = `
 <div class="question-modal-answers">
 <h4>Answer Options:</h4>
 ${q.answers.map((answer, i) => `
-<div class="answer-item ${correctAnswers.includes(answer) ? 'correct' : ''}">
-${correctAnswers.includes(answer) ? '✅ ' : '❌ '} ${answer}
+<div class="answer-item ${i === correctIndex ? 'correct' : ''}">
+${i === correctIndex ? '✅ ' : '❌ '} ${answer}
 </div>
 `).join('')}
 </div>
 `;
+
 document.getElementById('question-modal-body').innerHTML = modalContent;
 document.getElementById('questionViewModal').style.display = 'block';
 }
 
 function editExistingQuestion(index) {
 var q = questions[index];
+
 document.getElementById('question-text').value = q.question;
 document.getElementById('answer-1').value = q.answers[0];
 document.getElementById('answer-2').value = q.answers[1];
 document.getElementById('answer-3').value = q.answers[2];
 document.getElementById('answer-4').value = q.answers[3];
 document.getElementById('question-model').value = q.modelId || '';
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q.correct] :
-[]);
-document.querySelectorAll('.correct-checkbox').forEach(cb => {
-const index = parseInt(cb.getAttribute('data-index'));
-const answerText = document.getElementById(`answer-${index+1}`).value.trim();
-cb.checked = correctAnswers.includes(answerText);
+
+var correctIndex = q.answers.indexOf(q.correct);
+document.querySelectorAll('input[name="correct-answer"]').forEach((radio, i) => {
+radio.checked = (i === correctIndex);
 });
+
 questions.splice(index, 1);
 saveQuestionsToFirebase();
-document.getElementById('question-status').textContent =
-'Editing question. Update the fields above and click "Add Question" to save changes.';
+
+document.getElementById('question-status').textContent = 'Editing question. Update the fields above and click "Add Question" to save changes.';
 document.getElementById('question-status').className = 'url-status success';
+
 document.getElementById('question-text').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -3976,33 +3692,37 @@ updateDashboard();
 function updateQuizTimeInfo() {
 var start = new Date(quizStartTime);
 var end = new Date(quizEndTime);
+
 var options = {
-weekday: 'long',
-year: 'numeric',
-month: 'long',
-day: 'numeric',
-hour: '2-digit',
-minute: '2-digit'
+weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+hour: '2-digit', minute: '2-digit'
 };
+
 var timeRange = start.toLocaleDateString('en-US', options) + ' to ' +
-end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+
 document.getElementById('quiz-time-range').textContent = timeRange;
+
 var now = new Date().getTime();
 var quizTimer = document.getElementById('quiz-timer');
 var quizStatus = document.getElementById('quiz-status-text');
+
 if (now < quizStartTime) {
 var timeUntilStart = Math.floor((quizStartTime - now) / 1000);
 var hours = Math.floor(timeUntilStart / 3600);
 var minutes = Math.floor((timeUntilStart % 3600) / 60);
 var seconds = timeUntilStart % 60;
+
 quizTimer.textContent = `⏱️ Starts in: ${hours}h ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Not started';
 quizStatus.style.color = '#ff9800';
 quizActive = false;
+stopRankingSystem();
 } else if (now >= quizStartTime && now <= quizEndTime) {
 var timeLeft = Math.floor((quizEndTime - now) / 1000);
 var minutes = Math.floor(timeLeft / 60);
 var seconds = timeLeft % 60;
+
 quizTimer.textContent = `⏱️ Time left: ${minutes}m ${seconds}s`;
 quizStatus.textContent = 'Active';
 quizStatus.style.color = '#4caf50';
@@ -4012,16 +3732,45 @@ quizTimer.textContent = '⏱️ Quiz ended';
 quizStatus.textContent = 'Ended';
 quizStatus.style.color = '#f44336';
 quizActive = false;
+stopRankingSystem();
 }
 }
 
 function saveQuizProgress() {
-var progress = { currentIndex: currentIndex, playerResults: playerResults, timestamp: Date.now() };
+var progress = {
+currentIndex: currentIndex,
+playerResults: playerResults,
+timestamp: Date.now()
+};
+
 try {
 sessionStorage.setItem('quizProgress', JSON.stringify(progress));
 } catch (e) {
 localStorage.setItem('quizProgress', JSON.stringify(progress));
 }
+}
+
+function resumeQuiz() {
+playerEmail = getStoredValue('playerEmail');
+var savedProgress = getStoredValue('quizProgress');
+
+if (savedProgress) {
+var progress = JSON.parse(savedProgress);
+currentIndex = progress.currentIndex || 0;
+playerResults = progress.playerResults || {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0,
+answersDetails: []
+};
+}
+
+document.getElementById("player-email").style.display = "none";
+document.getElementById("joinBtn").style.display = "none";
+document.getElementById('player-question').innerHTML = "";
+showPlayerQuestion();
 }
 
 function getStoredValue(key) {
@@ -4051,84 +3800,27 @@ function resetQuizSession() {
 removeStoredValue('quizCompleted');
 removeStoredValue('quizStarted');
 removeStoredValue('quizProgress');
-removeStoredValue('playerCode');
+removeStoredValue('playerEmail');
 location.reload();
 }
 
-function startCountdown() {
-timeLeft = 60;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
-clearInterval(countdownInterval);
-countdownInterval = setInterval(() => {
-timeLeft--;
-document.getElementById('countdown').textContent = `Time left: ${timeLeft}s`;
-if (timeLeft <= 0) {
-clearInterval(countdownInterval);
-submitAnswers();
-}
-}, 1000);
-}
-
-function submitAnswers() {
-const selectedButtons = document.querySelectorAll('.answer-btn.selected');
-const selectedAnswers = Array.from(selectedButtons).map(btn => btn.textContent.trim());
-document.querySelectorAll('.answer-btn').forEach(btn => {
-btn.disabled = true;
-btn.style.pointerEvents = 'none';
-});
-var visibleQuestions = getVisibleQuestions();
-var q = visibleQuestions[currentIndex];
-var responseTime = (Date.now() - questionStartTime) / 1000;
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
-const correctAnswers = Array.isArray(q.correctAnswers) ? q.correctAnswers : (q.correct ? [q.correct] :
-[]);
-const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
-if (selectedAnswers.length === 0) {
-playerResults.incorrect++;
-} else if (isCorrect) {
-playerResults.correct++;
-} else {
-playerResults.incorrect++;
-}
-playerResults.total++;
-playerResults.responseTimes.push(responseTime);
-playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
-const status = selectedAnswers.length === 0 ? 'Unanswered' : (isCorrect ? 'Correct' : 'Incorrect');
-saveToFirebase(playerCode, userName, q.question, selectedAnswers, correctAnswers, responseTime, status, q
-.modelId);
-saveQuizProgress();
-showAnswerSavedMessage();
-startNextQuestionCountdown();
-}
-
-function startNextQuestionCountdown() {
-var countdownTime = 5;
-document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-document.getElementById('countdown').style.color = "#6e8efb";
-document.getElementById('countdown').style.fontWeight = "bold";
-var countdownInterval = setInterval(function() {
-countdownTime--;
-document.getElementById('countdown').textContent = `Next question in: ${countdownTime}s`;
-if (countdownTime <= 0) {
-clearInterval(countdownInterval);
-document.getElementById('countdown').textContent = "";
-moveToNextQuestion();
-}
-}, 1000);
-}
+// NO COUNTDOWN - removed startCountdown function
+// We'll move to next question immediately after answer
 
 function getVisibleQuestions() {
 let visibleQuestions = questions.filter(q => !q.hidden);
+
 if (activeQuizModel) {
 visibleQuestions = visibleQuestions.filter(q => q.modelId === activeQuizModel);
 }
+
 return visibleQuestions;
 }
 
 function moveToNextQuestion() {
 currentIndex++;
 var visibleQuestions = getVisibleQuestions();
+
 if (currentIndex < visibleQuestions.length) {
 saveQuizProgress();
 showPlayerQuestion();
@@ -4138,31 +3830,85 @@ showPlayerResults();
 }
 
 function showPlayerResults() {
+stopRankingSystem();
+
 setStoredValue('quizCompleted', 'true');
 removeStoredValue('quizProgress');
 removeStoredValue('quizStarted');
-trackActivePlayer(playerCode, 'leave');
-var avgResponseTime = playerResults.responseTimes.length > 0 ?
-(playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(
-2) :
-0;
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+
+trackActivePlayer(playerEmail, 'leave');
+
+var avgResponseTime = playerResults.responseTimes.length > 0
+? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+: 0;
+
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'Unknown User';
+
 const accuracy = playerResults.accuracy;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
 const passFailClass = passFail === 'PASS' ? 'result-correct' : 'result-incorrect';
+
+const currentPlayerRank = playerRankings[playerEmail];
+const finalRank = currentPlayerRank ? currentPlayerRank.rank : 'N/A';
+const totalPlayers = Object.keys(playerRankings).length;
+
+const liveRankDisplay = document.getElementById('current-rank-display');
+if (liveRankDisplay) {
+liveRankDisplay.remove();
+}
+
 document.getElementById('player-question').innerHTML = `
 <div class="player-results">
 <h2>🎉 Quiz Completed! 🎉</h2>
 <p>Thank you for participating, ${userName}!</p>
-<div class="result-stats">
-<div class="result-stat"><span class="result-number result-correct">${playerResults.correct}</span><span class="result-label">Correct Answers</span></div>
-<div class="result-stat"><span class="result-number result-incorrect">${playerResults.incorrect}</span><span class="result-label">Incorrect Answers</span></div>
-<div class="result-stat"><span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span><span class="result-label">Accuracy</span></div>
-<div class="result-stat"><span class="result-number result-time">${avgResponseTime}s</span><span class="result-label">Avg Response Time</span></div>
-<div class="result-stat"><span class="result-number ${passFailClass}">${passFail}</span><span class="result-label">Final Result</span></div>
+
+<div class="final-rank-section">
+<div style="font-size: 1.2rem; margin-bottom: 10px; opacity: 0.9;">
+Your Final Rank
 </div>
-<button class="download-btn" onclick="downloadPlayerResults()">📥 Download My Results</button>
+<div style="font-size: 3.5rem; font-weight: bold; margin: 10px 0;">
+#${finalRank}
+</div>
+<div style="font-size: 1rem; opacity: 0.8;">
+out of ${totalPlayers} players
+</div>
+${finalRank <= 3 ? `
+<div style="margin-top: 15px; font-size: 1.5rem;">
+${finalRank === 1 ? '🥇 GOLD MEDAL!' : ''}
+${finalRank === 2 ? '🥈 SILVER MEDAL!' : ''}
+${finalRank === 3 ? '🥉 BRONZE MEDAL!' : ''}
+</div>
+` : ''}
+</div>
+
+<div class="result-stats">
+<div class="result-stat">
+<span class="result-number result-correct">${playerResults.correct}</span>
+<span class="result-label">Correct Answers</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-incorrect">${playerResults.incorrect}</span>
+<span class="result-label">Incorrect Answers</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-accuracy">${playerResults.accuracy.toFixed(1)}%</span>
+<span class="result-label">Accuracy</span>
+</div>
+<div class="result-stat">
+<span class="result-number result-time">${avgResponseTime}s</span>
+<span class="result-label">Avg Response Time</span>
+</div>
+<div class="result-stat">
+<span class="result-number ${passFailClass}">${passFail}</span>
+<span class="result-label">Final Result</span>
+</div>
+</div>
+
+<button class="download-btn" onclick="downloadPlayerResultsExcel()">
+📥 Download My Results (Excel)
+</button>
+
 <div class="session-warning">
 <h3>⚠️ Quiz Completed</h3>
 <p>You have successfully completed this quiz.</p>
@@ -4170,77 +3916,145 @@ document.getElementById('player-question').innerHTML = `
 </div>
 </div>
 `;
+
 document.getElementById('player-answers').innerHTML = "";
-document.getElementById('countdown').textContent = "";
+document.getElementById('countdown').innerHTML = "";
 }
 
-function downloadPlayerResults() {
-var avgResponseTime = playerResults.responseTimes.length > 0 ?
-(playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(
-2) :
-0;
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Unknown User';
+// NEW: Download player results as Excel with Arabic name, questions, answers
+function downloadPlayerResultsExcel() {
+var avgResponseTime = playerResults.responseTimes.length > 0
+? (playerResults.responseTimes.reduce((a, b) => a + b, 0) / playerResults.responseTimes.length).toFixed(2)
+: 0;
+
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'Unknown User';
 const accuracy = playerResults.accuracy;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-var csvData = [
-['Player Name', 'Player Code', 'Correct Answers', 'Incorrect Answers', 'Total Questions', 'Accuracy',
-'Average Response Time', 'Final Result'
-],
-[userName, playerCode, playerResults.correct, playerResults.incorrect, playerResults.total, playerResults
-.accuracy.toFixed(1) + '%', avgResponseTime + 's', passFail
-]
-];
-var csv = csvData.map(row => row.join(',')).join('\n');
-var blob = new Blob([csv], { type: 'text/csv' });
-var url = window.URL.createObjectURL(blob);
-var a = document.createElement('a');
-a.href = url;
-a.download = `quiz-results-${userName}-${new Date().toISOString().split('T')[0]}.csv`;
-a.click();
-window.URL.revokeObjectURL(url);
+
+// Prepare detailed data for Excel
+const excelData = [];
+
+// Title section
+excelData.push([`Quiz Results for: ${userName}`]);
+excelData.push([`Email: ${playerEmail}`]);
+excelData.push([`Date: ${new Date().toLocaleString()}`]);
+excelData.push([]);
+
+// Summary section
+excelData.push(['SUMMARY']);
+excelData.push(['Correct Answers:', playerResults.correct]);
+excelData.push(['Incorrect Answers:', playerResults.incorrect]);
+excelData.push(['Total Questions:', playerResults.total]);
+excelData.push(['Accuracy:', playerResults.accuracy.toFixed(1) + '%']);
+excelData.push(['Average Response Time:', avgResponseTime + ' seconds']);
+excelData.push(['Final Result:', passFail]);
+excelData.push([]);
+
+// Detailed answers section
+excelData.push(['DETAILED ANSWERS']);
+excelData.push(['Question #', 'Question Text', 'Your Answer', 'Correct Answer', 'Result']);
+
+playerResults.answersDetails.forEach((detail, idx) => {
+excelData.push([
+idx + 1,
+detail.question,
+detail.userAnswer,
+detail.correctAnswer,
+detail.isCorrect ? '✓ Correct' : '✗ Incorrect'
+]);
+});
+
+const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+const workbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook, worksheet, `Quiz Results - ${userName}`);
+
+// Auto-size columns (basic)
+worksheet['!cols'] = [{wch:10}, {wch:50}, {wch:30}, {wch:30}, {wch:12}];
+
+XLSX.writeFile(workbook, `quiz_results_${userName}_${new Date().toISOString().slice(0,19)}.xlsx`);
 }
 
 function showPlayerQuestion() {
 var visibleQuestions = getVisibleQuestions();
+
 if (currentIndex >= visibleQuestions.length) {
 showPlayerResults();
 return;
 }
+
 var q = visibleQuestions[currentIndex];
-document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + " of " +
-visibleQuestions.length + ":</h3><p>" + q.question + "</p>";
+
+document.getElementById("player-question").innerHTML = "<h3>Question " + (currentIndex + 1) + " of " + visibleQuestions.length + ":</h3><p>" + q.question + "</p>";
+
 var answersDiv = document.getElementById("player-answers");
-answersDiv.innerHTML = "<h3>Select your answer(s):</h3>";
+answersDiv.innerHTML = "<h3>Select your answer:</h3>";
+
 var gridContainer = document.createElement("div");
 gridContainer.className = "answers-grid";
+
 questionStartTime = Date.now();
+
 q.answers.forEach(a => {
 var btn = document.createElement("button");
 btn.className = "answer-btn";
 btn.innerHTML = a;
-btn.onclick = function(e) {
+btn.onclick = function() {
 if (!quizActive) {
-alert("الاختبار غير نشط حالياً. يرجى التحقق من جدول الاختبار.");
+alert("The quiz is not currently active. Please check the quiz schedule.");
 return;
 }
-this.classList.toggle('selected');
+
+var selected = a;
+var correct = q.correct;
+var responseTime = (Date.now() - questionStartTime) / 1000;
+
+// DISABLE ALL BUTTONS immediately
+var allButtons = document.querySelectorAll('.answer-btn');
+allButtons.forEach(button => {
+button.disabled = true;
+button.style.pointerEvents = 'none';
+button.style.opacity = '0.7';
+});
+
+// Add pressed effect to selected button
+this.style.backgroundColor = '#e0e0e0';
+this.style.borderColor = '#6e8efb';
+
+// Show answer saved message (no color feedback)
+showAnswerSavedMessage();
+
+// Track results internally
+if (selected === correct) {
+playerResults.correct++;
+} else {
+playerResults.incorrect++;
+}
+playerResults.total++;
+playerResults.responseTimes.push(responseTime);
+playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
+
+// Store detailed answer for Excel export
+playerResults.answersDetails.push({
+question: q.question,
+userAnswer: selected,
+correctAnswer: correct,
+isCorrect: (selected === correct)
+});
+
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'مستخدم غير معروف';
+
+saveToFirebase(playerEmail, userName, q.question, selected, correct, responseTime, "Answered", q.modelId);
+saveQuizProgress();
+
+// Move to next question IMMEDIATELY (no countdown)
+moveToNextQuestion();
 };
 gridContainer.appendChild(btn);
 });
-var confirmBtn = document.createElement("button");
-confirmBtn.className = "confirm-btn";
-confirmBtn.textContent = "Confirm Answer";
-confirmBtn.onclick = function() {
-if (!quizActive) {
-alert("الاختبار غير نشط حالياً. يرجى التحقق من جدول الاختبار.");
-return;
-}
-submitAnswers();
-};
+
 answersDiv.appendChild(gridContainer);
-answersDiv.appendChild(confirmBtn);
-startCountdown();
 }
 
 function showAnswerSavedMessage() {
@@ -4262,6 +4076,7 @@ z-index: 2000;
 box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 animation: messageFade 2s ease-in-out forwards;
 `;
+
 if (!document.querySelector('#message-styles')) {
 const style = document.createElement('style');
 style.id = 'message-styles';
@@ -4276,8 +4091,10 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 }
-messageDiv.textContent = 'تم حفظ إجابتك';
+
+messageDiv.textContent = '✅ Answer saved!';
 document.body.appendChild(messageDiv);
+
 setTimeout(() => {
 if (document.getElementById('answer-saved-message')) {
 document.getElementById('answer-saved-message').remove();
@@ -4285,59 +4102,212 @@ document.getElementById('answer-saved-message').remove();
 }, 2000);
 }
 
-// Initialize the application
+// Ranking system (keep original but simplified)
+function startRankingSystem() {
+if (rankingUpdateInterval) {
+clearInterval(rankingUpdateInterval);
+}
+rankingUpdateInterval = setInterval(updatePlayerRankings, 5000);
+}
+
+function stopRankingSystem() {
+if (rankingUpdateInterval) {
+clearInterval(rankingUpdateInterval);
+rankingUpdateInterval = null;
+}
+}
+
+function updatePlayerRankings() {
+database.ref('quizResults').once('value')
+.then((snapshot) => {
+const results = snapshot.val();
+if (!results) return;
+
+const allResults = Object.values(results);
+const currentTime = Date.now();
+
+const recentResults = allResults.filter(result =>
+currentTime - new Date(result.timestamp).getTime() < 5 * 60 * 1000
+);
+
+const playerScores = {};
+
+recentResults.forEach(result => {
+if (!playerScores[result.playerEmail]) {
+playerScores[result.playerEmail] = {
+correct: 0,
+totalTime: 0,
+questions: 0,
+lastActivity: new Date(result.timestamp).getTime(),
+playerName: result.playerName
+};
+}
+
+const player = playerScores[result.playerEmail];
+player.questions++;
+
+if (result.selectedAnswer === result.correctAnswer) {
+player.correct++;
+player.totalTime += result.responseTime;
+}
+
+player.lastActivity = Math.max(player.lastActivity, new Date(result.timestamp).getTime());
+});
+
+const rankedPlayers = Object.entries(playerScores).map(([playerEmail, data]) => {
+const accuracy = data.questions > 0 ? (data.correct / data.questions) * 100 : 0;
+const avgTime = data.correct > 0 ? (data.totalTime / data.correct) : 0;
+const speedScore = Math.max(0, 100 - (avgTime * 10));
+const activityRecency = (currentTime - data.lastActivity) < 60000 ? 50 : 0;
+
+return {
+playerEmail,
+playerName: data.playerName,
+score: (accuracy * 0.6) + (speedScore * 0.3) + (activityRecency * 0.1),
+correct: data.correct,
+questions: data.questions,
+accuracy: accuracy,
+avgTime: avgTime
+};
+});
+
+rankedPlayers.sort((a, b) => b.score - a.score);
+
+playerRankings = {};
+rankedPlayers.forEach((player, index) => {
+playerRankings[player.playerEmail] = {
+rank: index + 1,
+...player
+};
+});
+
+updateCurrentPlayerRankDisplay();
+})
+.catch((error) => {
+console.error("Error updating rankings:", error);
+});
+}
+
+function updateCurrentPlayerRankDisplay() {
+if (!playerEmail || !quizActive) return;
+
+const currentPlayerRank = playerRankings[playerEmail];
+const rankDisplay = document.getElementById('current-rank-display');
+
+if (!rankDisplay) {
+const newRankDisplay = document.createElement('div');
+newRankDisplay.id = 'current-rank-display';
+newRankDisplay.className = 'rank-display';
+document.body.appendChild(newRankDisplay);
+}
+
+const displayElement = document.getElementById('current-rank-display');
+
+if (currentPlayerRank) {
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'You';
+
+displayElement.innerHTML = `
+<div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
+<div style="font-size: 1.5rem; font-weight: bold; color: #4caf50; text-align: center;">
+#${currentPlayerRank.rank}
+</div>
+<div style="font-size: 0.9rem; text-align: center; margin-bottom: 8px;">
+${userName}
+</div>
+<div style="font-size: 0.8rem; color: #666;">
+📊 ${currentPlayerRank.correct}/${currentPlayerRank.questions} correct
+</div>
+<div style="font-size: 0.8rem; color: #666;">
+⚡ Avg: ${currentPlayerRank.avgTime ? currentPlayerRank.avgTime.toFixed(1) + 's' : 'N/A'}
+</div>
+<div style="font-size: 0.8rem; color: #2196f3; margin-top: 5px;">
+Total Players: ${Object.keys(playerRankings).length}
+</div>
+`;
+} else {
+displayElement.innerHTML = `
+<div style="font-weight: bold; margin-bottom: 8px; color: #6e8efb;">🏆 Live Ranking</div>
+<div style="text-align: center; color: #666; font-size: 0.9rem;">
+Answer questions to see your rank!
+</div>
+`;
+}
+}
+
+// Initialize join button with email login
 document.getElementById("joinBtn").onclick = function() {
 if (!quizActive) {
 alert("The quiz is not currently active. Please check the quiz schedule.");
 return;
 }
+
 if (getStoredValue('quizCompleted') === 'true') {
 alert("You have already completed this quiz. You cannot retake it.");
 return;
 }
+
 if (getStoredValue('quizStarted') === 'true' && !getStoredValue('quizCompleted')) {
 if (!confirm("You have already started this quiz. Do you want to continue where you left off?")) {
 removeStoredValue('quizStarted');
 removeStoredValue('quizProgress');
 }
 }
-playerCode = document.getElementById("player-code").value.trim();
-if (playerCode !== "") {
-const user = users.find(u => u.code === playerCode);
+
+playerEmail = document.getElementById("player-email").value.trim();
+if (playerEmail !== "") {
+const user = users.find(u => u.email === playerEmail);
 if (!user) {
-alert("Invalid access code. Please check your code and try again.");
+alert("Invalid email. Please check your email or contact the administrator.");
 return;
 }
+
 if (!user.active) {
 alert("Your account is inactive. Please contact the quiz administrator.");
 return;
 }
+
+playerArabicName = user.arabicName;
+
 setStoredValue('quizStarted', 'true');
-setStoredValue('playerCode', playerCode);
-trackActivePlayer(playerCode, 'join');
-playerResults = { correct: 0, incorrect: 0, total: 0, responseTimes: [], accuracy: 0 };
+setStoredValue('playerEmail', playerEmail);
+
+trackActivePlayer(playerEmail, 'join');
+
+playerResults = {
+correct: 0,
+incorrect: 0,
+total: 0,
+responseTimes: [],
+accuracy: 0,
+answersDetails: []
+};
+
 var savedProgress = getStoredValue('quizProgress');
 if (savedProgress) {
 var progress = JSON.parse(savedProgress);
 currentIndex = progress.currentIndex || 0;
 playerResults = progress.playerResults || playerResults;
 }
+
+startRankingSystem();
+
 currentIndex = 0;
-document.getElementById("player-code").style.display = "none";
+document.getElementById("player-email").style.display = "none";
 document.getElementById("joinBtn").style.display = "none";
 showPlayerQuestion();
 } else {
-alert("Please enter your access code to join the game.");
+alert("Please enter your email address to join the game.");
 }
 };
 
 setInterval(updateQuizTimeInfo, 1000);
 updateQuizTimeInfo();
 
-window.addEventListener('beforeunload', function(e) {
+window.addEventListener('beforeunload', function (e) {
 if (getStoredValue('quizStarted') === 'true' && getStoredValue('quizCompleted') !== 'true') {
 saveQuizProgress();
-trackActivePlayer(playerCode, 'leave');
+trackActivePlayer(playerEmail, 'leave');
 e.preventDefault();
 e.returnValue = 'You have an ongoing quiz. Are you sure you want to leave?';
 return 'You have an ongoing quiz. Are you sure you want to leave?';
@@ -4352,9 +4322,10 @@ document.getElementById('player').classList.add('active');
 
 function checkQuizStatusAfterLoad() {
 if (getStoredValue('quizCompleted') === 'true') {
-const playerCode = getStoredValue('playerCode') || 'Unknown';
-const user = users.find(u => u.code === playerCode);
-const userName = user ? user.name : 'Player';
+const playerEmail = getStoredValue('playerEmail') || 'Unknown';
+const user = users.find(u => u.email === playerEmail);
+const userName = user ? user.arabicName : 'Player';
+
 document.getElementById('player-question').innerHTML = `
 <div class="player-results">
 <h2>🏁 Quiz Already Completed</h2>
@@ -4365,7 +4336,7 @@ document.getElementById('player-question').innerHTML = `
 </div>
 </div>
 `;
-document.getElementById("player-code").style.display = "none";
+document.getElementById("player-email").style.display = "none";
 document.getElementById("joinBtn").disabled = true;
 document.getElementById("joinBtn").style.background = "#ccc";
 document.getElementById("joinBtn").textContent = "Quiz Completed";
@@ -4382,7 +4353,7 @@ setTimeout(initializeApp, 2000);
 }
 }
 initializeApp();
-console.log("Enhanced Kahoot FS with Combined Export Function Initialized");
+console.log("Enhanced Kahoot FS with Email Login, No Countdown, and Excel Export");
 });
 </script>
 </body>
