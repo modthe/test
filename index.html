@@ -4,13 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kahoot FS - Quiz Platform</title>
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<!-- Excel Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ===== FULL CSS (unchanged) ===== */
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
 body{background:linear-gradient(135deg,#6a11cb 0%,#2575fc 100%);color:#333;line-height:1.6;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center}
 .container{width:95%;max-width:1200px;background:white;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.2);overflow:hidden}
@@ -213,7 +210,6 @@ label{display:block;margin-bottom:.5rem;font-weight:600}
 <div class="tab" onclick="switchTab('firebase-help')">About</div>
 </div>
 <div class="content">
-<!-- Player Tab -->
 <div id="player" class="tab-content active">
 <h2>Join Quiz</h2>
 <div class="time-info"><p>This quiz is scheduled for <strong id="quiz-time-range">tomorrow from 12:00 PM to 12:30 PM</strong></p><p id="quiz-status">Status: <span id="quiz-status-text">Not started</span></p></div>
@@ -226,7 +222,6 @@ label{display:block;margin-bottom:.5rem;font-weight:600}
 </div>
 <div class="instructions"><h3>Player Instructions</h3><ol><li>Enter your access code and click "Join Game"</li><li>Wait for the host to start the quiz</li><li>Select one or more answers (click to toggle selection)</li><li>Click "Confirm Answer" to submit your selection</li><li>Your answers and response time will be recorded</li><li>Each device has separate session - codes won't conflict</li><li>View your results and download them at the end</li><li><strong>Note:</strong> You can only complete the quiz once per session</li></ol></div>
 </div>
-<!-- Host Tab -->
 <div id="host" class="tab-content">
 <h2>Quiz Host (Admin)</h2>
 <div class="admin-section">
@@ -264,7 +259,6 @@ label{display:block;margin-bottom:.5rem;font-weight:600}
 <button class="export-btn" onclick="exportToExcel()">📊 Export to Excel</button>
 <button class="export-btn csv" onclick="exportToCSV()">📄 Export to CSV</button>
 <button class="export-btn csv" onclick="downloadAllUserResults()">📥 Download All Individual Results (First Attempt Only)</button>
-<!-- NEW unified export button -->
 <button class="export-btn" style="background:#6a1b9a;" onclick="exportUnifiedLastQuiz()">📦 تنزيل التقرير الكامل (الخمس الأوائل + جميع المستخدمين) - آخر اختبار</button>
 <button class="export-btn delete" onclick="confirmDeleteResults()">🗑️ Delete All Results</button>
 <button onclick="loadQuizResults()">🔄 Refresh Results</button>
@@ -284,7 +278,6 @@ label{display:block;margin-bottom:.5rem;font-weight:600}
 </div>
 </div>
 </div>
-<!-- Modals -->
 <div id="modelSelectionModal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Select Model to Export</h3><button class="close-modal" onclick="closeModelSelection()">&times;</button></div><div class="model-selection-list" id="modelSelectionList"></div><div class="modal-footer"><button onclick="exportSelectedModel()" style="background:#4caf50;color:#fff;padding:.8rem 1.5rem;border:none;border-radius:5px;cursor:pointer;font-size:1rem;">Export Selected Model</button><button onclick="closeModelSelection()" style="background:#f44336;color:#fff;padding:.8rem 1.5rem;border:none;border-radius:5px;cursor:pointer;font-size:1rem;margin-left:10px;">Cancel</button></div></div></div>
 <div id="questionViewModal" class="question-modal"><div class="question-modal-content"><div class="question-modal-header"><h3 class="question-modal-title">Question Details</h3><button class="close-modal" onclick="closeQuestionView()">&times;</button></div><div class="question-modal-body" id="question-modal-body"></div></div></div>
 
@@ -322,15 +315,32 @@ return id;
 // Global Variables
 // ============================================================
 var questions=[], users=[], quizModels=[], currentIndex=0, playerCode="", countdownInterval, timeLeft=30, questionStartTime, quizActive=false, currentModelFilter=null, activeQuizModel=null, selectedUserForExport=null, selectedModelForExport=null;
+var currentQuestionSubmitted = false;
 var playerResults={correct:0,incorrect:0,total:0,responseTimes:[],accuracy:0};
 var quizStartTime=localStorage.getItem('quizStartTime'), quizEndTime=localStorage.getItem('quizEndTime');
 if(!quizStartTime){ var t=new Date(); t.setDate(t.getDate()+1); t.setHours(12,0,0,0); quizStartTime=t.getTime(); localStorage.setItem('quizStartTime',quizStartTime); } else quizStartTime=parseInt(quizStartTime);
 if(!quizEndTime){ var e=new Date(quizStartTime); e.setMinutes(e.getMinutes()+30); quizEndTime=e.getTime(); localStorage.setItem('quizEndTime',quizEndTime); } else quizEndTime=parseInt(quizEndTime);
 
 // ============================================================
-// Tab & Navigation
+// Tab & Navigation (✅ SAFE - checks function existence)
 // ============================================================
-function switchTab(tabName){ document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); if(tabName==='host'){ loadHostTimeSettings(); loadUsers(); loadQuizModels(); updateActiveModelDisplay(); updateDashboard(); } }
+function switchTab(tabName){
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+document.getElementById(tabName).classList.add('active');
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+if (event && event.target) event.target.classList.add('active');
+if(tabName==='host'){
+try {
+loadHostTimeSettings();
+if (typeof loadUsers === 'function') loadUsers();
+if (typeof loadQuizModels === 'function') loadQuizModels();
+updateActiveModelDisplay();
+updateDashboard();
+} catch(err) {
+console.error('switchTab(host) error:', err);
+}
+}
+}
 function scrollToSection(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
 
 // ============================================================
@@ -356,22 +366,71 @@ if(activeQuizModel){ const m=quizModels.find(mm=>mm.id===activeQuizModel); docum
 
 function saveActiveQuizModel(id){ database.ref('activeQuizModel').set(id); }
 function clearActiveModel(){ activeQuizModel=null; saveActiveQuizModel(null); updateActiveModelDisplay(); displayQuizModels(); updateDashboard(); document.getElementById('model-status').textContent='Active model cleared. Players will see all questions.'; document.getElementById('model-status').className='url-status success'; setTimeout(()=>{ document.getElementById('model-status').textContent='Create quiz models to organize questions'; document.getElementById('model-status').className='url-status'; },3000); }
-function updateActiveModelDisplay(){ const el=document.getElementById('active-model-info'); if(activeQuizModel){ const m=quizModels.find(mm=>mm.id===activeQuizModel); const name=m?m.name:'Unknown Model'; const count=questions.filter(q=>q.modelId===activeQuizModel).length; el.innerHTML=`<strong>${name}</strong> - ${count} questions<br><small>Players will only see questions from this model</small>`; } else el.innerHTML='<strong>No model selected</strong><br><small>Players will see all questions from all models</small>'; }
+function updateActiveModelDisplay(){ const el=document.getElementById('active-model-info'); if(!el) return; if(activeQuizModel){ const m=quizModels.find(mm=>mm.id===activeQuizModel); const name=m?m.name:'Unknown Model'; const count=questions.filter(q=>q.modelId===activeQuizModel).length; el.innerHTML=`<strong>${name}</strong> - ${count} questions<br><small>Players will only see questions from this model</small>`; } else el.innerHTML='<strong>No model selected</strong><br><small>Players will see all questions from all models</small>'; }
 
 function saveQuizTimeToFirebase(st,et){ database.ref('quizTime').set({startTime:st,endTime:et}).then(()=>{ document.getElementById('host-time-status').textContent='Quiz time saved successfully!'; document.getElementById('host-time-status').className='url-status success'; updateDashboard(); }).catch(e=>{ document.getElementById('host-time-status').textContent='Error: '+e.message; document.getElementById('host-time-status').className='url-status error'; }); }
 function saveQuestionsToFirebase(){ database.ref('questions').set(questions).then(()=>{ document.getElementById('question-status').textContent='Questions saved successfully!'; document.getElementById('question-status').className='url-status success'; updateDashboard(); }).catch(e=>{ document.getElementById('question-status').textContent='Error: '+e.message; document.getElementById('question-status').className='url-status error'; }); }
 function saveUsersToFirebase(){ database.ref('users').set(users).then(()=>{ document.getElementById('user-status').textContent='Users saved successfully!'; document.getElementById('user-status').className='url-status success'; updateDashboard(); }).catch(e=>{ document.getElementById('user-status').textContent='Error: '+e.message; document.getElementById('user-status').className='url-status error'; }); }
 function saveQuizModelsToFirebase(){ database.ref('quizModels').set(quizModels).then(()=>{ document.getElementById('model-status').textContent='Models saved successfully!'; document.getElementById('model-status').className='url-status success'; updateDashboard(); }).catch(e=>{ document.getElementById('model-status').textContent='Error: '+e.message; document.getElementById('model-status').className='url-status error'; }); }
 
-function saveToFirebase(pc,pn,q,sa,ca,rt,st,mid){
+// ============================================================
+// ✅ NEW: Missing functions (were referenced but never defined)
+// ============================================================
+function loadUsers(){
+database.ref('users').once('value').then(s => {
+const d = s.val();
+users = d ? Object.values(d) : [];
+displayUsers();
+updateDashboard();
+}).catch(err => console.error('loadUsers error:', err));
+}
+
+function loadQuizModels(){
+database.ref('quizModels').once('value').then(s => {
+const d = s.val();
+quizModels = d ? Object.values(d) : [];
+displayQuizModels();
+updateDashboard();
+}).catch(err => console.error('loadQuizModels error:', err));
+}
+
+// ============================================================
+// saveToFirebase with questionId + retry
+// ============================================================
+function saveToFirebase(pc,pn,q,sa,ca,rt,st,mid,qid){
+return new Promise((resolve,reject)=>{
 const rid=database.ref().child('quizResults').push().key;
-const data={playerCode:pc||"Unknown Code",playerName:pn||"Unknown Player",question:q||"Unknown Question",selectedAnswers:sa||[],correctAnswers:ca||[],responseTime:rt||0,status:st||"Unknown",timestamp:new Date().toISOString(),questionIndex:currentIndex,sessionId:getSessionId(),deviceType:/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)?'Mobile':'Desktop',modelId:mid||"No Model"};
-database.ref('quizResults/'+rid).set(data).catch(()=>setTimeout(()=>database.ref('quizResults/'+rid).set(data),500));
+const data={
+playerCode:pc||"Unknown Code",
+playerName:pn||"Unknown Player",
+question:q||"Unknown Question",
+selectedAnswers:sa||[],
+correctAnswers:ca||[],
+responseTime:rt||0,
+status:st||"Unknown",
+timestamp:new Date().toISOString(),
+questionIndex:currentIndex,
+sessionId:getSessionId(),
+deviceType:/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)?'Mobile':'Desktop',
+modelId:mid||"No Model",
+questionId:qid||null
+};
+const trySave=(remaining)=>{
+database.ref('quizResults/'+rid).set(data)
+.then(()=>resolve(rid))
+.catch(err=>{
+console.error('Save error (retries left: '+remaining+'):',err);
+if(remaining>0) setTimeout(()=>trySave(remaining-1),1000);
+else reject(err);
+});
+};
+trySave(3);
+});
 }
 function trackActivePlayer(pc,action){ if(!pc) return; const ref=database.ref('activePlayers/'+pc); if(action==='join') ref.set({joinedAt:new Date().toISOString(),playerName:users.find(u=>u.code===pc)?.name||'Unknown'}); else if(action==='leave') ref.remove(); }
 
 // ============================================================
-// Export Functions (existing)
+// Export Functions
 // ============================================================
 function exportToExcel(){ database.ref('quizResults').once('value').then(s=>{ const r=s.val(); if(!r){ alert('No results.'); return; } const ws=XLSX.utils.json_to_sheet(Object.values(r)); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Quiz Results"); XLSX.writeFile(wb,'quiz-results.xlsx'); alert('Downloaded!'); }).catch(e=>{ alert('Error: '+e.message); }); }
 function exportToCSV(){ database.ref('quizResults').once('value').then(s=>{ const r=s.val(); if(!r){ alert('No results.'); return; } const data=Object.values(r); const csv=generateCSV(data); downloadCSV(csv,'quiz-results.csv'); alert('Downloaded!'); }).catch(e=>{ alert('Error: '+e.message); }); }
@@ -382,212 +441,294 @@ function downloadCSV(c,f){ const blob=new Blob([c],{type:'text/csv;charset=utf-8
 function arraysEqual(a,b){ if(!Array.isArray(a)||!Array.isArray(b)) return false; if(a.length!==b.length) return false; const sa=[...a].sort(), sb=[...b].sort(); return sa.every((v,i)=>v===sb[i]); }
 function groupResultsByAttempt(results){ if(!results||!results.length) return []; const sorted=[...results].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp)); const attempts=[]; let current=[sorted[0]]; for(let i=1;i<sorted.length;i++){ const curr=sorted[i], prev=sorted[i-1]; const diff=new Date(curr.timestamp)-new Date(prev.timestamp); if(diff>30*60*1000||curr.sessionId!==prev.sessionId){ attempts.push(current); current=[curr]; } else current.push(curr); } if(current.length) attempts.push(current); return attempts; }
 
-function downloadAllUserResults(){ /* as provided in original, unchanged */ }
+function downloadAllUserResults(){
+database.ref('quizResults').once('value').then(s=>{
+const r=s.val();
+if(!r){ alert('No results.'); return; }
+const data=Object.values(r);
+const byUserModel={};
+data.forEach(d=>{
+const key=(d.playerCode||'unknown')+'__'+(d.modelId||'nomodel');
+if(!byUserModel[key]) byUserModel[key]=[];
+byUserModel[key].push(d);
+});
+const wb=XLSX.utils.book_new();
+let count=0;
+Object.keys(byUserModel).forEach(key=>{
+const ress=byUserModel[key];
+const sorted=ress.slice().sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+const groups=groupResultsByAttempt(sorted);
+if(groups.length===0) return;
+const firstAttempt=groups[0];
+const playerName=firstAttempt[0].playerName||'Unknown';
+const playerCode=firstAttempt[0].playerCode||'';
+const modelId=firstAttempt[0].modelId||'';
+const model=quizModels.find(m=>m.id===modelId);
+const modelName=model?model.name:'Unknown';
+let correct=0;
+firstAttempt.forEach(ra=>{ if(arraysEqual(ra.selectedAnswers,ra.correctAnswers)) correct++; });
+const total=firstAttempt.length;
+const acc=total>0?(correct/total*100):0;
+const pass=acc>=50?'PASS':'FAIL';
+const sheetData=[
+['Player',playerName,'Code',playerCode,'Model',modelName],
+[],
+['Q#','Question','Selected','Correct','Time (s)','Status','Timestamp','Result']
+];
+firstAttempt.forEach((ra,idx)=>{
+const ok=arraysEqual(ra.selectedAnswers,ra.correctAnswers);
+sheetData.push([idx+1,ra.question||'',(ra.selectedAnswers||[]).join(', '),(ra.correctAnswers||[]).join(', '),ra.responseTime||0,ra.status||'',ra.timestamp?new Date(ra.timestamp).toLocaleString():'',ok?'CORRECT':'INCORRECT']);
+});
+sheetData.push([]);
+sheetData.push(['Total:',total,'Correct:',correct,'Accuracy:',acc.toFixed(1)+'%','Result:',pass]);
+const ws=XLSX.utils.aoa_to_sheet(sheetData);
+let sheetName=(playerName+'-'+modelName).substring(0,31).replace(/[\\/*\[\]?:]/g,'');
+if(!sheetName) sheetName='Sheet'+(count+1);
+let uniqueName=sheetName, suffix=2;
+while(wb.SheetNames && wb.SheetNames.indexOf(uniqueName)!==-1){ uniqueName=(sheetName.substring(0,28)+'-'+suffix).substring(0,31); suffix++; }
+XLSX.utils.book_append_sheet(wb,ws,uniqueName);
+count++;
+if(count>80) return;
+});
+if(count===0){ alert('No attempts found.'); return; }
+XLSX.writeFile(wb,'all-user-results-'+new Date().toISOString().split('T')[0]+'.xlsx');
+alert('Downloaded '+count+' user attempts!');
+}).catch(e=>{ alert('Error: '+e.message); });
+}
+
+function loadQuizResults(){
+database.ref('quizResults').once('value').then(s=>{
+const r=s.val();
+const container=document.getElementById('results-container');
+if(!r){
+container.innerHTML='<p>No results yet.</p>';
+document.getElementById('user-results-container').innerHTML='';
+return;
+}
+const data=Object.values(r).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+let html='<div class="result-header"><div>Player</div><div>Question</div><div>Selected</div><div>Correct</div><div>Time</div><div>Status</div><div>Timestamp</div></div>';
+data.forEach(row=>{
+const cls=row.status==='Correct'?'correct':(row.status==='Incorrect'?'incorrect':'');
+html+='<div class="result-row '+cls+'">'+
+'<div>'+(row.playerName||'N/A')+' ('+(row.playerCode||'')+')</div>'+
+'<div>'+(row.question||'')+'</div>'+
+'<div>'+((row.selectedAnswers||[]).join(', ')||'—')+'</div>'+
+'<div>'+((row.correctAnswers||[]).join(', ')||'—')+'</div>'+
+'<div>'+(row.responseTime||0)+'s</div>'+
+'<div>'+(row.status||'')+'</div>'+
+'<div>'+(row.timestamp?new Date(row.timestamp).toLocaleString():'')+'</div>'+
+'</div>';
+});
+container.innerHTML=html;
+const byUser={};
+data.forEach(d=>{
+const k=d.playerCode||'unknown';
+if(!byUser[k]) byUser[k]=[];
+byUser[k].push(d);
+});
+const arr=Object.keys(byUser).map(k=>({
+playerCode:k,
+playerName:byUser[k][0].playerName||'Unknown',
+responses:byUser[k]
+}));
+loadIndividualUserResults(arr);
+}).catch(e=>{
+document.getElementById('results-container').innerHTML='<p>Error: '+e.message+'</p>';
+});
+}
+
+function loadIndividualUserResults(arr){
+const container=document.getElementById('user-results-container');
+if(!arr||arr.length===0){ container.innerHTML='<p>No individual results.</p>'; return; }
+let html='';
+arr.forEach(u=>{
+let correct=0,total=0,totalTime=0;
+u.responses.forEach(r=>{
+total++;
+totalTime+=(r.responseTime||0);
+if(arraysEqual(r.selectedAnswers,r.correctAnswers)) correct++;
+});
+const acc=total>0?(correct/total*100):0;
+const avgT=total>0?(totalTime/total):0;
+const pass=acc>=50?'PASS':'FAIL';
+const passColor=pass==='PASS'?'#4caf50':'#f44336';
+html+='<div class="user-result-item">'+
+'<div class="user-result-header"><strong>'+(u.playerName||'Unknown')+' ('+u.playerCode+')</strong>'+
+'<button class="user-btn export" onclick="openModelSelection(\''+u.playerCode+'\')">Export</button></div>'+
+'<div class="user-result-stats">'+
+'<div class="user-stat"><div class="user-stat-number">'+correct+'</div><div class="user-stat-label">Correct</div></div>'+
+'<div class="user-stat"><div class="user-stat-number">'+(total-correct)+'</div><div class="user-stat-label">Incorrect</div></div>'+
+'<div class="user-stat"><div class="user-stat-number">'+acc.toFixed(1)+'%</div><div class="user-stat-label">Accuracy</div></div>'+
+'<div class="user-stat"><div class="user-stat-number">'+avgT.toFixed(2)+'s</div><div class="user-stat-label">Avg Time</div></div>'+
+'<div class="user-stat"><div class="user-stat-number" style="color:'+passColor+'">'+pass+'</div><div class="user-stat-label">Result</div></div>'+
+'</div></div>';
+});
+container.innerHTML=html;
+}
 
 function deleteAllResults(){ if(confirm('Delete all results?')){ database.ref('quizResults').remove().then(()=>{ alert('Deleted.'); loadQuizResults(); }); } }
 function deleteUserResults(pc){ if(confirm('Delete results for '+pc+'?')){ database.ref('quizResults').once('value').then(s=>{ const r=s.val(); if(!r){ alert('No results.'); return; } const updates={}; let found=false; Object.keys(r).forEach(k=>{ if(r[k]&&r[k].playerCode===pc){ updates[k]=null; found=true; } }); if(!found){ alert('No results for this user.'); return; } database.ref('quizResults').update(updates).then(()=>{ alert('Deleted.'); loadQuizResults(); }); }); } }
 function confirmDeleteResults(){ if(confirm('Delete ALL results?')) if(confirm('Final warning?')) deleteAllResults(); }
 function deleteUserByCode(pc){ if(confirm('Delete user '+pc+'?')){ const idx=users.findIndex(u=>u.code===pc); if(idx!==-1){ users.splice(idx,1); saveUsersToFirebase(); displayUsers(); } deleteUserResults(pc); } }
 
-function loadQuizResults(){ /* as in original */ }
-function loadIndividualUserResults(arr){ /* as in original */ }
-
 // ============================================================
-// NEW UNIFIED EXPORT FUNCTION: Top 5 + All Users in one Excel
+// exportUnifiedLastQuiz (fully rewritten)
 // ============================================================
 function exportUnifiedLastQuiz() {
-database.ref('quizResults').once('value')
-.then(snapshot => {
+database.ref('quizResults').once('value').then(snapshot => {
 const results = snapshot.val();
 if (!results) { alert('لا توجد نتائج.'); return; }
 const allResults = Object.values(results);
 if (allResults.length === 0) { alert('لا توجد نتائج.'); return; }
 
-// Filter for default model (id='default') or fallback to first model
-let defaultModelId = 'default';
-let defaultModel = quizModels.find(m => m.id === defaultModelId);
-if (!defaultModel && quizModels.length > 0) {
-defaultModelId = quizModels[0].id;
-defaultModel = quizModels[0];
+let targetModelId = activeQuizModel;
+const modelCounts = {};
+allResults.forEach(r => {
+if (r.modelId && r.modelId !== 'No Model') {
+modelCounts[r.modelId] = (modelCounts[r.modelId] || 0) + 1;
 }
-if (!defaultModel) { alert('لا يوجد نموذج.'); return; }
+});
+if (!targetModelId || !modelCounts[targetModelId]) {
+const entries = Object.entries(modelCounts).sort((a, b) => b[1] - a[1]);
+if (entries.length === 0) { alert('لا توجد نتائج مرتبطة بأي نموذج.'); return; }
+targetModelId = entries[0][0];
+}
+const targetModel = quizModels.find(m => m.id === targetModelId);
+const modelLabel = targetModel ? targetModel.name : targetModelId;
 
-const modelResults = allResults.filter(r => r.modelId === defaultModelId);
-if (modelResults.length === 0) { alert('لا توجد نتائج للنموذج الافتراضي.'); return; }
+const modelResults = allResults.filter(r => r.modelId === targetModelId);
+if (modelResults.length === 0) { alert('لا توجد نتائج لهذا النموذج.'); return; }
 
-// Determine total questions in the model
-const modelQuestions = questions.filter(q => q.modelId === defaultModelId);
+const modelQuestions = questions.filter(q => q.modelId === targetModelId && !q.hidden);
 const totalQuestions = modelQuestions.length;
-if (totalQuestions === 0) { alert('لا توجد أسئلة في النموذج.'); return; }
+if (totalQuestions === 0) { alert('لا توجد أسئلة مرئية في هذا النموذج.'); return; }
 
-// Group results by player, then separate attempts
 const playerMap = {};
 modelResults.forEach(r => {
 if (!playerMap[r.playerCode]) {
 playerMap[r.playerCode] = {
 playerCode: r.playerCode,
 playerName: r.playerName || 'Unknown',
-attempts: []
+responses: []
 };
 }
-playerMap[r.playerCode].attempts.push(r);
+playerMap[r.playerCode].responses.push(r);
 });
 
-// For each player, get the latest COMPLETE attempt
-const latestCompleteAttempts = [];
+const allPlayersStats = [];
+const completePlayersStats = [];
+
 Object.values(playerMap).forEach(player => {
-const sortedAttempts = player.attempts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-const attemptsGroups = groupResultsByAttempt(sortedAttempts);
-if (attemptsGroups.length > 0) {
-const latestGroup = attemptsGroups[attemptsGroups.length - 1];
-if (latestGroup.length === totalQuestions) {
-latestCompleteAttempts.push({
-playerCode: player.playerCode,
-playerName: player.playerName,
-responses: latestGroup
-});
-}
-}
-});
+const sorted = player.responses.slice().sort((a, b) =>
+new Date(a.timestamp) - new Date(b.timestamp));
+const attempts = groupResultsByAttempt(sorted);
+if (attempts.length === 0) return;
+const latestGroup = attempts[attempts.length - 1];
 
-if (latestCompleteAttempts.length === 0) {
-alert('لا يوجد مستخدمون أكملوا جميع الأسئلة في آخر اختبار.');
-return;
+const byQuestion = {};
+latestGroup.forEach(r => {
+const key = r.questionId || r.question || ('idx-' + r.questionIndex);
+if (!byQuestion[key] || new Date(r.timestamp) > new Date(byQuestion[key].timestamp)) {
+byQuestion[key] = r;
 }
+});
+const uniqueResponses = Object.values(byQuestion);
 
-// Compute statistics for each player
-const playersStats = latestCompleteAttempts.map(p => {
 let correct = 0;
 let totalTime = 0;
-p.responses.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
-arraysEqual(r.selectedAnswers, r.correctAnswers);
-if (isCorrect) correct++;
+uniqueResponses.forEach(r => {
+if (Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+arraysEqual(r.selectedAnswers, r.correctAnswers)) {
+correct++;
+}
 totalTime += (r.responseTime || 0);
 });
-const total = p.responses.length;
-const avgTime = total > 0 ? totalTime / total : 0;
-const accuracy = total > 0 ? (correct / total) * 100 : 0;
+const answered = uniqueResponses.length;
+const avgTime = answered > 0 ? totalTime / answered : 0;
+const accuracy = totalQuestions > 0 ? (correct / totalQuestions) * 100 : 0;
 const passFail = accuracy >= 50 ? 'PASS' : 'FAIL';
-return {
-playerCode: p.playerCode,
-playerName: p.playerName,
+const complete = answered === totalQuestions;
+
+const stat = {
+playerCode: player.playerCode,
+playerName: player.playerName,
 correct: correct,
-total: total,
+answered: answered,
+total: totalQuestions,
 avgTime: avgTime,
 accuracy: accuracy,
 passFail: passFail,
-responses: p.responses
+complete: complete,
+responses: uniqueResponses
 };
+allPlayersStats.push(stat);
+if (complete) completePlayersStats.push(stat);
 });
 
-// Sort for top 5: by correct descending, then avgTime ascending
-const sortedForTop = [...playersStats].sort((a, b) => {
+if (allPlayersStats.length === 0) { alert('لا توجد بيانات لاعبين.'); return; }
+
+const sortedForTop = completePlayersStats.slice().sort((a, b) => {
 if (b.correct !== a.correct) return b.correct - a.correct;
 return a.avgTime - b.avgTime;
 });
 const top5 = sortedForTop.slice(0, 5);
 
-// Sort all users by name
-const allUsersSorted = [...playersStats].sort((a, b) => a.playerName.localeCompare(b.playerName));
+const allUsersSorted = allPlayersStats.slice().sort((a, b) =>
+(a.playerName || '').localeCompare(b.playerName || ''));
 
-// Build Excel workbook
 const workbook = XLSX.utils.book_new();
 
-// --- Sheet 1: Top 5 Summary ---
-const topSummary = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة %', 'متوسط الزمن (ث)', 'النتيجة']
-];
+const topSummary = [['الترتيب','اسم اللاعب','الكود','الإجابات الصحيحة','إجمالي الأسئلة','النسبة %','متوسط الزمن (ث)','النتيجة']];
 top5.forEach((p, idx) => {
-topSummary.push([
-idx + 1,
-p.playerName,
-p.playerCode,
-p.correct,
-p.total,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
+topSummary.push([idx + 1, p.playerName, p.playerCode, p.correct, p.total,
+p.accuracy.toFixed(1), p.avgTime.toFixed(2), p.passFail]);
 });
-const wsTopSummary = XLSX.utils.aoa_to_sheet(topSummary);
-XLSX.utils.book_append_sheet(workbook, wsTopSummary, 'Top 5 Summary');
+XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(topSummary), 'Top 5 Summary');
 
-// --- Sheet 2: Top 5 Details ---
-const topDetails = [
-['الترتيب', 'اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
-];
+const topDetails = [['الترتيب','اسم اللاعب','الكود','التاريخ','السؤال','الإجابة المختارة','الإجابة الصحيحة','زمن الاستجابة (ث)','النتيجة']];
 top5.forEach((p, rank) => {
-const sortedRes = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-sortedRes.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+const rs = p.responses.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+rs.forEach(r => {
+const ok = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
-topDetails.push([
-rank + 1,
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
+topDetails.push([rank + 1, p.playerName, p.playerCode,
+new Date(r.timestamp).toLocaleString(), r.question || '',
+(r.selectedAnswers || []).join(', '), (r.correctAnswers || []).join(', '),
+r.responseTime || 0, ok ? 'صحيح' : 'خاطئ']);
 });
-topDetails.push([]); // separator between players
+topDetails.push([]);
 });
-const wsTopDetails = XLSX.utils.aoa_to_sheet(topDetails);
-XLSX.utils.book_append_sheet(workbook, wsTopDetails, 'Top 5 Details');
+XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(topDetails), 'Top 5 Details');
 
-// --- Sheet 3: All Users Summary ---
-const allSummary = [
-['اسم اللاعب', 'الكود', 'الإجابات الصحيحة', 'إجمالي الأسئلة', 'النسبة %', 'متوسط الزمن (ث)', 'النتيجة']
-];
+const allSummary = [['اسم اللاعب','الكود','الإجابات الصحيحة','الأسئلة المُجابة','إجمالي الأسئلة','النسبة %','متوسط الزمن (ث)','النتيجة','الحالة']];
 allUsersSorted.forEach(p => {
-allSummary.push([
-p.playerName,
-p.playerCode,
-p.correct,
-p.total,
-p.accuracy.toFixed(1),
-p.avgTime.toFixed(2),
-p.passFail
-]);
+allSummary.push([p.playerName, p.playerCode, p.correct, p.answered, p.total,
+p.accuracy.toFixed(1), p.avgTime.toFixed(2), p.passFail,
+p.complete ? 'مكتمل' : 'غير مكتمل']);
 });
-const wsAllSummary = XLSX.utils.aoa_to_sheet(allSummary);
-XLSX.utils.book_append_sheet(workbook, wsAllSummary, 'All Users Summary');
+XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(allSummary), 'All Users Summary');
 
-// --- Sheet 4: All Users Details ---
-const allDetails = [
-['اسم اللاعب', 'الكود', 'التاريخ', 'السؤال', 'الإجابة المختارة', 'الإجابة الصحيحة', 'زمن الاستجابة (ث)', 'النتيجة']
-];
+const allDetails = [['اسم اللاعب','الكود','التاريخ','السؤال','الإجابة المختارة','الإجابة الصحيحة','زمن الاستجابة (ث)','النتيجة']];
 allUsersSorted.forEach(p => {
-const sortedRes = p.responses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-sortedRes.forEach(r => {
-const isCorrect = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
+const rs = p.responses.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+rs.forEach(r => {
+const ok = Array.isArray(r.selectedAnswers) && Array.isArray(r.correctAnswers) &&
 arraysEqual(r.selectedAnswers, r.correctAnswers);
-allDetails.push([
-p.playerName,
-p.playerCode,
-new Date(r.timestamp).toLocaleString(),
-r.question || '',
-(r.selectedAnswers || []).join(', '),
-(r.correctAnswers || []).join(', '),
-r.responseTime || 0,
-isCorrect ? 'صحيح' : 'خاطئ'
-]);
+allDetails.push([p.playerName, p.playerCode, new Date(r.timestamp).toLocaleString(),
+r.question || '', (r.selectedAnswers || []).join(', '),
+(r.correctAnswers || []).join(', '), r.responseTime || 0, ok ? 'صحيح' : 'خاطئ']);
 });
-allDetails.push([]); // separator between players
+allDetails.push([]);
 });
-const wsAllDetails = XLSX.utils.aoa_to_sheet(allDetails);
-XLSX.utils.book_append_sheet(workbook, wsAllDetails, 'All Users Details');
+XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(allDetails), 'All Users Details');
 
-// Download
-const filename = `default-model-full-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+const filename = 'report-' + modelLabel.replace(/[\\/*\[\]?:]/g,'') + '-' + new Date().toISOString().split('T')[0] + '.xlsx';
 XLSX.writeFile(workbook, filename);
-alert('تم تنزيل التقرير الكامل بنجاح!');
-})
-.catch(err => {
+alert('تم تنزيل التقرير بنجاح!\n' +
+'النموذج: ' + modelLabel + '\n' +
+'عدد الأسئلة المرئية: ' + totalQuestions + '\n' +
+'عدد المكتملين: ' + completePlayersStats.length + '/' + allPlayersStats.length);
+}).catch(err => {
 console.error(err);
 alert('حدث خطأ: ' + err.message);
 });
@@ -631,6 +772,7 @@ setTimeout(() => { document.getElementById('model-status').textContent = 'Create
 function displayQuizModels() {
 var container = document.getElementById('models-container');
 var modelSelect = document.getElementById('question-model');
+if(!container || !modelSelect) return;
 container.innerHTML = '';
 modelSelect.innerHTML = '<option value="">-- Select a Model --</option>';
 if (quizModels.length === 0) { container.innerHTML = '<p>No models created yet.</p>'; return; }
@@ -853,6 +995,7 @@ setTimeout(() => { document.getElementById('user-status').textContent = 'Add use
 
 function displayUsers() {
 var container = document.getElementById('users-container');
+if(!container) return;
 container.innerHTML = '';
 if (users.length === 0) { container.innerHTML = '<p>No users added yet.</p>'; return; }
 users.forEach((user, index) => {
@@ -929,6 +1072,7 @@ setTimeout(() => { document.getElementById('question-status').textContent = 'Add
 
 function displayQuestions() {
 var container = document.getElementById('questions-container');
+if(!container) return;
 container.innerHTML = '';
 if (currentModelFilter) {
 const btn = document.createElement('button');
@@ -1107,8 +1251,12 @@ submitAnswers();
 }
 
 function submitAnswers() {
+if (currentQuestionSubmitted) return;
+currentQuestionSubmitted = true;
+clearInterval(countdownInterval);
+
 const selected = document.querySelectorAll('.answer-btn.selected');
-const selectedAnswers = Array.from(selected).map(btn => btn.textContent.trim());
+const selectedAnswers = Array.from(selected).map(btn => btn.dataset.answer);
 document.querySelectorAll('.answer-btn').forEach(btn => { btn.disabled = true; btn.style.pointerEvents = 'none'; });
 var visibleQuestions = getVisibleQuestions();
 var q = visibleQuestions[currentIndex];
@@ -1124,9 +1272,10 @@ playerResults.total++;
 playerResults.responseTimes.push(responseTime);
 playerResults.accuracy = (playerResults.correct / playerResults.total) * 100;
 const status = selectedAnswers.length === 0 ? 'Unanswered' : (isCorrect ? 'Correct' : 'Incorrect');
-saveToFirebase(playerCode, userName, q.question, selectedAnswers, correctAnswers, responseTime, status, q.modelId);
+saveToFirebase(playerCode, userName, q.question, selectedAnswers, correctAnswers, responseTime, status, q.modelId, q.questionId)
+.then(() => showAnswerSavedMessage('✅ تم حفظ إجابتك'))
+.catch(() => showAnswerSavedMessage('⚠️ تعذر حفظ الإجابة - يرجى مراجعة المسؤول'));
 saveQuizProgress();
-showAnswerSavedMessage();
 startNextQuestionCountdown();
 }
 
@@ -1210,6 +1359,7 @@ URL.revokeObjectURL(url);
 }
 
 function showPlayerQuestion() {
+currentQuestionSubmitted = false;
 var visibleQuestions = getVisibleQuestions();
 if (currentIndex >= visibleQuestions.length) { showPlayerResults(); return; }
 var q = visibleQuestions[currentIndex];
@@ -1222,7 +1372,8 @@ questionStartTime = Date.now();
 q.answers.forEach(a => {
 var btn = document.createElement("button");
 btn.className = "answer-btn";
-btn.innerHTML = a;
+btn.textContent = a;
+btn.dataset.answer = a;
 btn.onclick = function(e) {
 if (!quizActive) { alert("الاختبار غير نشط حالياً."); return; }
 this.classList.toggle('selected');
@@ -1241,7 +1392,8 @@ answersDiv.appendChild(confirmBtn);
 startCountdown();
 }
 
-function showAnswerSavedMessage() {
+function showAnswerSavedMessage(message) {
+message = message || 'تم حفظ إجابتك';
 const msg = document.createElement('div');
 msg.id = 'answer-saved-message';
 msg.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(110,142,251,0.95);color:white;padding:20px 40px;border-radius:10px;font-size:1.5rem;font-weight:bold;text-align:center;z-index:2000;box-shadow:0 5px 15px rgba(0,0,0,0.3);animation:messageFade 2s ease-in-out forwards;`;
@@ -1251,7 +1403,7 @@ style.id = 'message-styles';
 style.textContent = `@keyframes messageFade{0%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}40%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(0.9)}}`;
 document.head.appendChild(style);
 }
-msg.textContent = 'تم حفظ إجابتك';
+msg.textContent = message;
 document.body.appendChild(msg);
 setTimeout(() => { if (document.getElementById('answer-saved-message')) document.getElementById('answer-saved-message').remove(); }, 2000);
 }
@@ -1329,10 +1481,10 @@ setTimeout(init, 2000);
 }
 }
 init();
-console.log("Kahoot FS with Unified Export Loaded");
+console.log("Kahoot FS with Unified Export + All Fixes Loaded");
 });
 
-// Additional functions (openModelSelection, closeModelSelection, exportSelectedModel, exportUserResultsForModel)
+// Additional functions for model selection export
 function openModelSelection(pc) {
 selectedUserForExport = pc;
 const modal = document.getElementById('modelSelectionModal');
